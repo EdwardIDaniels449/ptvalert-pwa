@@ -4,10 +4,10 @@ const APP_VERSION = '1.0.0';
 
 // 需要缓存的核心资源
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/offline.html',
+  '/ptvalert-pwa/',
+  '/ptvalert-pwa/index.html',
+  '/ptvalert-pwa/manifest.json',
+  '/ptvalert-pwa/offline.html',
   // CSS
   'https://unpkg.com/leaflet@1.7.1/dist/leaflet.css',
   // JavaScript
@@ -16,17 +16,17 @@ const urlsToCache = [
   'https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js',
   'https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js',
   // 图标和图片
-  '/images/icon-72x72.png',
-  '/images/icon-96x96.png',
-  '/images/icon-128x128.png',
-  '/images/icon-144x144.png',
-  '/images/icon-152x152.png',
-  '/images/icon-192x192.png',
-  '/images/icon-384x384.png',
-  '/images/icon-512x512.png',
-  '/images/icon-512x512-maskable.png',
-  '/images/report-icon-192x192.png',
-  '/images/map-icon-192x192.png'
+  '/ptvalert-pwa/images/icon-72x72.png',
+  '/ptvalert-pwa/images/icon-96x96.png',
+  '/ptvalert-pwa/images/icon-128x128.png',
+  '/ptvalert-pwa/images/icon-144x144.png',
+  '/ptvalert-pwa/images/icon-152x152.png',
+  '/ptvalert-pwa/images/icon-192x192.png',
+  '/ptvalert-pwa/images/icon-384x384.png',
+  '/ptvalert-pwa/images/icon-512x512.png',
+  '/ptvalert-pwa/images/icon-512x512-maskable.png',
+  '/ptvalert-pwa/images/report-icon-192x192.png',
+  '/ptvalert-pwa/images/map-icon-192x192.png'
 ];
 
 // 安装Service Worker
@@ -89,7 +89,7 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(event.request)
         .catch(() => {
-          return caches.match('/offline.html');
+          return caches.match('/ptvalert-pwa/offline.html');
         })
     );
     return;
@@ -130,7 +130,7 @@ self.addEventListener('fetch', event => {
             console.log('[Service Worker] 获取资源失败:', error);
             // 对于图片等资源，可以返回一个占位图像
             if (event.request.url.match(/\.(jpg|jpeg|png|gif|svg)$/)) {
-              return caches.match('/images/offline-image.png');
+              return caches.match('/ptvalert-pwa/images/offline-image.png');
             }
             
             // 对于不关键的请求，可以返回一个空响应
@@ -155,18 +155,18 @@ self.addEventListener('push', event => {
     notificationData = {
       title: 'PtvAlert通知',
       body: event.data ? event.data.text() : '有新的消息',
-      icon: '/images/icon-192x192.png',
-      badge: '/images/badge-96x96.png',
+      icon: '/ptvalert-pwa/images/icon-192x192.png',
+      badge: '/ptvalert-pwa/images/badge-96x96.png',
       data: {
-        url: '/'
+        url: '/ptvalert-pwa/'
       }
     };
   }
   
   const options = {
     body: notificationData.body,
-    icon: notificationData.icon || '/images/icon-192x192.png',
-    badge: notificationData.badge || '/images/badge-96x96.png',
+    icon: notificationData.icon || '/ptvalert-pwa/images/icon-192x192.png',
+    badge: notificationData.badge || '/ptvalert-pwa/images/badge-96x96.png',
     vibrate: [100, 50, 100],
     data: notificationData.data || {},
     actions: notificationData.actions || [
@@ -206,7 +206,7 @@ self.addEventListener('notificationclick', event => {
           }
           // 否则打开新窗口
           if (clients.openWindow) {
-            return clients.openWindow('/');
+            return clients.openWindow('/ptvalert-pwa/');
           }
         })
     );
