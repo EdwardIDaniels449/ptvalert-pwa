@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "routes": [
+    { "src": "/service-worker.js", "dest": "/service-worker.js", "headers": { "cache-control": "public, max-age=0, must-revalidate", "content-type": "application/javascript" } },
+    { "src": "/manifest.json", "dest": "/manifest.json", "headers": { "cache-control": "public, max-age=0, must-revalidate", "content-type": "application/manifest+json" } },
+    { "src": "/offline.html", "dest": "/offline.html", "headers": { "cache-control": "public, max-age=0, must-revalidate" } },
+    { "src": "/images/(.*)", "dest": "/images/$1", "headers": { "cache-control": "public, max-age=86400" } },
+    { "src": "/(.*)\\.(js|css|png|jpg|jpeg|gif|ico|svg)$", "dest": "/$1.$2", "headers": { "cache-control": "public, max-age=86400" } },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
+    }
+  ]
+} 
