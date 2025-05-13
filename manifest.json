@@ -2,54 +2,54 @@
   "name": "PtvAlert",
   "short_name": "PtvAlert",
   "description": "Melbourne transit information sharing platform",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#1c1c1e",
   "theme_color": "#0071e3",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/images/icon-72x72.png",
+      "src": "./images/icon-72x72.png",
       "type": "image/png",
       "sizes": "72x72"
     },
     {
-      "src": "/images/icon-96x96.png",
+      "src": "./images/icon-96x96.png",
       "type": "image/png",
       "sizes": "96x96"
     },
     {
-      "src": "/images/icon-128x128.png",
+      "src": "./images/icon-128x128.png",
       "type": "image/png",
       "sizes": "128x128"
     },
     {
-      "src": "/images/icon-144x144.png",
+      "src": "./images/icon-144x144.png",
       "type": "image/png",
       "sizes": "144x144"
     },
     {
-      "src": "/images/icon-152x152.png",
+      "src": "./images/icon-152x152.png",
       "type": "image/png",
       "sizes": "152x152"
     },
     {
-      "src": "/images/icon-192x192.png",
+      "src": "./images/icon-192x192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "/images/icon-384x384.png",
+      "src": "./images/icon-384x384.png",
       "type": "image/png",
       "sizes": "384x384"
     },
     {
-      "src": "/images/icon-512x512.png",
+      "src": "./images/icon-512x512.png",
       "type": "image/png",
       "sizes": "512x512"
     },
     {
-      "src": "/images/icon-512x512-maskable.png",
+      "src": "./images/icon-512x512-maskable.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
@@ -60,10 +60,10 @@
       "name": "Add Report",
       "short_name": "Add",
       "description": "Add a new report to the map",
-      "url": "/?action=add",
+      "url": "./?action=add",
       "icons": [
         {
-          "src": "/images/report-icon-192x192.png",
+          "src": "./images/report-icon-192x192.png",
           "sizes": "192x192"
         }
       ]
@@ -72,10 +72,10 @@
       "name": "View Map",
       "short_name": "Map",
       "description": "View the map of reports",
-      "url": "/?action=map",
+      "url": "./?action=map",
       "icons": [
         {
-          "src": "/images/map-icon-192x192.png",
+          "src": "./images/map-icon-192x192.png",
           "sizes": "192x192"
         }
       ]
@@ -83,13 +83,13 @@
   ],
   "screenshots": [
     {
-      "src": "/images/screenshot1.png",
+      "src": "./images/screenshot1.png",
       "type": "image/png",
       "sizes": "1080x1920",
       "form_factor": "narrow"
     },
     {
-      "src": "/images/screenshot2.png",
+      "src": "./images/screenshot2.png",
       "type": "image/png",
       "sizes": "1080x1920",
       "form_factor": "narrow"
@@ -101,9 +101,9 @@
   "related_applications": [],
   "prefer_related_applications": false,
   "iarc_rating_id": "",
-  "scope": "/",
+  "scope": "./",
   "serviceworker": {
-    "src": "/service-worker.js",
-    "scope": "/"
+    "src": "./service-worker.js",
+    "scope": "./"
   }
 } 

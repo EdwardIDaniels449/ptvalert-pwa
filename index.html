@@ -3,12 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0071e3">
+    <meta name="description" content="墨尔本交通信息共享平台">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PtvAlert">
+    
     <title>PtvAlert网页版</title>
+    
+    <!-- Manifest和图标 -->
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" href="./favicon.ico">
+    <link rel="apple-touch-icon" href="./images/icon-192x192.png">
+    
+    <!-- 样式表 -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    
     <!-- 添加Firebase SDK 脚本 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- 推送通知处理脚本 -->
+    <script src="./js/notification-handler.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -4453,6 +4471,53 @@
                 });
             
             return marker;
+        }
+    </script>
+    
+    <!-- PWA初始化和推送通知 -->
+    <script>
+        // 注册Service Worker，启用PWA功能
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async function() {
+                try {
+                    // 注册Service Worker
+                    const registration = await navigator.serviceWorker.register('./service-worker.js', {
+                        scope: './'
+                    });
+                    console.log('Service Worker 注册成功，作用域为:', registration.scope);
+                    
+                    // 初始化通知功能
+                    if ('Notification' in window && 'PushManager' in window) {
+                        // 如果用户已登录，设置用户ID
+                        if (currentUserId) {
+                            window.notificationHandler.setCurrentUserId(currentUserId);
+                        }
+                        
+                        // 初始化通知功能
+                        const notificationSupported = await window.notificationHandler.initNotifications();
+                        
+                        if (notificationSupported) {
+                            console.log('推送通知功能已初始化');
+                            
+                            // 如果有权限，尝试订阅
+                            if (Notification.permission === 'granted') {
+                                try {
+                                    const isAlreadySubscribed = await window.notificationHandler.isSubscribedToPush();
+                                    
+                                    if (!isAlreadySubscribed) {
+                                        const subscription = await window.notificationHandler.subscribeUserToPush();
+                                        console.log('成功订阅推送通知:', subscription);
+                                    }
+                                } catch (error) {
+                                    console.error('订阅推送通知失败:', error);
+                                }
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Service Worker 注册失败:', error);
+                }
+            });
         }
     </script>
 </body>

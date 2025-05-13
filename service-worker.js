@@ -1,13 +1,13 @@
 // Define cache name and app version
-const CACHE_NAME = 'ptvalert-cache-v2';
-const APP_VERSION = '1.0.2';
+const CACHE_NAME = 'ptvalert-cache-v3';
+const APP_VERSION = '1.0.3';
 
 // Resources to cache
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/offline.html',
+  './',
+  './index.html',
+  './manifest.json',
+  './offline.html',
   // CSS
   'https://unpkg.com/leaflet@1.7.1/dist/leaflet.css',
   // JavaScript
@@ -15,19 +15,20 @@ const urlsToCache = [
   'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js',
   'https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js',
   'https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js',
-  '/js/notification-handler.js',
+  './js/notification-handler.js',
   // Icons and images
-  '/images/icon-72x72.png',
-  '/images/icon-96x96.png',
-  '/images/icon-128x128.png',
-  '/images/icon-144x144.png',
-  '/images/icon-152x152.png',
-  '/images/icon-192x192.png',
-  '/images/icon-384x384.png',
-  '/images/icon-512x512.png',
-  '/images/icon-512x512-maskable.png',
-  '/images/report-icon-192x192.png',
-  '/images/map-icon-192x192.png'
+  './images/icon-72x72.png',
+  './images/icon-96x96.png',
+  './images/icon-128x128.png',
+  './images/icon-144x144.png',
+  './images/icon-152x152.png',
+  './images/icon-192x192.png',
+  './images/icon-384x384.png',
+  './images/icon-512x512.png',
+  './images/icon-512x512-maskable.png',
+  './images/report-icon-192x192.png',
+  './images/map-icon-192x192.png',
+  './images/offline-image.png'
 ];
 
 // Install Service Worker
@@ -93,7 +94,7 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(event.request)
         .catch(() => {
-          return caches.match('/offline.html');
+          return caches.match('./offline.html');
         })
     );
     return;
@@ -132,7 +133,7 @@ self.addEventListener('fetch', event => {
             
             // Return placeholder for images
             if (event.request.url.match(/\.(jpg|jpeg|png|gif|svg)$/)) {
-              return caches.match('/images/offline-image.png');
+              return caches.match('./images/offline-image.png');
             }
             
             // Return empty response for other requests
