@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#0071e3">
     <meta name="description" content="墨尔本交通信息共享平台">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PtvAlert">
     
@@ -3336,8 +3337,15 @@
         // Google Maps API 加载回调
         function googleMapsLoadedCallback() {
             console.log("Google Maps 已加载，初始化地图...");
+            
+            // 如果initMap函数存在，调用它
             if (typeof initMap === 'function') {
                 initMap();
+            }
+            
+            // 只有当addRefreshTramButton函数存在时才调用它
+            if (typeof addRefreshTramButton === 'function') {
+                addRefreshTramButton();
             }
         }
     </script>
@@ -4116,25 +4124,86 @@
     <!-- 更新按钮和弹窗文本 -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // 确保i18n对象包含所需的字段
+            if (typeof i18n !== 'undefined') {
+                // 添加可能缺失的翻译字段
+                i18n.zh = i18n.zh || {};
+                i18n.en = i18n.en || {};
+                
+                // 添加快速添加描述相关的翻译
+                i18n.zh.quickAddDesc = i18n.zh.quickAddDesc || '快速添加';
+                i18n.zh.quickAddTitle = i18n.zh.quickAddTitle || '快速添加描述';
+                i18n.zh.quickDescPlaceholder = i18n.zh.quickDescPlaceholder || '请输入事件描述...';
+                i18n.zh.addToMap = i18n.zh.addToMap || '添加到地图';
+                
+                i18n.en.quickAddDesc = i18n.en.quickAddDesc || 'Quick Add';
+                i18n.en.quickAddTitle = i18n.en.quickAddTitle || 'Quick Add Description';
+                i18n.en.quickDescPlaceholder = i18n.en.quickDescPlaceholder || 'Enter event description...';
+                i18n.en.addToMap = i18n.en.addToMap || 'Add to Map';
+            } else {
+                // 如果i18n对象不存在，创建一个简单的版本
+                window.i18n = {
+                    zh: {
+                        quickAddDesc: '快速添加',
+                        quickAddTitle: '快速添加描述',
+                        quickDescPlaceholder: '请输入事件描述...',
+                        addToMap: '添加到地图',
+                        geocoding: '正在解析位置...',
+                        geocodeSuccess: '位置已找到',
+                        geocodeError: '位置解析失败',
+                        translation: '翻译: '
+                    },
+                    en: {
+                        quickAddDesc: 'Quick Add',
+                        quickAddTitle: 'Quick Add Description',
+                        quickDescPlaceholder: 'Enter event description...',
+                        addToMap: 'Add to Map',
+                        geocoding: 'Geocoding...',
+                        geocodeSuccess: 'Location found',
+                        geocodeError: 'Geocoding failed',
+                        translation: 'Translation: '
+                    }
+                };
+                
+                // 设置默认语言
+                window.currentLang = window.currentLang || 'zh';
+            }
+            
             // 更新快速添加描述按钮文本
             function updateQuickAddText() {
-                document.getElementById('quickAddBtn').textContent = i18n[currentLang].quickAddDesc;
-                document.getElementById('quickAddTitle').textContent = i18n[currentLang].quickAddTitle;
-                document.getElementById('quickDescInput').placeholder = i18n[currentLang].quickDescPlaceholder;
-                document.getElementById('quickDescSubmit').textContent = i18n[currentLang].addToMap;
+                const quickAddBtn = document.getElementById('quickAddBtn');
+                const quickAddTitle = document.getElementById('quickAddTitle');
+                const quickDescInput = document.getElementById('quickDescInput');
+                const quickDescSubmit = document.getElementById('quickDescSubmit');
+                
+                if (quickAddBtn) quickAddBtn.textContent = i18n[currentLang].quickAddDesc;
+                if (quickAddTitle) quickAddTitle.textContent = i18n[currentLang].quickAddTitle;
+                if (quickDescInput) quickDescInput.placeholder = i18n[currentLang].quickDescPlaceholder;
+                if (quickDescSubmit) quickDescSubmit.textContent = i18n[currentLang].addToMap;
             }
             
             // 初始更新
-            updateQuickAddText();
+            try {
+                updateQuickAddText();
+            } catch (error) {
+                console.error("Error updating quick add text:", error);
+            }
             
             // 语言切换时更新文本
-            const originalLangSwitchHandler = document.getElementById('langSwitchBtn').onclick;
-            document.getElementById('langSwitchBtn').onclick = function(e) {
-                if (originalLangSwitchHandler) {
-                    originalLangSwitchHandler.call(this, e);
-                }
-                updateQuickAddText();
-            };
+            const langSwitchBtn = document.getElementById('langSwitchBtn');
+            if (langSwitchBtn) {
+                const originalLangSwitchHandler = langSwitchBtn.onclick;
+                langSwitchBtn.onclick = function(e) {
+                    if (originalLangSwitchHandler) {
+                        originalLangSwitchHandler.call(this, e);
+                    }
+                    try {
+                        updateQuickAddText();
+                    } catch (error) {
+                        console.error("Error updating text after language switch:", error);
+                    }
+                };
+            }
         });
     </script>
 

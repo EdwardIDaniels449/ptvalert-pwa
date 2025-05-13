@@ -10,11 +10,11 @@
 const API_BASE_URL = 'https://ptvalert.your-subdomain.workers.dev';
 
 // Current user ID - should be set by the main application
-let currentUserId = '';
+let notificationUserId = '';
 
 // Set the current user ID
 function setCurrentUserId(userId) {
-  currentUserId = userId;
+  notificationUserId = userId;
   
   // Check if already subscribed and update the subscription if user ID changed
   if (isSubscribedToPush()) {
@@ -118,7 +118,7 @@ async function subscribeUserToPush() {
       console.log('Already subscribed to push notifications');
       
       // If the user ID has changed, update the subscription
-      await updateSubscriptionUserId(currentUserId);
+      await updateSubscriptionUserId(notificationUserId);
       
       return subscription;
     }
@@ -143,7 +143,7 @@ async function subscribeUserToPush() {
     console.log('Subscribed to push notifications:', subscription);
     
     // Send subscription to server
-    await sendSubscriptionToServer(subscription, currentUserId);
+    await sendSubscriptionToServer(subscription, notificationUserId);
     
     return subscription;
   } catch (error) {
@@ -162,7 +162,7 @@ async function sendSubscriptionToServer(subscription, userId) {
       },
       body: JSON.stringify({
         subscription: subscription,
-        userId: userId || currentUserId || 'anonymous'
+        userId: userId || notificationUserId || 'anonymous'
       })
     });
     
@@ -254,7 +254,7 @@ async function sendTestNotification() {
             primaryKey: 1
           }
         },
-        userId: currentUserId
+        userId: notificationUserId
       })
     });
     
@@ -282,7 +282,7 @@ async function addMarkerWithNotification(markerData) {
     // Add notify flag to send notifications
     const dataToSend = {
       ...markerData,
-      userId: currentUserId || 'anonymous',
+      userId: notificationUserId || 'anonymous',
       notify: true,
       timestamp: new Date().toISOString()
     };
