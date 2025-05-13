@@ -118,8 +118,8 @@ function saveSubscription(subscription) {
   // 获取当前用户信息（如果已登录）
   const userId = getCurrentUserId();
   
-  // 发送到服务器
-  fetch('/api/push-subscriptions', {
+  // 发送到Cloudflare Worker
+  fetch('https://push-notification-service.您的用户名.workers.dev/api/subscribe', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -183,7 +183,7 @@ function unsubscribeFromPush() {
 function deleteSubscriptionFromServer(subscription) {
   const subscriptionJson = subscription.toJSON();
   
-  fetch('/api/push-subscriptions', {
+  fetch('https://push-notification-service.您的用户名.workers.dev/api/subscribe', {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json'

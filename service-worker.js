@@ -163,7 +163,35 @@ self.addEventListener('push', event => {
     };
   }
   
-  // 处理地图标记推送通知
+  // Cloudflare Worker 格式的推送通知处理
+  if (notificationData.title && notificationData.data && notificationData.data.url) {
+    const options = {
+      body: notificationData.body,
+      icon: notificationData.icon || '/ptvalert-pwa/images/icon-192x192.png',
+      badge: notificationData.badge || '/ptvalert-pwa/images/badge-96x96.png',
+      vibrate: [100, 50, 100],
+      data: notificationData.data || {},
+      actions: notificationData.actions || [
+        { action: 'view', title: '查看详情' }
+      ]
+    };
+    
+    // 如果有markerId，认为是地图标记通知
+    if (notificationData.data.markerId) {
+      // 保存/更新地图标记数据到IndexedDB
+      if (notificationData.data.markerInfo) {
+        updateLocalMarkers(notificationData.data.markerInfo);
+      }
+    }
+    
+    event.waitUntil(
+      self.registration.showNotification(notificationData.title, options)
+    );
+    
+    return;
+  }
+  
+  // 处理地图标记推送通知 (兼容旧格式)
   if (notificationData.type === 'map-marker') {
     const markerData = notificationData.markerData || {};
     const options = {
