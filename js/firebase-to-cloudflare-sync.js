@@ -226,10 +226,61 @@ function updateSyncConfig(newConfig) {
     console.log('[FB>CF] 同步配置已更新:', syncConfig);
 }
 
+// 同步单条报告到Cloudflare
+function syncSingleReportToCloudflare(reportData) {
+    if (!reportData || !reportData.id) {
+        console.error('[FB>CF] 无效的报告数据');
+        return Promise.reject(new Error('无效的报告数据'));
+    }
+    
+    console.log('[FB>CF] 开始同步单条报告到Cloudflare...', reportData.id);
+    
+    // 准备同步数据
+    const syncData = {
+        reports: [reportData],
+        sendNotifications: syncConfig.sendNotifications
+    };
+    
+    // 发送到Cloudflare
+    return fetch(`${cloudflareConfig.apiUrl}/api/sync-from-firebase`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(syncData)
+    })
+    .then(response => response.json())
+    .then(result => {
+        console.log('[FB>CF] 单条报告同步完成:', result);
+        
+        // 如果启用了通知，显示成功消息
+        if (syncConfig.sendNotifications && result.succeeded > 0) {
+            sendDanmaku(currentLang === 'zh' ? 
+                '报告已同步到Cloudflare并发送通知' : 
+                'Report synced to Cloudflare with notification'
+            );
+        }
+        
+        return result;
+    })
+    .catch(error => {
+        console.error('[FB>CF] 单条报告同步失败:', error);
+        
+        // 显示错误消息
+        sendDanmaku(currentLang === 'zh' ? 
+            '同步报告到Cloudflare失败' : 
+            'Failed to sync report to Cloudflare'
+        );
+        
+        throw error;
+    });
+}
+
 // 导出API
 window.firebaseCloudflareSync = {
     config: syncConfig,
     init: initFirebaseToCloudflareSync,
     syncNow: triggerManualSync,
-    updateConfig: updateSyncConfig
+    updateConfig: updateSyncConfig,
+    syncSingleReport: syncSingleReportToCloudflare
 }; 

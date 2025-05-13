@@ -1937,6 +1937,25 @@
         function syncReportToCloudflare(reportData) {
             console.log("正在同步报告到Cloudflare...", reportData);
             
+            // 使用firebase-to-cloudflare-sync.js中的函数进行同步(如果可用)
+            if (window.firebaseCloudflareSync && typeof window.firebaseCloudflareSync.syncSingleReport === 'function') {
+                window.firebaseCloudflareSync.syncSingleReport(reportData)
+                    .then(result => {
+                        console.log("报告已同步到Cloudflare(使用同步工具)", result);
+                    })
+                    .catch(error => {
+                        console.error("使用同步工具同步报告失败，尝试直接同步:", error);
+                        // 失败时尝试直接同步
+                        directSyncToCloudflare(reportData);
+                    });
+            } else {
+                // 回退到直接同步
+                directSyncToCloudflare(reportData);
+            }
+        }
+        
+        // 直接同步到Cloudflare(不经过同步工具)
+        function directSyncToCloudflare(reportData) {
             fetch(`${cloudflareConfig.apiUrl}${cloudflareConfig.dataEndpoint}/${reportData.id}`, {
                 method: 'PUT',
                 headers: {
@@ -1946,13 +1965,13 @@
             })
             .then(response => response.json())
             .then(data => {
-                console.log("报告已同步到Cloudflare", data);
+                console.log("报告已直接同步到Cloudflare", data);
                 
                 // 发送通知
                 sendNotificationForReport(reportData);
             })
             .catch((error) => {
-                console.error("同步报告到Cloudflare失败:", error);
+                console.error("直接同步报告到Cloudflare失败:", error);
             });
         }
         
@@ -5036,6 +5055,11 @@
                         
                         // 增加用户报告计数
                         incrementUserReportCount();
+                        
+                        // 同步到Cloudflare
+                        if (syncToCloudflare) {
+                            syncReportToCloudflare(reportData);
+                        }
                     })
                     .catch((error) => {
                         console.error("Error saving quick report to Firebase:", error);
