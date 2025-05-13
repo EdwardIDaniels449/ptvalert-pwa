@@ -4,7 +4,8 @@
  */
 
 // Web Push 公钥 - 用于订阅推送服务
-// 在实际应用中，这应该替换为您的VAPID公钥
+// VAPID 公钥 - 确保这个公钥与 Cloudflare Worker 环境变量中设置的值相同
+// 此处可能的问题是公钥格式，格式应为 Cloudflare Worker 环境变量中的 VAPID_PUBLIC_KEY
 const applicationServerPublicKey = 'BFpa0WyDaUOEPw7iKaxLHjf1yReNiMXHdSh4t3PBXq962LCjQmpeFKs63PDhwd_F5kPqi7PsI6KGpIoXsaXMJ70';
 
 let isSubscribed = false;
@@ -216,18 +217,26 @@ function deleteSubscriptionFromServer(subscription) {
  * @return {Uint8Array} - 转换后的数组
  */
 function urlB64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding)
-    .replace(/\-/g, '+')
-    .replace(/_/g, '/');
+  try {
+    // 修正 base64 字符串格式
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
 
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
+    // 使用 try-catch 包装 atob 调用，以捕获可能的错误
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
 
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  } catch (error) {
+    console.error('Base64 解码错误:', error, '原始字符串:', base64String);
+    // 返回一个空数组，或者抛出错误以便上层函数处理
+    throw new Error('VAPID 密钥格式无效，请检查您的公钥');
   }
-  return outputArray;
 }
 
 // 注册周期性后台同步

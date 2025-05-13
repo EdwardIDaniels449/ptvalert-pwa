@@ -790,19 +790,24 @@ async function sendNotificationsToAll(subscriptions, notificationPayload, env) {
 
 // Base64编码URL安全
 function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding)
-    .replace(/\-/g, '+')
-    .replace(/_/g, '/');
+  try {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
 
-  const rawData = atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
+    const rawData = atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
 
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    
+    return outputArray;
+  } catch (error) {
+    console.error('Base64 解码错误:', error, '原始字符串:', base64String);
+    throw new Error('VAPID 密钥格式无效，请检查您的公钥');
   }
-  
-  return outputArray;
 }
 
 // 发送推送通知
