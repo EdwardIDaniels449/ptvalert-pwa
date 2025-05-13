@@ -90,9 +90,50 @@ npx wrangler tail
 如果遇到 API 连接问题，请检查：
 
 1. 使用浏览器开发工具检查网络请求
-2. 使用 `/ping` 和 `/version` 端点测试 API 可用性
-3. 检查 `fix-api-mode.js` 中的日志输出
-4. 使用 `api-diagnostics.js` 工具进行更深入的诊断
+2. If(API请求失败):
+    a. 使用 `/ping` 和 `/version` 端点测试 API 可用性
+    b. 检查 `fix-api-mode.js` 中的日志输出
+    c. 使用 `api-diagnostics.js` 工具进行更深入的诊断
+
+#### 已知问题及解决方案
+
+1. **Response body is already used 错误**
+
+   如果在 `/api/sync-from-firebase` 端点测试中遇到以下错误：
+   ```
+   TypeError: Failed to execute 'clone' on 'Response': Response body is already used
+   ```
+   
+   这是因为 Worker 代码中尝试多次读取请求体。解决方案是在读取请求体之前克隆请求：
+   
+   ```javascript
+   // 创建请求的副本，以防止原始请求体已被使用
+   let requestClone = request.clone();
+   const data = await requestClone.json();
+   ```
+   
+   同时，确保前端测试工具使用 POST 请求并提供有效的 JSON 格式数据：
+   
+   ```javascript
+   fetch(`${apiUrl}/api/sync-from-firebase`, {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({ reports: [] })
+   })
+   ```
+
+2. **CORS 问题**
+
+   如果遇到跨域资源共享 (CORS) 错误，确保 Worker 中包含了正确的 CORS 头部：
+   
+   ```javascript
+   const corsHeaders = {
+     'Access-Control-Allow-Origin': '*',
+     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+     'Access-Control-Max-Age': '86400',
+   };
+   ```
 
 ## 扩展与优化
 

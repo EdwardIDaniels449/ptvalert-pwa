@@ -198,45 +198,62 @@
     };
     
     // 6. 监听DOMContentLoaded事件，在页面加载完成后再次应用修复
-    window.addEventListener('DOMContentLoaded', function() {
-        console.log('[全面修复] 页面加载完成，再次应用修复');
-        
-        // 再次确保设置
-        window.IS_GITHUB_PAGES = false;
-        window.cloudflareConfig.useRealApi = true;
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('[全面修复] DOMContentLoaded事件触发，再次应用修复');
+        setupPropertyProtection();
         
         // 测试API连接
-        const testApiConnection = function() {
-            console.log('[全面修复] 测试API连接');
-            const apiBaseUrl = window.cloudflareConfig.apiUrl || window.cloudflareConfig.apiBaseUrl;
-            
-            fetch(`${apiBaseUrl}/ping`)
-                .then(response => response.json())
-                .then(data => {
-                    console.log('[全面修复] API连接测试成功:', data);
-                    
-                    // 使页面显示API状态
-                    const statusElement = document.getElementById('apiStatus');
-                    if (statusElement) {
-                        statusElement.textContent = '已连接';
-                        statusElement.className = 'connected';
-                    }
-                })
-                .catch(error => {
-                    console.error('[全面修复] API连接测试失败:', error);
-                    
-                    // 使页面显示API状态
-                    const statusElement = document.getElementById('apiStatus');
-                    if (statusElement) {
-                        statusElement.textContent = '连接失败';
-                        statusElement.className = 'disconnected';
-                    }
-                });
-        };
-        
-        // 延迟1秒后测试连接
         setTimeout(testApiConnection, 1000);
     });
     
-    console.log('[全面修复] 全面API修复程序已完成初始化');
+    // 测试API连接
+    const testApiConnection = function() {
+        console.log('[全面修复] 测试API连接');
+        const apiUrl = window.cloudflareConfig.apiUrl || window.cloudflareConfig.apiBaseUrl;
+        if (!apiUrl) {
+            console.error('[全面修复] API URL未设置，无法测试连接');
+            return;
+        }
+        
+        // 测试ping端点
+        fetch(`${apiUrl}/ping`)
+            .then(response => {
+                if (response.ok) {
+                    console.log('[全面修复] Ping测试成功');
+                } else {
+                    console.error(`[全面修复] Ping测试失败: ${response.status} ${response.statusText}`);
+                }
+                return response;
+            })
+            .catch(error => {
+                console.error('[全面修复] Ping测试网络错误:', error);
+            });
+            
+        // 测试同步端点 - 确保使用POST并提供有效的JSON主体
+        fetch(`${apiUrl}/api/sync-from-firebase`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                reports: [] // 空数组作为有效载荷
+            })
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('[全面修复] 同步测试成功');
+                } else {
+                    console.error(`[全面修复] 同步测试失败: ${response.status} ${response.statusText}`);
+                    // 尝试获取更详细的错误信息
+                    return response.text().then(text => {
+                        console.error('[全面修复] 同步错误响应:', text);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('[全面修复] 同步测试网络错误:', error);
+            });
+    };
+    
+    console.log('[全面修复] 修复程序加载完成');
 })(); 

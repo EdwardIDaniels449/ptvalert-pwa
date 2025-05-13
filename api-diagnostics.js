@@ -223,7 +223,7 @@
         resultDiv.innerHTML = '<div style="color:#666;">测试API连接中...</div>';
         
         const cloudflareConfig = window.cloudflareConfig || {};
-        const apiUrl = cloudflareConfig.apiUrl;
+        const apiUrl = cloudflareConfig.apiUrl || cloudflareConfig.apiBaseUrl;
         
         if (!apiUrl) {
             resultDiv.innerHTML = '<div style="color:red;">错误: API URL未设置</div>';
@@ -232,9 +232,11 @@
         
         // 测试基本API端点
         Promise.all([
-            testEndpoint(`${apiUrl}/ping`, 'Ping'),
-            testEndpoint(`${apiUrl}/api/reports`, '报告列表'),
-            testEndpoint(`${apiUrl}/api/sync-from-firebase`, '同步端点')
+            testEndpoint(`${apiUrl}/ping`, 'Ping', 'GET'),
+            testEndpoint(`${apiUrl}/api/reports`, '报告列表', 'GET'),
+            testEndpoint(`${apiUrl}/api/sync-from-firebase`, '同步端点', 'POST', {
+                reports: [] // 空数组作为有效载荷
+            })
         ]).then(results => {
             let html = '<h4>API测试结果</h4>';
             
@@ -271,13 +273,19 @@
     }
     
     // 测试单个端点
-    function testEndpoint(url, name) {
-        return fetch(url, {
-            method: 'GET',
+    function testEndpoint(url, name, method = 'GET', body = null) {
+        const options = {
+            method: method,
             headers: {
                 'Content-Type': 'application/json'
             }
-        })
+        };
+        
+        if (body && (method === 'POST' || method === 'PUT')) {
+            options.body = JSON.stringify(body);
+        }
+        
+        return fetch(url, options)
         .then(response => {
             return {
                 name: name,
