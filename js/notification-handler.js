@@ -858,4 +858,200 @@ window.notificationHandler = {
   pushMarkerNotification,
   pushAllMarkers,
   requestNotificationPermission
-}; 
+};
+
+// 推送权限状态
+let pushPermissionGranted = false;
+
+// 订阅对象
+let pushSubscription = null;
+
+// 初始化推送通知功能
+document.addEventListener('DOMContentLoaded', function() {
+    const pushButton = document.getElementById('requestPushPermission');
+    const pushBtnText = document.getElementById('pushBtnText');
+    
+    if (!pushButton) return;
+    
+    // 检查浏览器是否支持推送API
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        console.log('浏览器不支持推送通知功能');
+        pushButton.style.display = 'none';
+        return;
+    }
+    
+    // 检查当前通知权限状态
+    updatePushButtonState();
+    
+    // 注册按钮点击事件
+    pushButton.addEventListener('click', requestNotificationPermission);
+});
+
+// 更新按钮状态
+function updatePushButtonState() {
+    const pushButton = document.getElementById('requestPushPermission');
+    const pushBtnText = document.getElementById('pushBtnText');
+    
+    if (!pushButton || !pushBtnText) return;
+    
+    if (Notification.permission === 'granted') {
+        pushPermissionGranted = true;
+        pushButton.style.backgroundColor = '#34c759';
+        pushBtnText.textContent = '通知已启用';
+        subscribeToPush();
+    } else if (Notification.permission === 'denied') {
+        pushButton.style.backgroundColor = '#ff3b30';
+        pushBtnText.textContent = '通知已禁用';
+    } else {
+        pushButton.style.backgroundColor = '#0071e3';
+        pushBtnText.textContent = '启用推送通知';
+    }
+}
+
+// 订阅推送服务
+async function subscribeToPush() {
+    try {
+        // 确保Service Worker已注册
+        const registration = await navigator.serviceWorker.ready;
+        
+        // 如果在GitHub Pages环境中，使用模拟推送订阅
+        if (window.location.hostname.includes('github.io')) {
+            console.log('GitHub Pages环境不支持真实推送API，使用模拟推送');
+            setupMarkerObserver();
+            return;
+        }
+        
+        // 获取现有订阅或创建新订阅
+        let subscription = await registration.pushManager.getSubscription();
+        
+        if (!subscription) {
+            // 创建新订阅 - 在实际部署时需要替换为真实的VAPID公钥
+            const vapidPublicKey = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
+            const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
+            
+            subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: convertedVapidKey
+            });
+        }
+        
+        pushSubscription = subscription;
+        console.log('推送订阅成功:', subscription);
+        
+        // 在真实环境中，这里应该将订阅发送到服务器保存
+        // sendSubscriptionToServer(subscription);
+        
+        // 设置标记观察器
+        setupMarkerObserver();
+    } catch (error) {
+        console.error('推送订阅失败:', error);
+    }
+}
+
+// 显示通知
+function showNotification(title, message) {
+    if (Notification.permission !== 'granted') return;
+    
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification(title, {
+                body: message,
+                icon: './images/icon-192x192.png',
+                badge: './images/icon-72x72.png',
+                vibrate: [200, 100, 200],
+                tag: 'map-marker-notification',
+                actions: [
+                    { action: 'view', title: '查看地图' }
+                ]
+            });
+        });
+    } else {
+        // 降级为普通浏览器通知
+        new Notification(title, { body: message });
+    }
+}
+
+// 设置地图标记观察器
+function setupMarkerObserver() {
+  console.log(LOG_PREFIX + '设置地图标记观察器');
+  
+  // 保存当前标记计数
+  let currentMarkerCount = window.mapMarkers ? window.mapMarkers.length : 0;
+  console.log(LOG_PREFIX + '初始标记数量:', currentMarkerCount);
+  
+  // 清除之前的观察器（如果存在）
+  if (window._markerObserverInterval) {
+    clearInterval(window._markerObserverInterval);
+  }
+  
+  // 定期检查标记变化
+  window._markerObserverInterval = setInterval(() => {
+    if (!window.mapMarkers) return;
+    
+    // 检测到新标记
+    if (window.mapMarkers.length > currentMarkerCount) {
+      const newMarkersCount = window.mapMarkers.length - currentMarkerCount;
+      console.log(LOG_PREFIX + `检测到${newMarkersCount}个新标记`);
+      
+      // 获取新增标记
+      const newMarkers = window.mapMarkers.slice(-newMarkersCount);
+      
+      // 显示通知
+      if (Notification.permission === 'granted') {
+        // 如果有多个新标记，显示汇总通知
+        if (newMarkersCount > 1) {
+          showNotification(
+            '地图更新',
+            `发现${newMarkersCount}个新标记`,
+            {
+              tag: 'map-multiple-markers',
+              renotify: true,
+              actions: [
+                { action: 'view-all', title: '查看全部' }
+              ],
+              data: {
+                markerCount: newMarkersCount,
+                action: 'view-all'
+              }
+            }
+          );
+        } else {
+          // 获取标记信息
+          const marker = newMarkers[0];
+          const markerTitle = marker.title || marker.getTitle?.() || '新标记';
+          let markerPosition = null;
+          
+          if (marker.position) {
+            markerPosition = marker.position;
+          } else if (marker.getPosition) {
+            markerPosition = marker.getPosition();
+          }
+          
+          // 显示单个标记通知
+          showNotification(
+            '新标记添加',
+            markerTitle,
+            {
+              tag: 'map-marker-' + Date.now(),
+              actions: [
+                { action: 'view-map', title: '在地图上查看' }
+              ],
+              data: {
+                markerId: marker.id || Date.now(),
+                markerPosition: markerPosition ? {
+                  lat: markerPosition.lat?.() || markerPosition.lat,
+                  lng: markerPosition.lng?.() || markerPosition.lng
+                } : null
+              }
+            }
+          );
+        }
+      }
+      
+      // 更新计数
+      currentMarkerCount = window.mapMarkers.length;
+    }
+  }, 5000); // 每5秒检查一次
+  
+  return true;
+} 

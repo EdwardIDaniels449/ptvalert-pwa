@@ -891,13 +891,21 @@
     <!-- 地图容器 -->
     <div id="map"></div>
     
-    <!-- 报告按钮 -->
+    <!-- 地图控制 -->
     <div class="map-control">
         <div style="display:flex;gap:10px;margin-bottom:10px;">
             <a href="#" class="add-report-btn" id="addReportBtn">+ 添加报告</a>
             <a href="#" class="add-report-btn" id="quickAddBtn" style="background-color:#34c759;">+ 直接添加描述</a>
         </div>
         <span id="addReportTip" style="display:none;color:#ffb300;font-size:14px;margin-left:10px;">请在地图上点选位置</span>
+    </div>
+    
+    <!-- 推送通知按钮 -->
+    <div style="position:fixed;bottom:100px;right:20px;z-index:2000;">
+        <button id="requestPushPermission" style="background-color:#0071e3;color:white;border:none;padding:10px 15px;border-radius:8px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;gap:6px;">
+            <span style="font-size:20px;">🔔</span>
+            <span id="pushBtnText">启用推送通知</span>
+        </button>
     </div>
     
     <!-- 报告计数器弹窗 -->
@@ -5471,6 +5479,115 @@
         
         // 在控制台中提示用户可以使用的诊断功能
         console.log('%c 🛠️ PtvAlert 诊断工具可用! 输入 window.diagnose() 或 diagnose() 以获取详细信息', 'background:#0071e3;color:white;padding:5px 10px;border-radius:4px;font-weight:bold;');
+    </script>
+
+    <!-- 添加主动推送请求提示功能 -->
+    <div id="notification-prompt-banner" style="display: none; position: fixed; bottom: 20px; left: 10px; right: 10px; max-width: 600px; margin: 0 auto; background: rgba(0,0,0,0.8); color: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 1000; font-size: 14px;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center;">
+                <div style="font-size: 24px; margin-right: 10px;">🔔</div>
+                <div>
+                    <div style="font-weight: bold; margin-bottom: 5px;">接收地图标记更新</div>
+                    <div>开启通知，及时获取地图上的新标记信息！</div>
+                </div>
+            </div>
+            <div>
+                <button id="enable-notifications-btn" style="background: #0071e3; color: white; border: none; padding: 8px 15px; border-radius: 5px; margin-right: 10px; cursor: pointer;">开启通知</button>
+                <button id="dismiss-prompt-btn" style="background: transparent; color: #ccc; border: 1px solid #ccc; padding: 8px 15px; border-radius: 5px; cursor: pointer;">暂不需要</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加推送按钮事件处理 -->
+    <script>
+        // 为添加的推送通知按钮添加事件处理
+        document.addEventListener('DOMContentLoaded', function() {
+            const pushButton = document.getElementById('requestPushPermission');
+            if (pushButton) {
+                pushButton.addEventListener('click', function() {
+                    if (window.notificationHandler && typeof window.notificationHandler.requestNotificationPermission === 'function') {
+                        window.notificationHandler.requestNotificationPermission();
+                    } else {
+                        console.error('通知处理程序不可用或缺少requestNotificationPermission方法');
+                        // 回退到简单实现
+                        requestPushPermissionFallback();
+                    }
+                });
+                
+                // 更新初始按钮状态
+                updatePushButtonState();
+            }
+            
+            // 简单的回退实现，用于处理通知处理程序不可用的情况
+            function requestPushPermissionFallback() {
+                if (!('Notification' in window)) {
+                    alert('您的浏览器不支持通知功能');
+                    return;
+                }
+                
+                Notification.requestPermission().then(function(permission) {
+                    console.log('通知权限结果:', permission);
+                    updatePushButtonState();
+                    
+                    if (permission === 'granted') {
+                        // 显示欢迎通知
+                        new Notification('地图标记通知已启用', {
+                            body: '您将收到地图上新标记的通知',
+                            icon: './images/icon-192x192.png'
+                        });
+                        
+                        // 设置标记观察器
+                        setupMarkerObserverFallback();
+                    }
+                });
+            }
+            
+            // 更新按钮状态
+            function updatePushButtonState() {
+                const pushButton = document.getElementById('requestPushPermission');
+                const pushBtnText = document.getElementById('pushBtnText');
+                
+                if (!pushButton || !pushBtnText) return;
+                
+                if (Notification.permission === 'granted') {
+                    pushButton.style.backgroundColor = '#34c759';
+                    pushBtnText.textContent = '通知已启用';
+                } else if (Notification.permission === 'denied') {
+                    pushButton.style.backgroundColor = '#ff3b30';
+                    pushBtnText.textContent = '通知已禁用';
+                } else {
+                    pushButton.style.backgroundColor = '#0071e3';
+                    pushBtnText.textContent = '启用推送通知';
+                }
+            }
+            
+            // 简单的标记观察器回退实现
+            function setupMarkerObserverFallback() {
+                if (window._markerObserverInterval) {
+                    clearInterval(window._markerObserverInterval);
+                }
+                
+                let currentMarkerCount = window.mapMarkers ? window.mapMarkers.length : 0;
+                
+                window._markerObserverInterval = setInterval(() => {
+                    if (!window.mapMarkers) return;
+                    
+                    if (window.mapMarkers.length > currentMarkerCount) {
+                        const newMarkersCount = window.mapMarkers.length - currentMarkerCount;
+                        const newMarkers = window.mapMarkers.slice(-newMarkersCount);
+                        
+                        if (Notification.permission === 'granted') {
+                            new Notification('地图有新标记', {
+                                body: `添加了${newMarkersCount}个新标记`,
+                                icon: './images/icon-192x192.png'
+                            });
+                        }
+                        
+                        currentMarkerCount = window.mapMarkers.length;
+                    }
+                }, 5000);
+            }
+        });
     </script>
 </body>
 </html>
