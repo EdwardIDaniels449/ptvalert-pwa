@@ -48,85 +48,51 @@
         
         // Google Maps API加载完成的回调函数
         function googleMapsLoadedCallback() {
-            console.log("Google Maps API已加载");
-            if (!mapsInitialized && typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
-                try {
-                    initMap();
-                    mapsInitialized = true;
-                } catch (error) {
-                    console.error("地图初始化失败:", error);
-                    // 尝试延迟初始化
-                    setTimeout(initMap, 1000);
-                }
-            } else {
-                console.warn("Google Maps API加载回调被调用，但API不可用或地图已初始化");
+            console.log('Google Maps API已加载完成，准备初始化地图');
+            
+            // 初始化地图
+            initMap();
+            
+            // 如果有注册的回调函数，调用它们
+            if (window.mapReadyCallbacks && window.mapReadyCallbacks.length) {
+                console.log('执行地图就绪回调函数');
+                window.mapReadyCallbacks.forEach(function(callback) {
+                    callback();
+                });
             }
         }
         
         // 初始化地图
         function initMap() {
-            console.log("initMap被调用，初始化地图...");
+            console.log('初始化地图');
             
-            // 检查DOM元素是否存在
-            const mapElement = document.getElementById("map");
-            if (!mapElement) {
-                console.error("地图容器元素不存在!");
-                return;
-            }
-            
-            console.log("地图容器元素尺寸:", mapElement.offsetWidth, "x", mapElement.offsetHeight);
-            
-            // 创建地图
-            try {
-                if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
-                    console.error("Google Maps API未加载!");
-                    return;
-                }
-                
-                map = new google.maps.Map(mapElement, {
-                    center: MELBOURNE_CENTER,
-                    zoom: 13,
-                    mapTypeId: google.maps.MapTypeId.ROADMAP,
-                    fullscreenControl: false,
-                    streetViewControl: false
-                });
-                
-                // 添加地图点击事件
-                map.addListener("click", (event) => {
-                    if (isSelectingLocation) {
-                        selectedLocation = {
-                            lat: event.latLng.lat(),
-                            lng: event.latLng.lng()
-                        };
-                        
-                        // 添加临时选点标记
-                        if (selectionMarker) {
-                            selectionMarker.setMap(null);
-                        }
-                        
-                        selectionMarker = new google.maps.Marker({
-                            position: selectedLocation,
-                            map: map,
-                            zIndex: 1000
-                        });
-                        
-                        // 开启报告表单
-                        openReportForm();
+            // 创建地图实例
+            window.map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: -37.8136, lng: 144.9631 }, // 墨尔本中心坐标
+                zoom: 13,
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                fullscreenControl: false,
+                streetViewControl: false,
+                styles: [
+                    {
+                        featureType: "poi",
+                        elementType: "labels",
+                        stylers: [{ visibility: "off" }]
                     }
-                });
-                
-                // 添加基本标记测试
-                new google.maps.Marker({
-                    position: MELBOURNE_CENTER,
-                    map: map,
-                    title: "墨尔本中心"
-                });
-                
-                console.log("地图初始化完成!");
-                mapsInitialized = true;
-            } catch (error) {
-                console.error("地图初始化过程中发生错误:", error);
-            }
+                ]
+            });
+            
+            // 添加地图点击事件处理
+            window.map.addListener('click', function(event) {
+                if (window.isSelectingLocation) {
+                    const latLng = event.latLng;
+                    if (window.UIController && typeof window.UIController.selectMapLocation === 'function') {
+                        window.UIController.selectMapLocation(latLng);
+                    }
+                }
+            });
+            
+            console.log('地图初始化完成');
         }
         
         // 打开报告表单
@@ -470,6 +436,10 @@
             }, 100);
         })();
     </script>
+    
+    <!-- 辅助脚本 -->
+    <script src="js/map-loader.js"></script>
+    <script src="js/ui-controller.js"></script>
     
     <style>
         * {
@@ -1113,29 +1083,67 @@
         </div>
     </div>
 </body>
-<!-- Google Maps API必须放在body元素最后，确保DOM已完全加载 -->
+
+<!-- 辅助脚本 -->
 <script>
-    // 确保地图初始化正确
-    window.onload = function() {
-        console.log("Window loaded, checking Google Maps...");
-        // 如果Google Maps API未加载或回调未触发，尝试手动初始化
-        if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
-            console.error("Google Maps API未正确加载，正在尝试重新加载...");
-            
-            // 创建新的脚本元素
-            const script = document.createElement('script');
-            script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places,visualization&v=weekly";
-            script.async = true;
-            script.defer = true;
-            document.body.appendChild(script);
-        } else if (typeof map === 'undefined' || !map) {
-            console.log("Google Maps API已加载但地图未初始化，手动调用initMap");
-            // 手动调用初始化函数
-            if (typeof initMap === 'function') {
-                initMap();
-            }
+  // Maps API加载完毕的回调
+  function googleMapsLoadedCallback() {
+    console.log('Google Maps API已加载完成，准备初始化地图');
+    
+    // 初始化地图
+    initMap();
+    
+    // 如果有注册的回调函数，调用它们
+    if (window.mapReadyCallbacks && window.mapReadyCallbacks.length) {
+      console.log('执行地图就绪回调函数');
+      window.mapReadyCallbacks.forEach(function(callback) {
+        callback();
+      });
+    }
+  }
+
+  // 地图初始化函数
+  function initMap() {
+    console.log('初始化地图');
+    
+    // 创建地图实例
+    window.map = new google.maps.Map(document.getElementById('map'), {
+      center: { lat: -37.8136, lng: 144.9631 }, // 墨尔本中心坐标
+      zoom: 13,
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      fullscreenControl: false,
+      streetViewControl: false,
+      styles: [
+        {
+          featureType: "poi",
+          elementType: "labels",
+          stylers: [{ visibility: "off" }]
         }
-    };
+      ]
+    });
+    
+    // 添加地图点击事件处理
+    window.map.addListener('click', function(event) {
+      if (window.isSelectingLocation) {
+        const latLng = event.latLng;
+        if (window.UIController && typeof window.UIController.selectMapLocation === 'function') {
+          window.UIController.selectMapLocation(latLng);
+        }
+      }
+    });
+    
+    console.log('地图初始化完成');
+  }
 </script>
-<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places,visualization&v=weekly" onerror="console.error('Google Maps 加载失败')"></script>
+
+<!-- 先加载辅助脚本，确保它们在Google Maps API之前初始化 -->
+<script src="js/map-loader.js"></script>
+<script src="js/ui-controller.js"></script>
+
+<!-- Google Maps API 脚本 -->
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places,visualization&v=weekly">
+</script>
+
+</body>
 </html>
