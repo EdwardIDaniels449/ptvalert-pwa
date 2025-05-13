@@ -1737,33 +1737,14 @@
             }
         }
         
-        // 更新标记创建代码，使用AdvancedMarkerElement替代Marker
+        // 更新标记创建代码，使用传统Marker
         function addSelectionMarker(location, isFromGeocoding = false) {
-            // 移除旧标记（如果有）
-            if (selectionMarker) {
-                selectionMarker.setMap(null);
-            }
-            
-            // 检查是否支持AdvancedMarkerElement
-            const useAdvancedMarker = google.maps.marker && typeof google.maps.marker.AdvancedMarkerElement === 'function';
-            
-            if (useAdvancedMarker) {
-                // 使用Advanced Marker API
-                // 创建自定义标记图标
-                const iconElement = document.createElement('div');
-                iconElement.innerHTML = isFromGeocoding ? '🔍' : '📍';
-                iconElement.style.fontSize = '24px';
-                iconElement.style.color = isFromGeocoding ? '#0077cc' : '#ff3b30';
+            try {
+                // 移除旧标记（如果有）
+                if (selectionMarker) {
+                    selectionMarker.setMap(null);
+                }
                 
-                // 创建AdvancedMarkerElement
-                selectionMarker = new google.maps.marker.AdvancedMarkerElement({
-                    position: location,
-                    map: map,
-                    content: iconElement,
-                    zIndex: 1000
-                });
-            } else {
-                // 使用传统Marker API
                 // 创建标记图标
                 const markerIcon = {
                     url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
@@ -1783,32 +1764,39 @@
                     icon: markerIcon,
                     zIndex: 1000
                 });
+                
+                // 在标记周围添加一个圆圈来增强可见性
+                if (!selectionCircle) {
+                    selectionCircle = new google.maps.Circle({
+                        map: map,
+                        center: location,
+                        radius: 50, // 50米半径
+                        strokeColor: isFromGeocoding ? "#0077cc" : "#ff3b30",
+                        strokeOpacity: 0.8,
+                        strokeWeight: 2,
+                        fillColor: isFromGeocoding ? "#0077cc" : "#ff3b30",
+                        fillOpacity: 0.1,
+                        zIndex: 999
+                    });
+                } else {
+                    selectionCircle.setCenter(location);
+                    selectionCircle.setMap(map);
+                    selectionCircle.setOptions({
+                        strokeColor: isFromGeocoding ? "#0077cc" : "#ff3b30",
+                        fillColor: isFromGeocoding ? "#0077cc" : "#ff3b30"
+                    });
+                }
+                
+                // 移动地图到标记位置
+                map.panTo(location);
+            } catch (error) {
+                console.error("添加选择标记时出错:", error);
+                // 显示错误消息给用户
+                sendDanmaku(currentLang === 'zh' ? 
+                    '添加标记失败，请重试' : 
+                    'Failed to add marker, please try again'
+                );
             }
-            
-            // 在标记周围添加一个圆圈来增强可见性
-            if (!selectionCircle) {
-                selectionCircle = new google.maps.Circle({
-                    map: map,
-                    center: location,
-                    radius: 50, // 50米半径
-                    strokeColor: isFromGeocoding ? "#0077cc" : "#ff3b30",
-                    strokeOpacity: 0.8,
-                    strokeWeight: 2,
-                    fillColor: isFromGeocoding ? "#0077cc" : "#ff3b30",
-                    fillOpacity: 0.1,
-                    zIndex: 999
-                });
-            } else {
-                selectionCircle.setCenter(location);
-                selectionCircle.setMap(map);
-                selectionCircle.setOptions({
-                    strokeColor: isFromGeocoding ? "#0077cc" : "#ff3b30",
-                    fillColor: isFromGeocoding ? "#0077cc" : "#ff3b30"
-                });
-            }
-            
-            // 移动地图到标记位置
-            map.panTo(location);
         }
         
         // 从Firebase加载报告数据
@@ -2033,41 +2021,8 @@
         
         // 更新将报告标记添加到地图
         function addReportMarkerToMap(reportData) {
-            // 创建标记内容元素
-            const markerContent = document.createElement('div');
-            markerContent.style.backgroundColor = 'white';
-            markerContent.style.borderRadius = '50%';
-            markerContent.style.padding = '8px';
-            markerContent.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
-            markerContent.style.fontSize = '24px';
-            markerContent.style.width = '40px';
-            markerContent.style.height = '40px';
-            markerContent.style.display = 'flex';
-            markerContent.style.alignItems = 'center';
-            markerContent.style.justifyContent = 'center';
-            markerContent.innerHTML = reportData.emoji || '📍';
-            
-            let marker;
-            
-            // 检查是否支持AdvancedMarkerElement
-            const useAdvancedMarker = google.maps.marker && typeof google.maps.marker.AdvancedMarkerElement === 'function';
-            
-            if (useAdvancedMarker) {
-                // 使用Advanced Marker API
-                marker = new google.maps.marker.AdvancedMarkerElement({
-                    position: { lat: parseFloat(reportData.lat), lng: parseFloat(reportData.lng) },
-                    map: map,
-                    content: markerContent,
-                    title: reportData.description
-                });
-                
-                // 为Advanced Marker添加点击事件
-                marker.addEventListener("click", function() {
-                    console.log('Report marker clicked:', reportData.id);
-                    showReportDetails(reportData);
-                });
-            } else {
-                // 创建传统标记图标
+            try {
+                // 创建标记图标
                 const markerIcon = {
                     url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
                         `<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 42 42">
@@ -2080,42 +2035,51 @@
                 };
                 
                 // 使用传统Marker API
-                marker = new google.maps.Marker({
-                    position: { lat: parseFloat(reportData.lat), lng: parseFloat(reportData.lng) },
+                const marker = new google.maps.Marker({
+                    position: { 
+                        lat: parseFloat(reportData.lat), 
+                        lng: parseFloat(reportData.lng) 
+                    },
                     map: map,
                     icon: markerIcon,
                     title: reportData.description
                 });
                 
+                // 创建信息窗口内容
+                const infoContent = `
+                    <div class="info-window">
+                        <div class="emoji-display">${reportData.emoji || '📍'}</div>
+                        <div class="description">${reportData.description}</div>
+                        <div class="time-display">${formatTimeAgo(new Date(reportData.time))}</div>
+                    </div>
+                `;
+                
+                const infoWindow = new google.maps.InfoWindow({
+                    content: infoContent,
+                    maxWidth: 200
+                });
+                
                 // 为传统Marker添加点击事件
                 marker.addListener("click", function() {
                     console.log('Report marker clicked:', reportData.id);
+                    // 关闭所有活动的信息窗口
+                    if (this.infoWindow) this.infoWindow.close();
                     showReportDetails(reportData);
                 });
+                
+                // 保存infoWindow的引用和reportData到marker对象上
+                marker.infoWindow = infoWindow;
+                marker.reportData = reportData;
+                
+                // 添加到标记数组
+                markers.push(marker);
+                
+                return marker;
+            } catch (error) {
+                console.error("添加标记时出错:", error, reportData);
+                // 返回null以便调用者可以处理错误
+                return null;
             }
-            
-            // 创建信息窗口内容
-            const infoContent = `
-                <div class="info-window">
-                    <div class="emoji-display">${reportData.emoji || '📍'}</div>
-                    <div class="description">${reportData.description}</div>
-                    <div class="time-display">${formatTimeAgo(new Date(reportData.time))}</div>
-                </div>
-            `;
-            
-            const infoWindow = new google.maps.InfoWindow({
-                content: infoContent,
-                maxWidth: 200
-            });
-            
-            // 保存infoWindow的引用和reportData到marker对象上
-            marker.infoWindow = infoWindow;
-            marker.reportData = reportData;
-            
-            // 添加到标记数组
-            markers.push(marker);
-            
-            return marker;
         }
         
         // 报告详情弹窗
@@ -3887,7 +3851,7 @@
             }
         }
     </script>
-    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places,marker"></script>
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places"></script>
     
     <!-- DOM就绪后初始化 -->
     <script>
