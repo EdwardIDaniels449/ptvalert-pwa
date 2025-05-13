@@ -1,0 +1,23 @@
+{
+  "functions": {
+    "predeploy": [
+      "echo \"const functions = require('firebase-functions');const config = functions.config();if (!config.vapid || !config.vapid.public_key || !config.vapid.private_key) {console.error('\\n\\n⚠️  VAPID密钥未配置! 请运行以下命令设置:\\n');console.error('firebase functions:config:set vapid.public_key=\\\"您的公钥\\\" vapid.private_key=\\\"您的私钥\\\"\\n\\n');process.exit(1);}\" > functions/config-check.js && node functions/config-check.js"
+    ],
+    "source": "functions"
+  },
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "functions/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "function": "api"
+      }
+    ]
+  }
+} 
