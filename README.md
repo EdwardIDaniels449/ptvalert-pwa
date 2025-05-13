@@ -170,4 +170,7 @@ chmod +x sync-to-github.sh
 
 ## 许可证
 
-MIT 
+MIT
+
+## Latest deployment
+Latest update: $(date '+%Y-%m-%d %H:%M:%S') 
