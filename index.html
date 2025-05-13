@@ -977,6 +977,9 @@
         // 增加同步选项，设置为true以确保数据同步
         const syncToCloudflare = true; // 即使使用Firebase也同步到Cloudflare
         
+        // 确定当前使用的存储系统
+        const useCloudflare = true; // 设置为true使用Cloudflare, false使用Firebase
+        
         // 定义Cloudflare API配置
         const cloudflareConfig = {
             apiUrl: 'https://ptvalert.pages.dev',
@@ -1672,6 +1675,7 @@
         // 初始化地图
         function initMap() {
             console.log("initMap被调用，初始化地图...");
+            
             // 创建地图
             try {
                 map = new google.maps.Map(document.getElementById("map"), {
@@ -1696,17 +1700,57 @@
                     }
                 });
                 
+                // 确保关键变量已正确设置
+                console.log("存储系统配置检查:");
+                console.log("- useCloudflare =", useCloudflare);
+                console.log("- syncToCloudflare =", syncToCloudflare);
+                console.log("- cloudflareConfig =", cloudflareConfig);
+                
                 // 加载报告
-                if (useCloudflare) {
-                    loadReportsFromCloudflare();
-                    console.log("从Cloudflare加载标记数据");
-                } else {
-                    loadReportsFromFirebase();
-                    console.log("从Firebase加载标记数据");
+                console.log("尝试加载报告数据...");
+                try {
+                    if (useCloudflare) {
+                        console.log("从Cloudflare加载标记数据");
+                        // 首先尝试从Cloudflare加载
+                        loadReportsFromCloudflare();
+                        
+                        // 如果10秒后标记数量为0，尝试从Firebase加载
+                        setTimeout(() => {
+                            if (markers.length === 0) {
+                                console.log("Cloudflare加载超时或无结果，尝试从Firebase加载数据...");
+                                loadReportsDirectlyFromFirebase();
+                            }
+                        }, 10000);
+                    } else {
+                        console.log("从Firebase加载标记数据");
+                        loadReportsFromFirebase();
+                    }
+                } catch (dataError) {
+                    console.error("加载报告数据时出错:", dataError);
+                    
+                    // 错误处理 - 尝试回退方式加载
+                    setTimeout(() => {
+                        try {
+                            console.log("使用回退方式加载报告数据...");
+                            loadReportsDirectlyFromFirebase();
+                        } catch (fallbackError) {
+                            console.error("回退加载也失败:", fallbackError);
+                            sendDanmaku(currentLang === 'zh' ? 
+                                '无法加载报告数据，请刷新页面重试' : 
+                                'Failed to load report data, please refresh'
+                            );
+                        }
+                    }, 2000);
                 }
+                
                 console.log("地图初始化完成!");
             } catch (error) {
                 console.error("地图初始化失败:", error);
+                // 显示错误给用户
+                sendDanmaku(currentLang === 'zh' ? 
+                    '地图初始化失败，请刷新页面' : 
+                    'Map initialization failed, please refresh'
+                );
             }
         }
         
@@ -1825,43 +1869,97 @@
         
         // 从Cloudflare Workers加载报告数据
         function loadReportsFromCloudflare() {
+            console.log("尝试从Cloudflare加载报告数据...");
             fetch(`${cloudflareConfig.apiUrl}${cloudflareConfig.dataEndpoint}`)
                 .then(response => {
+                    console.log("Cloudflare API响应状态:", response.status);
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(data => {
+                    console.log("从Cloudflare获取的数据:", data);
+                    
                     // 清除现有标记
                     markers.forEach(marker => {
                         marker.setMap(null);
                     });
                     markers = [];
                     
-                    if (data.markers && Array.isArray(data.markers)) {
-                        data.markers.forEach(report => {
-                            addReportMarker(report);
+                    // 这里根据实际API响应结构进行调整
+                    // 有些API返回{markers:[...]}，有些直接返回[...]
+                    const reportsList = data.markers || data.reports || data;
+                    
+                    if (reportsList && Array.isArray(reportsList) && reportsList.length > 0) {
+                        reportsList.forEach(report => {
+                            if (report && report.id) {
+                                addReportMarker(report);
+                            }
                         });
                         console.log("Reports loaded from Cloudflare:", markers.length);
+                        
+                        // 显示加载成功消息
+                        sendDanmaku(currentLang === 'zh' ? 
+                            `已从Cloudflare加载${markers.length}个标记` : 
+                            `Loaded ${markers.length} markers from Cloudflare`
+                        );
                     } else {
-                        // 如果Cloudflare没有数据，回退到Firebase
-                        console.log("No data from Cloudflare, falling back to Firebase");
-                        reportsRef.on('value', (snapshot) => {
-                            if (snapshot.exists()) {
-                                snapshot.forEach((childSnapshot) => {
-                                    const report = childSnapshot.val();
-                                    addReportMarker(report);
-                                });
-                            }
-                            console.log("Reports loaded from Firebase fallback:", markers.length);
-                        });
+                        // 如果Cloudflare没有数据或数据格式不正确，回退到Firebase
+                        console.log("Cloudflare没有返回有效数据，回退到Firebase");
+                        sendDanmaku(currentLang === 'zh' ? 
+                            '从Cloudflare加载失败，尝试Firebase' : 
+                            'Failed to load from Cloudflare, trying Firebase'
+                        );
+                        loadReportsDirectlyFromFirebase();
                     }
                 })
                 .catch(error => {
-                    console.error("Error loading reports from Cloudflare:", error);
+                    console.error("从Cloudflare加载报告时出错:", error);
+                    sendDanmaku(currentLang === 'zh' ? 
+                        'Cloudflare连接失败，使用Firebase' : 
+                        'Cloudflare connection failed, using Firebase'
+                    );
                     // 错误时回退到Firebase
-                    loadReportsFromFirebase();
+                    loadReportsDirectlyFromFirebase();
+                });
+        }
+        
+        // 直接从Firebase加载报告数据（作为回退）
+        function loadReportsDirectlyFromFirebase() {
+            console.log("直接从Firebase加载报告数据（回退模式）");
+            
+            reportsRef.once('value')
+                .then((snapshot) => {
+                    // 清除现有标记
+                    markers.forEach(marker => {
+                        marker.setMap(null);
+                    });
+                    markers = [];
+                    
+                    if (snapshot.exists()) {
+                        snapshot.forEach((childSnapshot) => {
+                            const report = childSnapshot.val();
+                            if (report && report.id) {
+                                addReportMarker(report);
+                            }
+                        });
+                    }
+                    
+                    console.log("Reports loaded from Firebase fallback:", markers.length);
+                    
+                    // 显示加载成功消息
+                    sendDanmaku(currentLang === 'zh' ? 
+                        `已从Firebase加载${markers.length}个标记` : 
+                        `Loaded ${markers.length} markers from Firebase`
+                    );
+                })
+                .catch(error => {
+                    console.error("从Firebase加载报告时出错:", error);
+                    sendDanmaku(currentLang === 'zh' ? 
+                        '无法加载报告数据' : 
+                        'Unable to load report data'
+                    );
                 });
         }
         
@@ -2117,6 +2215,35 @@
                 
                 // 添加到标记数组
                 markers.push(marker);
+                
+                // 将数据保存到Firebase或Cloudflare
+                console.log("保存标记数据，存储系统:", useCloudflare ? "Cloudflare" : "Firebase");
+                
+                if (useCloudflare) {
+                    // 保存到Cloudflare
+                    saveReportToCloudflare(reportData);
+                } else {
+                    // 保存到Firebase
+                    reportsRef.child(reportData.id.toString()).set(reportData)
+                        .then(() => {
+                            console.log("Quick report saved to Firebase", reportData);
+                            
+                            // 增加用户报告计数
+                            incrementUserReportCount();
+                            
+                            // 同步到Cloudflare
+                            if (syncToCloudflare) {
+                                syncReportToCloudflare(reportData);
+                            }
+                        })
+                        .catch((error) => {
+                            console.error("Error saving quick report to Firebase:", error);
+                            sendDanmaku(currentLang === 'zh' ? 
+                                '标记已添加到地图，但保存到服务器失败' : 
+                                'Marker added to map, but failed to save to server'
+                            );
+                        });
+                }
                 
                 return marker;
             } catch (error) {
@@ -5072,27 +5199,34 @@
                 // 添加到标记数组
                 markers.push(marker);
                 
-                // 将数据保存到Firebase（可选）
-                // 只有当需要持久化数据时才保存到Firebase
-                reportsRef.child(reportData.id.toString()).set(reportData)
-                    .then(() => {
-                        console.log("Quick report saved to Firebase", reportData);
-                        
-                        // 增加用户报告计数
-                        incrementUserReportCount();
-                        
-                        // 同步到Cloudflare
-                        if (syncToCloudflare) {
-                            syncReportToCloudflare(reportData);
-                        }
-                    })
-                    .catch((error) => {
-                        console.error("Error saving quick report to Firebase:", error);
-                        sendDanmaku(currentLang === 'zh' ? 
-                            '标记已添加到地图，但保存到服务器失败' : 
-                            'Marker added to map, but failed to save to server'
-                        );
-                    });
+                // 将数据保存到Firebase或Cloudflare
+                console.log("保存标记数据，存储系统:", useCloudflare ? "Cloudflare" : "Firebase");
+                
+                if (useCloudflare) {
+                    // 保存到Cloudflare
+                    saveReportToCloudflare(reportData);
+                } else {
+                    // 保存到Firebase
+                    reportsRef.child(reportData.id.toString()).set(reportData)
+                        .then(() => {
+                            console.log("Quick report saved to Firebase", reportData);
+                            
+                            // 增加用户报告计数
+                            incrementUserReportCount();
+                            
+                            // 同步到Cloudflare
+                            if (syncToCloudflare) {
+                                syncReportToCloudflare(reportData);
+                            }
+                        })
+                        .catch((error) => {
+                            console.error("Error saving quick report to Firebase:", error);
+                            sendDanmaku(currentLang === 'zh' ? 
+                                '标记已添加到地图，但保存到服务器失败' : 
+                                'Marker added to map, but failed to save to server'
+                            );
+                        });
+                }
                 
                 return marker;
             } catch (error) {
