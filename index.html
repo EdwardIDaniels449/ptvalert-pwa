@@ -1744,20 +1744,46 @@
                 selectionMarker.setMap(null);
             }
             
-            // 使用AdvancedMarkerElement替代Marker
-            // 创建自定义标记图标
-            const iconElement = document.createElement('div');
-            iconElement.innerHTML = isFromGeocoding ? '🔍' : '📍';
-            iconElement.style.fontSize = '24px';
-            iconElement.style.color = isFromGeocoding ? '#0077cc' : '#ff3b30';
+            // 检查是否支持AdvancedMarkerElement
+            const useAdvancedMarker = google.maps.marker && typeof google.maps.marker.AdvancedMarkerElement === 'function';
             
-            // 创建AdvancedMarkerElement
-            selectionMarker = new google.maps.marker.AdvancedMarkerElement({
-                position: location,
-                map: map,
-                content: iconElement,
-                zIndex: 1000
-            });
+            if (useAdvancedMarker) {
+                // 使用Advanced Marker API
+                // 创建自定义标记图标
+                const iconElement = document.createElement('div');
+                iconElement.innerHTML = isFromGeocoding ? '🔍' : '📍';
+                iconElement.style.fontSize = '24px';
+                iconElement.style.color = isFromGeocoding ? '#0077cc' : '#ff3b30';
+                
+                // 创建AdvancedMarkerElement
+                selectionMarker = new google.maps.marker.AdvancedMarkerElement({
+                    position: location,
+                    map: map,
+                    content: iconElement,
+                    zIndex: 1000
+                });
+            } else {
+                // 使用传统Marker API
+                // 创建标记图标
+                const markerIcon = {
+                    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
+                        `<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 42 42">
+                            <circle cx="21" cy="21" r="20" fill="white" opacity="0.95"/>
+                            <text x="21" y="29" font-size="24" text-anchor="middle" fill="${isFromGeocoding ? '#0077cc' : '#ff3b30'}">${isFromGeocoding ? '🔍' : '📍'}</text>
+                        </svg>`
+                    ),
+                    scaledSize: new google.maps.Size(42, 42),
+                    anchor: new google.maps.Point(21, 21)
+                };
+                
+                // 创建传统Marker
+                selectionMarker = new google.maps.Marker({
+                    position: location,
+                    map: map,
+                    icon: markerIcon,
+                    zIndex: 1000
+                });
+            }
             
             // 在标记周围添加一个圆圈来增强可见性
             if (!selectionCircle) {
@@ -2019,20 +2045,59 @@
             markerContent.style.display = 'flex';
             markerContent.style.alignItems = 'center';
             markerContent.style.justifyContent = 'center';
-            markerContent.innerHTML = reportData.emoji;
+            markerContent.innerHTML = reportData.emoji || '📍';
             
-            // 创建标记
-            const marker = new google.maps.marker.AdvancedMarkerElement({
-                position: { lat: reportData.lat, lng: reportData.lng },
-                map: map,
-                content: markerContent,
-                title: reportData.description
-            });
+            let marker;
+            
+            // 检查是否支持AdvancedMarkerElement
+            const useAdvancedMarker = google.maps.marker && typeof google.maps.marker.AdvancedMarkerElement === 'function';
+            
+            if (useAdvancedMarker) {
+                // 使用Advanced Marker API
+                marker = new google.maps.marker.AdvancedMarkerElement({
+                    position: { lat: parseFloat(reportData.lat), lng: parseFloat(reportData.lng) },
+                    map: map,
+                    content: markerContent,
+                    title: reportData.description
+                });
+                
+                // 为Advanced Marker添加点击事件
+                marker.addEventListener("click", function() {
+                    console.log('Report marker clicked:', reportData.id);
+                    showReportDetails(reportData);
+                });
+            } else {
+                // 创建传统标记图标
+                const markerIcon = {
+                    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
+                        `<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 42 42">
+                            <circle cx="21" cy="21" r="20" fill="white" opacity="0.95"/>
+                            <text x="21" y="29" font-size="24" text-anchor="middle" fill="black">${reportData.emoji || '📍'}</text>
+                        </svg>`
+                    ),
+                    scaledSize: new google.maps.Size(42, 42),
+                    anchor: new google.maps.Point(21, 21)
+                };
+                
+                // 使用传统Marker API
+                marker = new google.maps.Marker({
+                    position: { lat: parseFloat(reportData.lat), lng: parseFloat(reportData.lng) },
+                    map: map,
+                    icon: markerIcon,
+                    title: reportData.description
+                });
+                
+                // 为传统Marker添加点击事件
+                marker.addListener("click", function() {
+                    console.log('Report marker clicked:', reportData.id);
+                    showReportDetails(reportData);
+                });
+            }
             
             // 创建信息窗口内容
             const infoContent = `
                 <div class="info-window">
-                    <div class="emoji-display">${reportData.emoji}</div>
+                    <div class="emoji-display">${reportData.emoji || '📍'}</div>
                     <div class="description">${reportData.description}</div>
                     <div class="time-display">${formatTimeAgo(new Date(reportData.time))}</div>
                 </div>
@@ -2043,15 +2108,7 @@
                 maxWidth: 200
             });
             
-            // 添加点击事件侦听器
-            marker.addEventListener("click", function() {
-                console.log('Quick report marker clicked:', reportData.id);
-                // 关闭所有活动的信息窗口
-                if (this.infoWindow) this.infoWindow.close();
-                showReportDetails(reportData);
-            });
-            
-            // 保存infoWindow的引用到marker对象上
+            // 保存infoWindow的引用和reportData到marker对象上
             marker.infoWindow = infoWindow;
             marker.reportData = reportData;
             
@@ -3830,7 +3887,7 @@
             }
         }
     </script>
-    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places"></script>
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places,marker"></script>
     
     <!-- DOM就绪后初始化 -->
     <script>
