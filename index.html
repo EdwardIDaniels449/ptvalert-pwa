@@ -5011,5 +5011,131 @@
             });
         }
     </script>
+
+    <!-- 添加主动推送请求提示功能 -->
+    <div id="notification-prompt-banner" style="display: none; position: fixed; bottom: 20px; left: 10px; right: 10px; max-width: 600px; margin: 0 auto; background: rgba(0,0,0,0.8); color: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 1000; font-size: 14px;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center;">
+                <div style="font-size: 24px; margin-right: 10px;">🔔</div>
+                <div>
+                    <div style="font-weight: bold; margin-bottom: 5px;">接收地图标记更新</div>
+                    <div>开启通知，及时获取地图上的新标记信息！</div>
+                </div>
+            </div>
+            <div>
+                <button id="enable-notifications-btn" style="background: #0071e3; color: white; border: none; padding: 8px 15px; border-radius: 5px; margin-right: 10px; cursor: pointer;">开启通知</button>
+                <button id="dismiss-prompt-btn" style="background: transparent; color: #ccc; border: 1px solid #ccc; padding: 8px 15px; border-radius: 5px; cursor: pointer;">暂不需要</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 处理推送通知消息 -->
+    <script>
+        // 处理从Service Worker发来的消息
+        navigator.serviceWorker.addEventListener('message', function(event) {
+            console.log('收到Service Worker消息:', event.data);
+            
+            // 处理显示标记消息
+            if (event.data.type === 'SHOW_MARKER' && event.data.markerId) {
+                // 尝试查找并显示对应标记
+                if (window.showMarkerById && typeof window.showMarkerById === 'function') {
+                    window.showMarkerById(event.data.markerId, event.data.action === 'view-map');
+                } else {
+                    console.log('标记显示函数未定义，无法显示指定标记');
+                }
+            }
+        });
+        
+        // 页面加载时检查并主动请求通知权限
+        window.addEventListener('load', function() {
+            // 如果已经请求过权限并记录在本地存储中，不再显示
+            if (localStorage.getItem('notification-prompt-shown')) {
+                return;
+            }
+            
+            // 检查Notification API支持
+            if (!('Notification' in window)) {
+                console.log('此浏览器不支持通知功能');
+                return;
+            }
+            
+            // 如果已有权限，直接初始化
+            if (Notification.permission === 'granted') {
+                initNotifications();
+                return;
+            }
+            
+            // 如果已被拒绝，不再提示
+            if (Notification.permission === 'denied') {
+                return;
+            }
+            
+            // 延迟5秒显示通知权限提示
+            setTimeout(function() {
+                document.getElementById('notification-prompt-banner').style.display = 'block';
+            }, 5000);
+        });
+        
+        // 初始化通知功能
+        async function initNotifications() {
+            if (window.notificationHandler) {
+                try {
+                    // 初始化通知系统
+                    await window.notificationHandler.initNotifications();
+                    
+                    // 设置用户ID
+                    let userId = localStorage.getItem('user-id');
+                    if (!userId) {
+                        userId = 'user_' + Math.random().toString(36).substr(2, 9);
+                        localStorage.setItem('user-id', userId);
+                    }
+                    window.notificationHandler.setCurrentUserId(userId);
+                    
+                    // 如果有权限但未订阅，自动订阅
+                    if (Notification.permission === 'granted' && 
+                        !(await window.notificationHandler.isSubscribedToPush())) {
+                        await window.notificationHandler.subscribeUserToPush();
+                        console.log('已自动订阅推送通知');
+                    }
+                } catch (error) {
+                    console.error('初始化通知功能失败:', error);
+                }
+            }
+        }
+        
+        // 按钮事件处理
+        document.getElementById('enable-notifications-btn').addEventListener('click', async function() {
+            try {
+                document.getElementById('notification-prompt-banner').style.display = 'none';
+                
+                // 标记为已显示提示
+                localStorage.setItem('notification-prompt-shown', 'true');
+                
+                // 使用通知处理程序请求权限
+                if (window.notificationHandler) {
+                    const granted = await window.notificationHandler.requestNotificationPermission();
+                    if (granted) {
+                        console.log('通知权限已获得，已订阅推送');
+                    }
+                } else {
+                    console.error('通知处理程序未加载');
+                }
+            } catch (error) {
+                console.error('请求通知权限失败:', error);
+            }
+        });
+        
+        // 拒绝按钮事件
+        document.getElementById('dismiss-prompt-btn').addEventListener('click', function() {
+            document.getElementById('notification-prompt-banner').style.display = 'none';
+            localStorage.setItem('notification-prompt-shown', 'true');
+        });
+        
+        // 显示地图标记的函数 - 应由地图组件实现
+        window.showMarkerById = function(markerId, centerOnMap) {
+            console.log('显示标记:', markerId, centerOnMap ? '并居中显示' : '');
+            // 地图组件应实现此函数的实际逻辑
+        };
+    </script>
 </body>
 </html>

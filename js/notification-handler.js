@@ -16,6 +16,9 @@ const LOG_PREFIX = '[通知系统] ';
 let SERVICE_WORKER_PATH = './service-worker.js';
 let SERVICE_WORKER_SCOPE = './';
 
+// 地图标记数据
+let markers = [];
+
 // 检查是否是GitHub Pages环境
 if (window.location.hostname.includes('github.io')) {
   console.log(LOG_PREFIX + '检测到GitHub Pages环境');
@@ -87,33 +90,8 @@ async function initNotifications() {
     console.log(LOG_PREFIX + '注册Service Worker:', SERVICE_WORKER_PATH, '作用域:', SERVICE_WORKER_SCOPE);
     
     try {
-      // 先尝试获取现有注册
-      const existingRegistration = await navigator.serviceWorker.getRegistration(SERVICE_WORKER_SCOPE);
-      
-      if (existingRegistration) {
-        console.log(LOG_PREFIX + '找到现有Service Worker注册:', existingRegistration.scope);
-        return true;
-      }
-      
-      // Register service worker with correct path and scope
-      const registration = await navigator.serviceWorker.register(SERVICE_WORKER_PATH, {
-        scope: SERVICE_WORKER_SCOPE
-      });
-      
-      console.log(LOG_PREFIX + 'Service Worker注册成功，作用域:', registration.scope);
-      
-      // 等待控制
-      if (!navigator.serviceWorker.controller) {
-        console.log(LOG_PREFIX + '等待Service Worker激活并控制页面...');
-        
-        // 等待Service Worker控制页面
-        await new Promise((resolve) => {
-          navigator.serviceWorker.addEventListener('controllerchange', () => {
-            console.log(LOG_PREFIX + 'Service Worker现在控制了页面');
-            resolve();
-          });
-        });
-      }
+      // 使用自定义的注册函数
+      const registration = await registerServiceWorker();
       
       // Check for existing subscription
       const subscription = await registration.pushManager.getSubscription();
@@ -127,33 +105,64 @@ async function initNotifications() {
       return true;
     } catch (registrationError) {
       console.error(LOG_PREFIX + 'Service Worker注册失败:', registrationError);
-      
-      // 在GitHub Pages环境中尝试其他策略
-      if (window.location.hostname.includes('github.io')) {
-        console.log(LOG_PREFIX + '尝试使用绝对URL作为备用方案');
-        
-        try {
-          // 使用完整的绝对URL
-          const fullURL = new URL(SERVICE_WORKER_PATH, window.location.origin).href;
-          console.log(LOG_PREFIX + '尝试使用完整URL:', fullURL);
-          
-          const registration = await navigator.serviceWorker.register(fullURL, {
-            scope: SERVICE_WORKER_SCOPE
-          });
-          
-          console.log(LOG_PREFIX + '使用绝对URL注册成功:', registration.scope);
-          return true;
-        } catch (fallbackError) {
-          console.error(LOG_PREFIX + '备用注册方法也失败:', fallbackError);
-          throw fallbackError;
-        }
-      } else {
-        throw registrationError;
-      }
+      throw registrationError;
     }
   } catch (error) {
     console.error(LOG_PREFIX + '初始化通知失败:', error);
     return false;
+  }
+}
+
+// 在registerServiceWorker函数中添加更多调试信息并明确指定GitHub Pages环境的处理
+async function registerServiceWorker() {
+  try {
+    if (!('serviceWorker' in navigator)) {
+      console.error(LOG_PREFIX + '此浏览器不支持Service Worker');
+      return;
+    }
+    
+    console.log(LOG_PREFIX + '开始注册Service Worker...');
+    console.log(LOG_PREFIX + '当前环境:', window.location.origin);
+    
+    // 默认参数
+    let swPath = './service-worker.js';
+    let swOptions = { scope: './' };
+    
+    // GitHub Pages特殊处理
+    if (window.location.hostname.includes('github.io')) {
+      console.log(LOG_PREFIX + '检测到GitHub Pages环境');
+      
+      // 获取仓库名
+      let repoName = '';
+      const pathSegments = window.location.pathname.split('/');
+      if (pathSegments.length >= 2 && pathSegments[1]) {
+        repoName = pathSegments[1];
+      } else {
+        // 硬编码的回退值
+        repoName = 'ptvalert-pwa';
+      }
+      
+      // 构建正确的Service Worker URL和作用域
+      const basePath = '/' + repoName + '/';
+      swPath = basePath + 'service-worker.js';
+      swOptions = { scope: basePath };
+      
+      console.log(LOG_PREFIX + 'GitHub Pages配置:');
+      console.log('- 仓库名:', repoName);
+      console.log('- 基础路径:', basePath);
+      console.log('- Service Worker路径:', swPath);
+      console.log('- 作用域:', swOptions.scope);
+    }
+    
+    // 注册Service Worker
+    console.log(LOG_PREFIX + '注册Service Worker，路径:', swPath, '作用域:', swOptions);
+    const registration = await navigator.serviceWorker.register(swPath, swOptions);
+    
+    console.log(LOG_PREFIX + 'Service Worker注册成功，作用域:', registration.scope);
+    return registration;
+  } catch (error) {
+    console.error(LOG_PREFIX + 'Service Worker注册失败:', error);
+    throw error;
   }
 }
 
@@ -331,8 +340,8 @@ async function sendTestNotification() {
       },
       body: JSON.stringify({
         notification: {
-          title: 'Test Notification',
-          body: 'This is a test notification from PtvAlert',
+          title: '测试通知',
+          body: '这是来自PtvAlert的测试通知',
           icon: '/images/icon-192x192.png',
           badge: '/images/badge-72x72.png',
           data: {
@@ -355,6 +364,115 @@ async function sendTestNotification() {
     return data;
   } catch (error) {
     console.error('Error sending test notification:', error);
+    throw error;
+  }
+}
+
+// 设置地图标记数据
+function setMapMarkers(mapMarkers) {
+  markers = mapMarkers;
+  console.log(LOG_PREFIX + '更新地图标记数据，共', markers.length, '个标记');
+}
+
+// 推送单个地图标记内容
+async function pushMarkerNotification(marker) {
+  try {
+    if (!marker || !marker.id) {
+      console.error(LOG_PREFIX + '无效的标记数据');
+      return;
+    }
+    
+    // 检查是否已订阅
+    if (!(await isSubscribedToPush())) {
+      console.log(LOG_PREFIX + '用户未订阅推送，无法发送标记通知');
+      return;
+    }
+    
+    // 准备通知数据
+    const notificationData = {
+      title: marker.title || '地图标记更新',
+      body: marker.description || '有新的地图标记信息',
+      icon: '/images/icon-192x192.png',
+      badge: '/images/badge-72x72.png',
+      data: {
+        url: '/',
+        markerId: marker.id,
+        markerInfo: marker,
+        dateOfArrival: Date.now()
+      }
+    };
+    
+    // 发送通知
+    const response = await fetch(`${API_BASE_URL}/api/send-notification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        notification: notificationData,
+        userId: notificationUserId
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.error || '发送标记通知失败');
+    }
+    
+    console.log(LOG_PREFIX + '标记通知发送成功:', marker.id);
+    return data;
+  } catch (error) {
+    console.error(LOG_PREFIX + '发送标记通知失败:', error);
+    throw error;
+  }
+}
+
+// 推送所有地图标记
+async function pushAllMarkers() {
+  try {
+    if (!markers || markers.length === 0) {
+      console.log(LOG_PREFIX + '没有地图标记数据可推送');
+      return;
+    }
+    
+    console.log(LOG_PREFIX + '开始推送所有地图标记，共', markers.length, '个');
+    
+    // 准备通知数据
+    const notificationData = {
+      title: '地图标记汇总',
+      body: `当前地图上有${markers.length}个标记`,
+      icon: '/images/icon-192x192.png',
+      badge: '/images/badge-72x72.png',
+      data: {
+        url: '/',
+        markerCount: markers.length,
+        dateOfArrival: Date.now()
+      }
+    };
+    
+    // 发送通知
+    const response = await fetch(`${API_BASE_URL}/api/send-notification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        notification: notificationData,
+        userId: notificationUserId
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.error || '发送标记汇总通知失败');
+    }
+    
+    console.log(LOG_PREFIX + '标记汇总通知发送成功');
+    return data;
+  } catch (error) {
+    console.error(LOG_PREFIX + '发送标记汇总通知失败:', error);
     throw error;
   }
 }
@@ -389,6 +507,15 @@ async function addMarkerWithNotification(markerData) {
     }
     
     console.log('Marker added with notification:', data.marker);
+    
+    // 添加到本地标记列表
+    if (markers) {
+      markers.push(data.marker);
+    }
+    
+    // 立即推送新添加的标记通知
+    await pushMarkerNotification(data.marker);
+    
     return data.marker;
   } catch (error) {
     console.error('Error adding marker with notification:', error);
@@ -455,6 +582,47 @@ async function storeMarkerInIndexedDB(marker) {
   }
 }
 
+// 主动请求通知权限
+async function requestNotificationPermission() {
+  try {
+    console.log(LOG_PREFIX + '请求通知权限...');
+    
+    // 检查是否支持通知功能
+    if (!("Notification" in window)) {
+      console.log(LOG_PREFIX + '此浏览器不支持通知功能');
+      return false;
+    }
+    
+    // 如果已经有权限，直接返回
+    if (Notification.permission === "granted") {
+      console.log(LOG_PREFIX + '已有通知权限');
+      return true;
+    }
+    
+    // 如果已经被拒绝，提示用户在浏览器设置中允许
+    if (Notification.permission === "denied") {
+      console.log(LOG_PREFIX + '通知权限已被拒绝');
+      return false;
+    }
+    
+    // 请求权限
+    const permission = await Notification.requestPermission();
+    console.log(LOG_PREFIX + '通知权限请求结果:', permission);
+    
+    // 如果获得权限，初始化推送服务
+    if (permission === "granted") {
+      await initNotifications();
+      await subscribeUserToPush();
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error(LOG_PREFIX + '请求通知权限失败:', error);
+    return false;
+  }
+}
+
 // Export the functions for use in other files
 window.notificationHandler = {
   initNotifications,
@@ -464,58 +632,9 @@ window.notificationHandler = {
   setCurrentUserId,
   sendTestNotification,
   addMarkerWithNotification,
-  storeMarkerInIndexedDB
-};
-
-// 在registerServiceWorker函数中添加更多调试信息并明确指定GitHub Pages环境的处理
-async function registerServiceWorker() {
-  try {
-    if (!('serviceWorker' in navigator)) {
-      console.error(LOG_PREFIX + '此浏览器不支持Service Worker');
-      return;
-    }
-    
-    console.log(LOG_PREFIX + '开始注册Service Worker...');
-    console.log(LOG_PREFIX + '当前环境:', window.location.origin);
-    
-    // 默认参数
-    let swPath = './service-worker.js';
-    let swOptions = { scope: './' };
-    
-    // GitHub Pages特殊处理
-    if (window.location.hostname.includes('github.io')) {
-      console.log(LOG_PREFIX + '检测到GitHub Pages环境');
-      
-      // 获取仓库名
-      let repoName = '';
-      const pathSegments = window.location.pathname.split('/');
-      if (pathSegments.length >= 2 && pathSegments[1]) {
-        repoName = pathSegments[1];
-      } else {
-        // 硬编码的回退值
-        repoName = 'ptvalert-pwa';
-      }
-      
-      // 构建正确的Service Worker URL和作用域
-      const basePath = '/' + repoName + '/';
-      swPath = basePath + 'service-worker.js';
-      swOptions = { scope: basePath };
-      
-      console.log(LOG_PREFIX + 'GitHub Pages配置:');
-      console.log('- 仓库名:', repoName);
-      console.log('- 基础路径:', basePath);
-      console.log('- Service Worker路径:', swPath);
-      console.log('- 作用域:', swOptions.scope);
-    }
-    
-    // 注册Service Worker
-    console.log(LOG_PREFIX + '注册Service Worker，路径:', swPath, '作用域:', swOptions);
-    const registration = await navigator.serviceWorker.register(swPath, swOptions);
-    
-    console.log(LOG_PREFIX + 'Service Worker注册成功，作用域:', registration.scope);
-    return registration;
-  } catch (error) {
-    console.error(LOG_PREFIX + 'Service Worker注册失败:', error);
-    throw error;
-  }
-} 
+  storeMarkerInIndexedDB,
+  setMapMarkers,
+  pushMarkerNotification,
+  pushAllMarkers,
+  requestNotificationPermission
+}; 

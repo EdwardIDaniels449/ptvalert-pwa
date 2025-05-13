@@ -197,7 +197,7 @@ self.addEventListener('push', event => {
     icon: BASE_PATH + 'images/icon-192x192.png',
     badge: BASE_PATH + 'images/badge-72x72.png',
     data: {
-      url: '/'
+      url: BASE_PATH
     }
   };
   
@@ -205,10 +205,28 @@ self.addEventListener('push', event => {
   if (event.data) {
     try {
       console.log('推送数据:', event.data.text());
+      const pushData = event.data.json();
       notificationData = {
         ...notificationData,
-        ...event.data.json()
+        ...pushData
       };
+      
+      // 如果是地图标记通知，添加特殊处理
+      if (notificationData.data && notificationData.data.markerId) {
+        // 添加地图标记特定的操作
+        notificationData.actions = [
+          { action: 'view-details', title: '查看详情' },
+          { action: 'view-map', title: '在地图上查看' }
+        ];
+        
+        // 添加震动模式来提高关注度
+        notificationData.vibrate = [100, 50, 100, 50, 100];
+      } else if (notificationData.data && notificationData.data.markerCount) {
+        // 这是标记汇总通知
+        notificationData.actions = [
+          { action: 'view-all', title: '查看所有标记' }
+        ];
+      }
     } catch (e) {
       console.error('解析推送数据失败:', e);
       notificationData.body = event.data.text();
@@ -223,11 +241,16 @@ self.addEventListener('push', event => {
       body: notificationData.body,
       icon: notificationData.icon,
       badge: notificationData.badge,
-      vibrate: [100, 50, 100],
+      vibrate: notificationData.vibrate || [100, 50, 100],
       data: notificationData.data || {},
       actions: notificationData.actions || [
         { action: 'view', title: '查看详情' }
-      ]
+      ],
+      // 添加更多选项
+      requireInteraction: true, // 要求用户交互，通知不会自动消失
+      tag: notificationData.data && notificationData.data.markerId ? 
+           'marker-' + notificationData.data.markerId : 
+           'ptvalert-notification-' + Date.now()
     })
     .then(() => console.log('通知显示成功'))
     .catch(err => console.error('显示通知失败:', err))
@@ -243,19 +266,22 @@ self.addEventListener('notificationclick', event => {
   
   // 获取通知数据
   const data = event.notification.data || {};
-  let url = data.url || '/';
+  let url = data.url || BASE_PATH;
   
   // 处理不同的操作
   if (event.action === 'view' || event.action === 'view-details') {
     // 查看详情
     if (data.markerId) {
-      url = `/marker-details.html?id=${data.markerId}`;
+      url = `${BASE_PATH}?marker=${data.markerId}`;
     }
-  } else if (event.action === 'navigate' || event.action === 'view-map') {
+  } else if (event.action === 'view-map' && data.markerInfo) {
     // 在地图上查看
-    if (data.markerInfo && data.markerInfo.lat && data.markerInfo.lng) {
-      url = `/?lat=${data.markerInfo.lat}&lng=${data.markerInfo.lng}&zoom=15`;
+    if (data.markerInfo.lat && data.markerInfo.lng) {
+      url = `${BASE_PATH}?lat=${data.markerInfo.lat}&lng=${data.markerInfo.lng}&zoom=15`;
     }
+  } else if (event.action === 'view-all') {
+    // 查看所有标记
+    url = `${BASE_PATH}?show=all-markers`;
   }
   
   // 打开相应的URL
@@ -264,8 +290,16 @@ self.addEventListener('notificationclick', event => {
       .then(clientList => {
         // 检查是否已有窗口打开
         for (const client of clientList) {
-          if (client.url.includes(url) && 'focus' in client) {
-            return client.focus();
+          if ('focus' in client) {
+            // 找到一个客户端窗口，发送消息告诉它显示这个标记
+            client.focus();
+            client.postMessage({
+              type: 'SHOW_MARKER',
+              markerId: data.markerId,
+              markerInfo: data.markerInfo,
+              action: event.action
+            });
+            return;
           }
         }
         
