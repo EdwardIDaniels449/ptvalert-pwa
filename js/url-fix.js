@@ -158,33 +158,93 @@
             if (isGitHubPages) {
                 console.log('检测到GitHub Pages环境，添加Service Worker路径修复');
                 
+                // 从URL提取仓库名
+                const getRepoName = function() {
+                    const pathSegments = window.location.pathname.split('/');
+                    if (pathSegments.length >= 2 && pathSegments[1]) {
+                        return pathSegments[1];
+                    }
+                    return ''; // 如果无法确定仓库名，返回空字符串
+                };
+                
+                const repoName = getRepoName();
+                console.log('GitHub Pages仓库名:', repoName || '(未检测到)');
+                
                 // 添加补丁脚本
                 const script = document.createElement('script');
                 script.textContent = `
                     // 修复GitHub Pages上的Service Worker注册
                     if ('serviceWorker' in navigator) {
+                        // 当前路径
+                        const currentLoc = window.location.href;
+                        console.log('当前页面URL:', currentLoc);
+                        
                         // 覆盖原始的serviceWorker.register方法
                         const originalRegister = navigator.serviceWorker.register;
                         navigator.serviceWorker.register = function(scriptURL, options) {
-                            console.warn('拦截Service Worker注册，原始路径:', scriptURL);
+                            console.log('拦截Service Worker注册请求，原始路径:', scriptURL);
                             
-                            // 修改为相对路径
-                            let fixedScriptURL = scriptURL;
-                            if (scriptURL.startsWith('/')) {
-                                fixedScriptURL = '.' + scriptURL;
-                                console.warn('修复为相对路径:', fixedScriptURL);
-                            }
-                            
-                            // 修改作用域为相对路径
+                            // 尝试直接使用当前目录的service-worker.js
+                            let fixedScriptURL = './service-worker.js';
                             let fixedOptions = options || {};
-                            if (fixedOptions.scope && fixedOptions.scope === '/') {
-                                fixedOptions.scope = './';
-                                console.warn('修复作用域为相对路径:', fixedOptions.scope);
-                            }
+                            fixedOptions.scope = './';
                             
-                            // 使用修复后的参数调用原始方法
-                            return originalRegister.call(this, fixedScriptURL, fixedOptions);
+                            console.log('将使用简单相对路径:', fixedScriptURL, '作用域:', fixedOptions.scope);
+                            
+                            // 创建带回退的注册函数
+                            const registerWithFallback = async function() {
+                                try {
+                                    console.log('尝试注册Service Worker:', fixedScriptURL);
+                                    return await originalRegister.call(navigator.serviceWorker, fixedScriptURL, fixedOptions);
+                                } catch (mainError) {
+                                    console.error('主Service Worker注册失败，尝试备用方案:', mainError);
+                                    
+                                    try {
+                                        // 尝试备用Service Worker
+                                        console.log('尝试注册备用Service Worker');
+                                        const fallbackReg = await originalRegister.call(
+                                            navigator.serviceWorker, 
+                                            './fallback-service-worker.js', 
+                                            {scope: './'}
+                                        );
+                                        console.log('备用Service Worker注册成功');
+                                        return fallbackReg;
+                                    } catch (fallbackError) {
+                                        console.error('备用Service Worker注册失败，尝试内联方案:', fallbackError);
+                                        
+                                        // 创建内联的最小Service Worker
+                                        try {
+                                            const minimalSW = \`
+                                                // 最小Service Worker
+                                                self.addEventListener('install', () => self.skipWaiting());
+                                                self.addEventListener('activate', event => event.waitUntil(clients.claim()));
+                                                self.addEventListener('fetch', event => event.respondWith(fetch(event.request)));
+                                                console.log('内联最小Service Worker已激活');
+                                            \`;
+                                            
+                                            const blob = new Blob([minimalSW], {type: 'application/javascript'});
+                                            const blobURL = URL.createObjectURL(blob);
+                                            
+                                            const inlineReg = await originalRegister.call(
+                                                navigator.serviceWorker, 
+                                                blobURL, 
+                                                {scope: './'}
+                                            );
+                                            console.log('内联Service Worker注册成功');
+                                            return inlineReg;
+                                        } catch (inlineError) {
+                                            console.error('所有Service Worker注册方法均失败:', inlineError);
+                                            throw inlineError;
+                                        }
+                                    }
+                                }
+                            };
+                            
+                            // 返回带回退的注册Promise
+                            return registerWithFallback();
                         };
+                        
+                        console.log('已替换Service Worker注册函数');
                     }
                 `;
                 document.head.appendChild(script);

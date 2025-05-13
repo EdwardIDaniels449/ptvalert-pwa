@@ -57,24 +57,14 @@
             // 诊断信息
             console.log('[GitHub Pages修复] 拦截Service Worker注册:', scriptURL);
             
-            // 修复scriptURL - 将相对路径转换为绝对路径
-            let newScriptURL = scriptURL;
-            if (scriptURL.startsWith('./') || scriptURL.startsWith('../')) {
-                newScriptURL = basePath + scriptURL.replace(/^\.\/|^\.\.\//, '');
-            } else if (scriptURL.startsWith('/')) {
-                newScriptURL = basePath + scriptURL.substring(1);
-            } else if (!scriptURL.includes('://')) {
-                newScriptURL = basePath + scriptURL;
-            }
+            // 简单使用当前目录的service-worker.js和相对路径作用域
+            const newScriptURL = './service-worker.js';
+            const newOptions = {
+                scope: './'
+            };
             
-            // 修复scope
-            let newOptions = {...options};
-            if (!newOptions.scope || newOptions.scope === '/' || newOptions.scope === './') {
-                newOptions.scope = basePath;
-            }
-            
-            console.log('[GitHub Pages修复] 修正后的Service Worker URL:', newScriptURL);
-            console.log('[GitHub Pages修复] 修正后的Service Worker scope:', newOptions.scope);
+            console.log('[GitHub Pages修复] 使用简单相对路径:', newScriptURL);
+            console.log('[GitHub Pages修复] 使用相对作用域:', newOptions.scope);
             
             // 显示诊断信息
             const diagnosticInfo = {
@@ -95,49 +85,116 @@
             };
             console.log('[GitHub Pages修复] Service Worker注册诊断:', diagnosticInfo);
             
-            // 使用修复后的参数调用原始方法
-            return originalRegister.call(this, newScriptURL, newOptions)
-                .then(registration => {
+            // 创建一个带回退机制的注册函数
+            const registerWithFallback = async function() {
+                try {
+                    // 尝试注册主Service Worker
+                    console.log('[GitHub Pages修复] 尝试注册主Service Worker...');
+                    const registration = await originalRegister.call(navigator.serviceWorker, newScriptURL, newOptions);
                     console.log('[GitHub Pages修复] Service Worker注册成功:', registration.scope);
                     return registration;
-                })
-                .catch(error => {
-                    console.error('[GitHub Pages修复] Service Worker注册失败:', error);
+                } catch (mainError) {
+                    console.error('[GitHub Pages修复] 主Service Worker注册失败，尝试备用方案:', mainError);
                     
-                    // 尝试使用特殊的回退机制
-                    if (error.name === 'TypeError' && error.message.includes('Failed to register a ServiceWorker')) {
-                        console.log('[GitHub Pages修复] 尝试使用404页面回退机制...');
+                    try {
+                        // 尝试备用Service Worker
+                        console.log('[GitHub Pages修复] 尝试注册备用Service Worker...');
+                        const fallbackReg = await originalRegister.call(
+                            navigator.serviceWorker, 
+                            './fallback-service-worker.js', 
+                            {scope: './'}
+                        );
+                        console.log('[GitHub Pages修复] 备用Service Worker注册成功:', fallbackReg.scope);
+                        return fallbackReg;
+                    } catch (fallbackError) {
+                        console.error('[GitHub Pages修复] 备用Service Worker注册也失败:', fallbackError);
                         
-                        // 返回一个伪注册对象，以防止应用崩溃
-                        return {
-                            scope: newOptions.scope || basePath,
-                            active: {
-                                state: 'activated',
-                                scriptURL: newScriptURL
-                            },
-                            installing: null,
-                            waiting: null,
-                            unregister: function() {
-                                console.log('[GitHub Pages修复] 卸载伪Service Worker');
-                                return Promise.resolve(true);
-                            },
-                            update: function() {
-                                console.log('[GitHub Pages修复] 更新伪Service Worker');
-                                return Promise.resolve(this);
-                            },
-                            getNotifications: function() {
-                                return Promise.resolve([]);
-                            },
-                            showNotification: function() {
-                                console.log('[GitHub Pages修复] 伪Service Worker显示通知');
-                                return Promise.resolve();
-                            },
-                            __fake: true
-                        };
+                        try {
+                            // 创建内联Service Worker
+                            console.log('[GitHub Pages修复] 尝试创建内联Service Worker...');
+                            const minimalSW = `
+                                // 内联最小Service Worker
+                                self.addEventListener('install', event => {
+                                    console.log('[内联SW] 安装');
+                                    self.skipWaiting();
+                                });
+                                
+                                self.addEventListener('activate', event => {
+                                    console.log('[内联SW] 激活');
+                                    event.waitUntil(clients.claim());
+                                });
+                                
+                                self.addEventListener('fetch', event => {
+                                    console.log('[内联SW] 收到请求:', event.request.url);
+                                    event.respondWith(fetch(event.request));
+                                });
+                                
+                                self.addEventListener('push', event => {
+                                    console.log('[内联SW] 收到推送');
+                                    const title = 'PtvAlert';
+                                    const options = { 
+                                        body: '收到新的通知',
+                                        icon: './images/icon-192x192.png'
+                                    };
+                                    event.waitUntil(self.registration.showNotification(title, options));
+                                });
+                                
+                                self.addEventListener('notificationclick', event => {
+                                    console.log('[内联SW] 通知点击');
+                                    event.notification.close();
+                                    const url = self.location.origin;
+                                    event.waitUntil(clients.openWindow(url));
+                                });
+                                
+                                console.log('[内联SW] 内联Service Worker加载完成');
+                            `;
+                            
+                            const blob = new Blob([minimalSW], {type: 'application/javascript'});
+                            const blobURL = URL.createObjectURL(blob);
+                            
+                            const inlineReg = await originalRegister.call(
+                                navigator.serviceWorker, 
+                                blobURL, 
+                                {scope: './'}
+                            );
+                            console.log('[GitHub Pages修复] 内联Service Worker注册成功:', inlineReg.scope);
+                            return inlineReg;
+                        } catch (inlineError) {
+                            console.error('[GitHub Pages修复] 所有Service Worker注册方法都失败:', inlineError);
+                            
+                            // 返回一个伪注册对象，以防止应用崩溃
+                            console.log('[GitHub Pages修复] 创建伪Service Worker对象...');
+                            return {
+                                scope: './',
+                                active: {
+                                    state: 'activated',
+                                    scriptURL: newScriptURL
+                                },
+                                installing: null,
+                                waiting: null,
+                                pushManager: {
+                                    getSubscription: () => Promise.resolve(null),
+                                    subscribe: () => Promise.resolve({
+                                        endpoint: 'https://fake-push-endpoint.github.io',
+                                        toJSON: () => ({ endpoint: 'https://fake-push-endpoint.github.io' })
+                                    })
+                                },
+                                unregister: () => Promise.resolve(true),
+                                update: () => Promise.resolve(this),
+                                getNotifications: () => Promise.resolve([]),
+                                showNotification: (title, options) => {
+                                    console.log('[GitHub Pages修复] 伪Service Worker显示通知:', title);
+                                    return Promise.resolve();
+                                },
+                                __fake: true
+                            };
+                        }
                     }
-                    
-                    throw error;
-                });
+                }
+            };
+            
+            // 返回带回退的注册Promise
+            return registerWithFallback();
         };
     }
     
