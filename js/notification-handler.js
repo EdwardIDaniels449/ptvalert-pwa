@@ -5,8 +5,8 @@
 
 // Web Push 公钥 - 用于订阅推送服务
 // VAPID 公钥 - 确保这个公钥与 Cloudflare Worker 环境变量中设置的值相同
-// 此处可能的问题是公钥格式，格式应为 Cloudflare Worker 环境变量中的 VAPID_PUBLIC_KEY
-const applicationServerPublicKey = 'BFpa0WyDaUOEPw7iKaxLHjf1yReNiMXHdSh4t3PBXq962LCjQmpeFKs63PDhwd_F5kPqi7PsI6KGpIoXsaXMJ70';
+// 从浏览器重新获取标准base64格式的公钥
+const applicationServerPublicKey = 'BLdQtij_ZMZjFEQn9W6VMcQPGmrpuQyvmJ7syUYym4JwIFjVgzuQJd1rRBoQdP5ruAEEw_RsGIgY2xLYwYnF968';
 
 let isSubscribed = false;
 let swRegistration = null;
@@ -91,22 +91,33 @@ function showNotificationPrompt() {
  * 将用户订阅到推送服务
  */
 function subscribeUserToPush() {
-  const applicationServerKey = urlB64ToUint8Array(applicationServerPublicKey);
-  
-  swRegistration.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: applicationServerKey
-  })
-  .then(subscription => {
-    console.log('用户已订阅:', subscription);
-    isSubscribed = true;
+  try {
+    const applicationServerKey = urlB64ToUint8Array(applicationServerPublicKey);
+    console.log('转换后的应用服务器密钥:', applicationServerKey);
     
-    // 将订阅信息发送到服务器
-    saveSubscription(subscription);
-  })
-  .catch(err => {
-    console.error('无法订阅推送:', err);
-  });
+    // 检查密钥是否有效
+    if (applicationServerKey.length === 0) {
+      console.error('无效的应用服务器密钥，无法订阅推送');
+      return;
+    }
+    
+    swRegistration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: applicationServerKey
+    })
+    .then(subscription => {
+      console.log('用户已订阅:', subscription);
+      isSubscribed = true;
+      
+      // 将订阅信息发送到服务器
+      saveSubscription(subscription);
+    })
+    .catch(err => {
+      console.error('无法订阅推送:', err);
+    });
+  } catch (error) {
+    console.error('订阅过程中出错:', error);
+  }
 }
 
 /**
@@ -218,14 +229,23 @@ function deleteSubscriptionFromServer(subscription) {
  */
 function urlB64ToUint8Array(base64String) {
   try {
+    // 输出原始字符串用于调试
+    console.log('原始base64字符串:', base64String);
+    
     // 修正 base64 字符串格式
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    console.log('添加的padding:', padding);
+    
     const base64 = (base64String + padding)
       .replace(/-/g, '+')
       .replace(/_/g, '/');
+    
+    console.log('处理后的base64字符串:', base64);
 
     // 使用 try-catch 包装 atob 调用，以捕获可能的错误
     const rawData = window.atob(base64);
+    console.log('解码成功，长度:', rawData.length);
+    
     const outputArray = new Uint8Array(rawData.length);
 
     for (let i = 0; i < rawData.length; ++i) {
@@ -233,9 +253,11 @@ function urlB64ToUint8Array(base64String) {
     }
     return outputArray;
   } catch (error) {
-    console.error('Base64 解码错误:', error, '原始字符串:', base64String);
-    // 返回一个空数组，或者抛出错误以便上层函数处理
-    throw new Error('VAPID 密钥格式无效，请检查您的公钥');
+    console.error('Base64 解码错误:', error.message);
+    console.error('原始字符串:', base64String);
+    
+    // 返回一个空数组，避免上层函数崩溃
+    return new Uint8Array(0);
   }
 }
 
