@@ -4936,115 +4936,125 @@
 
         // 添加快速报告标记
         function addQuickReportMarker(location, description) {
-            if (!map) return;
-            
-            // 默认使用狗emoji作为标记
-            let emoji = "🐶"; // 默认使用狗的emoji
-            
-            // 根据描述可以选择不同表情(保留这部分以便未来可能需要的特殊情况处理)
-            if (description && (description.toLowerCase().includes('traffic') || description.toLowerCase().includes('交通'))) {
-                emoji = "🚗";
-            } else if (description && (description.toLowerCase().includes('food') || description.toLowerCase().includes('餐'))) {
-                emoji = "🍔";
-            } else if (description && (description.toLowerCase().includes('event') || description.toLowerCase().includes('活动'))) {
-                emoji = "🎪";
-            } else if (description && (description.toLowerCase().includes('police') || description.toLowerCase().includes('警察'))) {
-                emoji = "👮";
-            } else if (description && (description.toLowerCase().includes('accident') || description.toLowerCase().includes('事故'))) {
-                emoji = "⚠️";
-            } else {
-                // 其他所有情况均使用狗emoji
-                emoji = "🐶";
-            }
-            
-            // 创建标记图标
-            const markerIcon = {
-                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
-                    `<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 42 42">
-                        <circle cx="21" cy="21" r="20" fill="white" opacity="0.95"/>
-                        <text x="21" y="29" font-size="24" text-anchor="middle" fill="black">${emoji}</text>
-                    </svg>`
-                ),
-                scaledSize: new google.maps.Size(42, 42),
-                anchor: new google.maps.Point(21, 21)
-            };
-            
-            // 创建标记数据对象
-            const reportData = {
-                id: Date.now(), // 使用时间戳作为ID
-                lat: location.lat,
-                lng: location.lng,
-                description: description,
-                originalDescription: description,
-                time: new Date().toISOString(),
-                emoji: emoji,
-                userName: document.getElementById('userDisplayName').textContent || (currentLang === 'zh' ? '用户' : 'User'),
-                userId: currentUserId
-            };
-            
-            // 创建标记
-            const marker = new google.maps.marker.AdvancedMarkerElement({
-                position: location,
-                map: map,
-                content: markerIcon,
-                animation: google.maps.Animation.DROP,
-                clickable: true,
-                zIndex: 999
-            });
-            
-            // 将报告数据保存到标记
-            marker.reportData = reportData;
-            
-            // 创建信息窗口，在鼠标悬停时显示简短描述
-            const infoWindow = new google.maps.InfoWindow({
-                content: `<div style="max-width:200px;font-family:sans-serif;">
-                    <p style="margin:8px 0;font-weight:bold;">${emoji} ${description}</p>
-                    <p style="margin:5px 0;color:#666;font-size:12px;">👤 ${reportData.userName}</p>
-                    <p style="margin:5px 0;color:#777;font-size:11px;">${new Date(reportData.time).toLocaleString()}</p>
-                </div>`
-            });
-            
-            // 鼠标悬停时显示信息窗口
-            marker.addListener('mouseover', function() {
-                infoWindow.open(map, marker);
-            });
-            
-            marker.addListener('mouseout', function() {
-                infoWindow.close();
-            });
-            
-            // 点击标记时显示详细信息
-            marker.addEventListener("click", function() {
-                console.log('Quick report marker clicked:', this.reportData.id);
-                // 关闭所有活动的信息窗口
-                if (this.infoWindow) this.infoWindow.close();
-                showReportDetails(this.reportData);
-            });
-            
-            // 保存infoWindow的引用到marker对象上
-            marker.infoWindow = infoWindow;
-            
-            // 添加到标记数组
-            markers.push(marker);
-            
-            // 将数据保存到Firebase（可选）
-            // 只有当需要持久化数据时才保存到Firebase
-            reportsRef.child(reportData.id.toString()).set(reportData)
-                .then(() => {
-                    console.log("Quick report saved to Firebase", reportData);
-                    
-                    // 增加用户报告计数
-                    incrementUserReportCount();
-                })
-                .catch((error) => {
-                    console.error("Error saving quick report to Firebase:", error);
-                    sendDanmaku(currentLang === 'zh' ? 
-                        '标记已添加到地图，但保存到服务器失败' : 
-                        'Marker added to map, but failed to save to server'
-                    );
+            try {
+                if (!map) return null;
+                
+                // 默认使用狗emoji作为标记
+                let emoji = "🐶"; // 默认使用狗的emoji
+                
+                // 根据描述可以选择不同表情(保留这部分以便未来可能需要的特殊情况处理)
+                if (description && (description.toLowerCase().includes('traffic') || description.toLowerCase().includes('交通'))) {
+                    emoji = "🚗";
+                } else if (description && (description.toLowerCase().includes('food') || description.toLowerCase().includes('餐'))) {
+                    emoji = "🍔";
+                } else if (description && (description.toLowerCase().includes('event') || description.toLowerCase().includes('活动'))) {
+                    emoji = "🎪";
+                } else if (description && (description.toLowerCase().includes('police') || description.toLowerCase().includes('警察'))) {
+                    emoji = "👮";
+                } else if (description && (description.toLowerCase().includes('accident') || description.toLowerCase().includes('事故'))) {
+                    emoji = "⚠️";
+                } else {
+                    // 其他所有情况均使用狗emoji
+                    emoji = "🐶";
+                }
+                
+                // 创建标记图标
+                const markerIcon = {
+                    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
+                        `<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 42 42">
+                            <circle cx="21" cy="21" r="20" fill="white" opacity="0.95"/>
+                            <text x="21" y="29" font-size="24" text-anchor="middle" fill="black">${emoji}</text>
+                        </svg>`
+                    ),
+                    scaledSize: new google.maps.Size(42, 42),
+                    anchor: new google.maps.Point(21, 21)
+                };
+                
+                // 创建标记数据对象
+                const reportData = {
+                    id: Date.now(), // 使用时间戳作为ID
+                    lat: location.lat,
+                    lng: location.lng,
+                    description: description,
+                    originalDescription: description,
+                    time: new Date().toISOString(),
+                    emoji: emoji,
+                    userName: document.getElementById('userDisplayName').textContent || (currentLang === 'zh' ? '用户' : 'User'),
+                    userId: currentUserId
+                };
+                
+                // 使用传统Marker API创建标记
+                const marker = new google.maps.Marker({
+                    position: location,
+                    map: map,
+                    icon: markerIcon,
+                    animation: google.maps.Animation.DROP,
+                    title: description,
+                    zIndex: 999
                 });
-            
-            return marker;
+                
+                // 将报告数据保存到标记
+                marker.reportData = reportData;
+                
+                // 创建信息窗口，在鼠标悬停时显示简短描述
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `<div style="max-width:200px;font-family:sans-serif;">
+                        <p style="margin:8px 0;font-weight:bold;">${emoji} ${description}</p>
+                        <p style="margin:5px 0;color:#666;font-size:12px;">👤 ${reportData.userName}</p>
+                        <p style="margin:5px 0;color:#777;font-size:11px;">${new Date(reportData.time).toLocaleString()}</p>
+                    </div>`
+                });
+                
+                // 鼠标悬停时显示信息窗口
+                marker.addListener('mouseover', function() {
+                    infoWindow.open(map, marker);
+                });
+                
+                marker.addListener('mouseout', function() {
+                    infoWindow.close();
+                });
+                
+                // 点击标记时显示详细信息
+                marker.addListener("click", function() {
+                    console.log('Quick report marker clicked:', this.reportData.id);
+                    // 关闭所有活动的信息窗口
+                    if (this.infoWindow) this.infoWindow.close();
+                    showReportDetails(this.reportData);
+                });
+                
+                // 保存infoWindow的引用到marker对象上
+                marker.infoWindow = infoWindow;
+                
+                // 添加到标记数组
+                markers.push(marker);
+                
+                // 将数据保存到Firebase（可选）
+                // 只有当需要持久化数据时才保存到Firebase
+                reportsRef.child(reportData.id.toString()).set(reportData)
+                    .then(() => {
+                        console.log("Quick report saved to Firebase", reportData);
+                        
+                        // 增加用户报告计数
+                        incrementUserReportCount();
+                    })
+                    .catch((error) => {
+                        console.error("Error saving quick report to Firebase:", error);
+                        sendDanmaku(currentLang === 'zh' ? 
+                            '标记已添加到地图，但保存到服务器失败' : 
+                            'Marker added to map, but failed to save to server'
+                        );
+                    });
+                
+                return marker;
+            } catch (error) {
+                console.error("添加快速报告标记时出错:", error, location, description);
+                // 显示错误消息
+                sendDanmaku(currentLang === 'zh' ? 
+                    '添加标记失败，请重试' : 
+                    'Failed to add marker, please try again'
+                );
+                return null;
+            }
         }
     </script>
     
