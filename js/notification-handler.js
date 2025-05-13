@@ -7,7 +7,7 @@
 // Uses Web Push API with Cloudflare Workers
 
 // Base URL for the API - change to your Cloudflare Worker URL
-const API_BASE_URL = 'https://ptvalert.your-subdomain.workers.dev';
+const API_BASE_URL = 'https://push-notification-service.qingyangzhou85.workers.dev/';
 
 // Current user ID - should be set by the main application
 let notificationUserId = '';
