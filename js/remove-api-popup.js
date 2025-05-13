@@ -30,9 +30,9 @@
         // 移除状态元素
         removeElementById('apiModeStatus');
         
-        // 移除可能包含状态元素的父容器
+        // 移除可能包含状态元素的父容器 - 仅检测包含"API模式:"文本的最小元素
         document.querySelectorAll('div').forEach(div => {
-            if (div.innerHTML && div.innerHTML.includes('API模式:')) {
+            if (div.innerHTML && div.innerHTML.includes('API模式:') && !isMainUIElement(div)) {
                 console.log('[彻底移除弹窗] 找到包含API模式文本的div，移除中...');
                 if (div.parentNode) {
                     div.parentNode.removeChild(div);
@@ -46,6 +46,30 @@
         
         // 覆盖掉js/api-mode-display.js中的函数，防止它再添加元素
         overrideApiDisplayFunctions();
+    }
+    
+    // 检查是否为页面主要UI元素，避免误删
+    function isMainUIElement(element) {
+        // 检查是否是地图容器
+        if (element.id === 'map') return true;
+        
+        // 检查是否是地图控制元素
+        if (element.classList.contains('map-control')) return true;
+        
+        // 检查是否是报告表单
+        if (element.id === 'reportForm') return true;
+        
+        // 检查是否是弹幕容器
+        if (element.id === 'danmakuContainer') return true;
+        
+        // 检查元素大小，API弹窗通常较小
+        const rect = element.getBoundingClientRect();
+        if (rect.width > 400 && rect.height > 300) return true;
+        
+        // 检查子元素数量，主要UI元素通常有多个子元素
+        if (element.children.length > 5) return true;
+        
+        return false;
     }
     
     // 按ID移除元素
@@ -100,7 +124,7 @@
         });
     }
     
-    // 设置DOM变化观察器
+    // 设置DOM变化观察器 - 只对API调试弹窗相关元素进行处理
     function setupMutationObserver() {
         // 如果已经有观察器，不重复创建
         if (window._apiPopupObserver) return;
@@ -121,8 +145,10 @@
                                 node.parentNode.removeChild(node);
                             }
                             
-                            // 检查是否包含API模式文本
-                            if (node.innerHTML && node.innerHTML.includes('API模式:')) {
+                            // 检查是否包含API模式文本，且不是主要UI元素
+                            if (node.innerHTML && 
+                                node.innerHTML.includes('API模式:') && 
+                                !isMainUIElement(node)) {
                                 console.log('[彻底移除弹窗] 监测到新增的包含API模式文本的元素，移除中...');
                                 node.parentNode.removeChild(node);
                             }
@@ -132,8 +158,8 @@
             });
         });
         
-        // 配置观察器
-        observer.observe(document, {
+        // 配置观察器 - 只观察body
+        observer.observe(document.body, {
             childList: true,     // 观察子节点的添加或删除
             subtree: true,       // 观察整个子树
             attributes: false,   // 不观察属性变化
@@ -145,7 +171,7 @@
         console.log('[彻底移除弹窗] DOM变化观察器已设置');
     }
     
-    // 覆盖api-mode-display.js中的关键函数
+    // 覆盖api-mode-display.js中的关键函数 - 使用CSS选择器精确定位
     function overrideApiDisplayFunctions() {
         // 确保全局对象存在
         window._overrideComplete = window._overrideComplete || false;
@@ -153,10 +179,13 @@
         // 避免重复覆盖
         if (window._overrideComplete) return;
         
-        // 添加CSS规则来隐藏弹窗
+        // 添加CSS规则来隐藏弹窗 - 使用更精确的选择器
         const style = document.createElement('style');
         style.textContent = `
-            #debugOutput, [id="debugOutput"] { 
+            #debugOutput, 
+            div[id="debugOutput"],
+            div:has(> #apiModeStatus),
+            div:has(> div:contains("API模式:")) { 
                 display: none !important; 
                 visibility: hidden !important; 
                 opacity: 0 !important;
@@ -166,6 +195,6 @@
         document.head.appendChild(style);
         
         window._overrideComplete = true;
-        console.log('[彻底移除弹窗] API显示函数已覆盖，并添加了CSS规则');
+        console.log('[彻底移除弹窗] API显示函数已覆盖，并添加了精确CSS规则');
     }
 })(); 

@@ -896,6 +896,84 @@
     </style>
 </head>
 <body>
-<div style="display:none;" id="app-root"></div>
+    <!-- 右上角语言切换按钮 -->
+    <button id="langSwitchBtn" style="position:fixed;top:18px;right:18px;z-index:1001;background:rgba(255,255,255,0.8);color:#333;border-radius:20px;padding:6px 12px;font-size:14px;font-weight:bold;box-shadow:0 2px 12px rgba(0,0,0,0.18);border:2px solid #0071e3;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.2s,border 0.2s;">
+      <span style="font-size:16px;">🌐</span>
+      <span id="langSwitchText">EN</span>
+    </button>
+    
+    <!-- 用户菜单 -->
+    <div id="userMenu" class="user-menu">
+      <span style="font-size:16px;">👤</span>
+      <span id="userDisplayName" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">用户</span>
+      <div class="user-menu-dropdown" id="userMenuDropdown">
+        <div class="user-menu-item" id="profileMenuItem">个人资料</div>
+        <div class="user-menu-item logout" id="logoutMenuItem">退出登录</div>
+      </div>
+    </div>
+    
+    <!-- 添加弹幕容器 -->
+    <div class="danmaku-container" id="danmakuContainer"></div>
+    
+    <!-- 地图容器 -->
+    <div id="map"></div>
+    
+    <!-- 地图控制 -->
+    <div class="map-control">
+        <div style="display:flex;gap:10px;margin-bottom:10px;">
+            <a href="#" class="add-report-btn" id="addReportBtn">+ 添加报告</a>
+            <a href="#" class="add-report-btn" id="quickAddBtn" style="background-color:#34c759;">+ 直接添加描述</a>
+        </div>
+        <span id="addReportTip" style="display:none;color:#ffb300;font-size:14px;margin-left:10px;">请在地图上点选位置</span>
+    </div>
+    
+    <!-- 推送通知按钮 -->
+    <div style="position:fixed;bottom:100px;right:20px;z-index:2000;">
+        <button id="requestPushPermission" style="background-color:#0071e3;color:white;border:none;padding:10px 15px;border-radius:8px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;gap:6px;">
+            <span style="font-size:20px;">🔔</span>
+            <span id="pushBtnText">启用推送通知</span>
+        </button>
+    </div>
+    
+    <!-- 报告计数器弹窗 -->
+    <div class="report-counter-popup" id="reportCounterPopup">
+        <h3 id="reportSuccessTitle">报告提交成功!</h3>
+        <p id="reportCounterText">您已累计提交 <span class="counter-value" id="reportCountValue">1</span> 次报告</p>
+        <button class="close-counter-popup" id="closeCounterPopup">确定</button>
+    </div>
+    
+    <!-- 报告表单 -->
+    <div class="report-form" id="reportForm">
+        <div class="form-header">
+            <h2 class="form-title" id="formTitle">新报告</h2>
+            <button class="form-close" id="formClose" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;">&times;</button>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" id="photoLabel">照片</label>
+            <div class="image-preview" style="width:100%;height:200px;border-radius:8px;background-color:#2c2c2e;display:flex;align-items:center;justify-content:center;margin-bottom:15px;overflow:hidden;position:relative;cursor:pointer;">
+                <img src="" class="preview-img" id="previewImg" style="max-width:100%;max-height:100%;display:none;">
+                <span class="image-placeholder" id="imagePlaceholder">点击添加照片</span>
+                <input type="file" id="imageInput" accept="image/*" style="position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" id="descLabel">描述</label>
+            <textarea class="form-textarea" id="descriptionInput" placeholder="请描述您看到的情况..." style="width:100%;padding:12px;border-radius:8px;border:1px solid #444;background-color:#2c2c2e;color:#fff;font-size:16px;min-height:100px;resize:vertical;"></textarea>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+                <button id="geocodeLocationBtn" style="padding:6px 12px;background-color:#0077cc;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;">根据描述定位</button>
+                <button id="currentLocationBtn" style="padding:6px 12px;margin-left:8px;background-color:#34c759;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;">使用当前位置</button>
+                <span style="font-size:12px;color:#999;margin-left:8px;flex:1;text-align:right;">提示: 输入地点描述后点击，或使用Ctrl+Enter快捷键</span>
+            </div>
+            <div id="geocodeStatus" style="margin-top:5px;font-size:14px;color:#ffcc00;display:none;"></div>
+        </div>
+        
+        <div style="display:flex;gap:10px;margin-top:15px;">
+            <button class="submit-btn" id="submitReport" style="flex:1;background-color:#0071e3;color:white;border:none;padding:14px;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;">确定</button>
+            <button class="reset-location-btn" id="resetLocationBtn" style="flex:1;background-color:#ffc107;color:#000;border:none;padding:14px;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;">重新选点</button>
+            <button class="cancel-btn" id="cancelReport" style="flex:1;background-color:#3a3a3c;color:white;border:none;padding:14px;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;">取消</button>
+        </div>
+    </div>
 </body>
 </html>
