@@ -1,28 +1,30 @@
 // 推送通知Service Worker
 const CACHE_NAME = 'ptvalert-cache-v3';
 const APP_NAME = '网站地图标记';
-const APP_VERSION = '1.0.3';
+const APP_VERSION = '1.0.4';
 
-// 要缓存的资源 - 修正路径问题
+// 要缓存的资源 - 使用相对路径以兼容GitHub Pages
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/offline.html',
-  '/push-client.js',
-  '/styles.css',
+  './',
+  './index.html',
+  './manifest.json',
+  './offline.html',
+  './push-client.js',
+  './styles.css',
+  './js/notification-handler.js',
+  './js/url-fix.js',
   // 图标和图片 - 不存在的资源先注释掉
   /*
-  '/images/icon-72x72.png',
-  '/images/icon-96x96.png',
-  '/images/icon-128x128.png',
-  '/images/icon-144x144.png',
-  '/images/icon-152x152.png',
-  '/images/icon-192x192.png',
-  '/images/icon-384x384.png',
-  '/images/icon-512x512.png',
-  '/images/badge-72x72.png',
-  '/images/offline-image.png'
+  './images/icon-72x72.png',
+  './images/icon-96x96.png',
+  './images/icon-128x128.png',
+  './images/icon-144x144.png',
+  './images/icon-152x152.png',
+  './images/icon-192x192.png',
+  './images/icon-384x384.png',
+  './images/icon-512x512.png',
+  './images/badge-72x72.png',
+  './images/offline-image.png'
   */
 ];
 

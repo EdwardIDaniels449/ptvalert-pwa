@@ -55,6 +55,47 @@
         }
     }
     
+    // 检查API域名是否可访问
+    async function checkApiServer() {
+        try {
+            // 尝试ping API服务器
+            console.log('正在检查API服务器连接...');
+            
+            // 使用HEAD请求检查服务器是否可达
+            // 使用随机参数防止缓存
+            const pingUrl = `https://ptvalert.pages.dev/favicon.ico?nocache=${Date.now()}`;
+            console.log(`Ping URL: ${pingUrl}`);
+            
+            try {
+                const response = await fetch(pingUrl, {
+                    method: 'HEAD',
+                    mode: 'cors',
+                    cache: 'no-cache'
+                });
+                
+                if (response.ok || response.status === 204) {
+                    console.log('API服务器可达:', response.status);
+                    return true;
+                } else {
+                    console.warn(`API服务器返回状态码: ${response.status}`);
+                    return false;
+                }
+            } catch (error) {
+                console.error('API服务器连接失败:', error);
+                
+                // 显示错误通知
+                setTimeout(() => {
+                    alert(`连接到API服务器失败: ${error.message}\n\n请检查你的网络连接，或者API服务器可能暂时不可用。`);
+                }, 1000);
+                
+                return false;
+            }
+        } catch (e) {
+            console.error('检查API服务器失败:', e);
+            return false;
+        }
+    }
+    
     // 修复API_BASE_URL
     function fixApiBaseUrl() {
         try {
@@ -89,6 +130,55 @@
         }
     }
     
+    // 修复GitHub Pages上的Service Worker路径
+    function fixServiceWorkerPath() {
+        try {
+            // 检查是否在GitHub Pages上
+            const isGitHubPages = window.location.hostname.includes('github.io');
+            
+            if (isGitHubPages) {
+                console.log('检测到GitHub Pages环境，添加Service Worker路径修复');
+                
+                // 添加补丁脚本
+                const script = document.createElement('script');
+                script.textContent = `
+                    // 修复GitHub Pages上的Service Worker注册
+                    if ('serviceWorker' in navigator) {
+                        // 覆盖原始的serviceWorker.register方法
+                        const originalRegister = navigator.serviceWorker.register;
+                        navigator.serviceWorker.register = function(scriptURL, options) {
+                            console.warn('拦截Service Worker注册，原始路径:', scriptURL);
+                            
+                            // 修改为相对路径
+                            let fixedScriptURL = scriptURL;
+                            if (scriptURL.startsWith('/')) {
+                                fixedScriptURL = '.' + scriptURL;
+                                console.warn('修复为相对路径:', fixedScriptURL);
+                            }
+                            
+                            // 修改作用域为相对路径
+                            let fixedOptions = options || {};
+                            if (fixedOptions.scope && fixedOptions.scope === '/') {
+                                fixedOptions.scope = './';
+                                console.warn('修复作用域为相对路径:', fixedOptions.scope);
+                            }
+                            
+                            // 使用修复后的参数调用原始方法
+                            return originalRegister.call(this, fixedScriptURL, fixedOptions);
+                        };
+                    }
+                `;
+                document.head.appendChild(script);
+                return true;
+            }
+            
+            return false;
+        } catch (e) {
+            console.error('修复Service Worker路径失败:', e);
+            return false;
+        }
+    }
+    
     // 监听控制台错误
     function setupErrorListener() {
         try {
@@ -103,6 +193,18 @@
                     fixApiBaseUrl();
                 }
                 
+                // 检查是否有404错误
+                if (errorText.includes('404') && errorText.includes('service-worker.js')) {
+                    console.warn('检测到Service Worker 404错误，尝试修复...');
+                    fixServiceWorkerPath();
+                }
+                
+                // 检查DNS解析错误
+                if (errorText.includes('ERR_NAME_NOT_RESOLVED') && errorText.includes('ptvalert.pages.dev')) {
+                    console.warn('检测到API域名DNS解析错误!');
+                    checkApiServer();
+                }
+                
                 // 调用原始的console.error
                 oldConsoleError.apply(console, args);
             };
@@ -114,11 +216,15 @@
     
     // 初始化
     async function initialize() {
+        // 立即执行GitHub Pages路径修复
+        fixServiceWorkerPath();
+        
         // 等待页面完全加载
         if (document.readyState === 'complete') {
             console.log('页面已完全加载，开始URL修复');
             await clearServiceWorkerAndCache();
             fixApiBaseUrl();
+            await checkApiServer();
             setupErrorListener();
         } else {
             console.log('等待页面加载完成...');
@@ -126,6 +232,7 @@
                 console.log('页面已加载，开始URL修复');
                 await clearServiceWorkerAndCache();
                 fixApiBaseUrl();
+                await checkApiServer();
                 setupErrorListener();
             });
         }

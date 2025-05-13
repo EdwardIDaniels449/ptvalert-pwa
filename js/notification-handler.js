@@ -44,8 +44,8 @@ async function initNotifications() {
     }
     
     // Register service worker - use relative path for GitHub Pages compatibility
-    const registration = await navigator.serviceWorker.register('/service-worker.js', {
-      scope: '/'
+    const registration = await navigator.serviceWorker.register('./service-worker.js', {
+      scope: './'
     });
     
     console.log('Service Worker registered with scope:', registration.scope);
