@@ -5,7 +5,7 @@
 
 // Web Push 公钥 - 用于订阅推送服务
 // 在实际应用中，这应该替换为您的VAPID公钥
-const applicationServerPublicKey = 'BDPPAJUQVQaAFHFm7qc-Fzj6m9jQLgK90YAl-JDxZ9j5_DJIVg47iDoFw9MVeAvQwbPAXoP_j-B9YOZq4d5g4qI';
+const applicationServerPublicKey = 'BFpa0WyDaUOEPw7iKaxLHjf1yReNiMXHdSh4t3PBXq962LCjQmpeFKs63PDhwd_F5kPqi7PsI6KGpIoXsaXMJ70';
 
 let isSubscribed = false;
 let swRegistration = null;
