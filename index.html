@@ -10,6 +10,112 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PtvAlert">
     
+    <!-- 全局变量修复脚本 - 必须最先加载 -->
+    <script src="./js/globals-fix.js"></script>
+    
+    <!-- URL诊断和修复脚本 - 最先执行 -->
+    <script>
+        (function() {
+            console.log('[URL诊断] 开始检查URL和网络问题');
+            
+            // 定义全局调试对象
+            window._ptvalert_debug = {
+                errors: [],
+                warnings: [],
+                fixes: []
+            };
+            
+            function logDebug(type, message) {
+                console.log(`[URL诊断] ${type}: ${message}`);
+                if (type === 'ERROR') window._ptvalert_debug.errors.push(message);
+                if (type === 'WARN') window._ptvalert_debug.warnings.push(message);
+                if (type === 'FIX') window._ptvalert_debug.fixes.push(message);
+            }
+            
+            // 检查当前环境
+            const hostname = window.location.hostname;
+            logDebug('INFO', `当前主机名: ${hostname}`);
+            
+            const isGithubPages = hostname.includes('github.io');
+            if (isGithubPages) {
+                logDebug('INFO', '检测到GitHub Pages环境');
+                
+                // 从URL中获取仓库名
+                const pathSegments = window.location.pathname.split('/');
+                let repoName = '';
+                
+                if (pathSegments.length >= 2 && pathSegments[1]) {
+                    repoName = pathSegments[1];
+                    logDebug('INFO', `检测到仓库名: ${repoName}`);
+                    
+                    // 设置全局变量供其他脚本使用
+                    window.GITHUB_PAGES_BASE_PATH = '/' + repoName + '/';
+                    window.IS_GITHUB_PAGES = true;
+                }
+                
+                // 预先定义API_BASE_URL使用当前域名
+                window.API_BASE_URL = 'https://' + hostname;
+                logDebug('FIX', `已提前设置API_BASE_URL = ${window.API_BASE_URL}`);
+            }
+            
+            // 为控制台添加诊断命令
+            window.showPtvAlertDiagnostics = function() {
+                console.log('===== PtvAlert 诊断信息 =====');
+                console.log('当前URL:', window.location.href);
+                console.log('主机名:', hostname);
+                console.log('GitHub Pages:', isGithubPages ? '是' : '否');
+                
+                if (window._ptvalert_debug.errors.length > 0) {
+                    console.log('\n错误:');
+                    window._ptvalert_debug.errors.forEach(err => console.log('- ' + err));
+                }
+                
+                if (window._ptvalert_debug.warnings.length > 0) {
+                    console.log('\n警告:');
+                    window._ptvalert_debug.warnings.forEach(warn => console.log('- ' + warn));
+                }
+                
+                if (window._ptvalert_debug.fixes.length > 0) {
+                    console.log('\n已应用修复:');
+                    window._ptvalert_debug.fixes.forEach(fix => console.log('- ' + fix));
+                }
+                
+                console.log('\nAPI配置:');
+                console.log('API_BASE_URL =', window.API_BASE_URL || '未定义');
+                
+                if (window.PUSH_CONFIG) {
+                    console.log('PUSH_CONFIG.SERVER_URL =', window.PUSH_CONFIG.SERVER_URL);
+                }
+                
+                console.log('\nGitHub Pages配置:');
+                console.log('IS_GITHUB_PAGES =', window.IS_GITHUB_PAGES || false);
+                console.log('GITHUB_PAGES_BASE_PATH =', window.GITHUB_PAGES_BASE_PATH || '未定义');
+                
+                console.log('\n服务工作线程:');
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(regs => {
+                        if (regs.length === 0) {
+                            console.log('未注册Service Worker');
+                        } else {
+                            regs.forEach(reg => {
+                                console.log(`Service Worker已注册: ${reg.scope}`);
+                                console.log(`状态: ${reg.active ? '活动' : reg.installing ? '安装中' : reg.waiting ? '等待' : '未知'}`);
+                            });
+                        }
+                    });
+                } else {
+                    console.log('此浏览器不支持Service Worker');
+                }
+                
+                console.log('===== 诊断结束 =====');
+                console.log('如需帮助请在控制台运行: showPtvAlertDiagnostics()');
+            };
+            
+            // 输出诊断提示
+            console.log('[URL诊断] 诊断完成。如需查看详细信息，请在控制台运行: showPtvAlertDiagnostics()');
+        })();
+    </script>
+    
     <!-- 紧急内联修复GitHub Pages的路径问题 -->
     <script>
         (function() {
