@@ -4,9 +4,13 @@
  */
 
 // Web Push 公钥 - 用于订阅推送服务
-// VAPID 公钥 - 确保这个公钥与 Cloudflare Worker 环境变量中设置的值相同
-// 从浏览器重新获取标准base64格式的公钥
-const applicationServerPublicKey = 'BLdQtij_ZMZjFEQn9W6VMcQPGmrpuQyvmJ7syUYym4JwIFjVgzuQJd1rRBoQdP5ruAEEw_RsGIgY2xLYwYnF968';
+// 已经处理为二进制格式，不需要解码
+const applicationServerKey = new Uint8Array([
+  4, 183, 80, 182, 40, 255, 100, 198, 99, 20, 68, 39, 245, 110, 149, 49, 196, 15, 26, 106, 
+  233, 185, 12, 175, 152, 158, 236, 200, 70, 50, 155, 130, 112, 32, 88, 213, 131, 59, 144, 
+  37, 221, 107, 68, 26, 16, 116, 254, 107, 184, 1, 4, 195, 244, 108, 24, 136, 24, 219, 18, 
+  216, 193, 137, 197, 239, 175
+]);
 
 let isSubscribed = false;
 let swRegistration = null;
@@ -93,8 +97,11 @@ function showNotificationPrompt() {
 function subscribeUserToPush() {
   try {
     console.log('开始订阅推送...');
-    const applicationServerKey = urlB64ToUint8Array(applicationServerPublicKey);
-    console.log('应用服务器密钥转换成功:', applicationServerKey.length, '字节');
+    
+    // 直接使用预定义的applicationServerKey
+    // 这是已经转换为Uint8Array的VAPID公钥
+    // 绕过了base64解码的步骤，避免出现atob解码错误
+    console.log('使用预定义的应用服务器密钥:', applicationServerKey.length, '字节');
     
     // 清除任何现有的订阅
     swRegistration.pushManager.getSubscription()
@@ -254,35 +261,6 @@ function deleteSubscriptionFromServer(subscription) {
   .catch(error => {
     console.error('删除订阅失败:', error);
   });
-}
-
-/**
- * 将base64字符串转换为Unit8Array
- * 这是WebPush API需要的格式
- * @param {string} base64String - base64编码的字符串
- * @return {Uint8Array} - 转换后的数组
- */
-function urlB64ToUint8Array(base64String) {
-  try {
-    // 使用更安全的方法，完全重写这个函数
-    console.log('尝试解码VAPID公钥:', base64String);
-    
-    // 使用固定的公钥返回硬编码的值
-    // 这是一个临时解决方案，确保推送通知可以工作
-    const hardcodedKey = new Uint8Array([
-      4, 183, 80, 182, 40, 255, 100, 198, 99, 20, 68, 39, 245, 110, 149, 49, 196, 15, 26, 106, 233, 185, 12, 175, 152, 158, 236, 200, 70, 50, 155, 130, 112, 32, 88, 213, 131, 59, 144, 37, 221, 107, 68, 26, 16, 116, 254, 107, 184, 1, 4, 195, 244, 108, 24, 136, 24, 219, 18, 216, 193, 137, 197, 239, 175
-    ]);
-    
-    console.log('使用硬编码的密钥:', hardcodedKey);
-    return hardcodedKey;
-  } catch (error) {
-    console.error('处理VAPID密钥时出错:', error);
-    // 仍然返回硬编码的密钥，确保函数不会失败
-    const hardcodedKey = new Uint8Array([
-      4, 183, 80, 182, 40, 255, 100, 198, 99, 20, 68, 39, 245, 110, 149, 49, 196, 15, 26, 106, 233, 185, 12, 175, 152, 158, 236, 200, 70, 50, 155, 130, 112, 32, 88, 213, 131, 59, 144, 37, 221, 107, 68, 26, 16, 116, 254, 107, 184, 1, 4, 195, 244, 108, 24, 136, 24, 219, 18, 216, 193, 137, 197, 239, 175
-    ]);
-    return hardcodedKey;
-  }
 }
 
 // 注册周期性后台同步
