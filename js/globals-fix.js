@@ -112,6 +112,15 @@
         // 覆盖全局fetch函数
         const originalFetch = window.fetch;
         window.fetch = function(url, options = {}) {
+            // 检查是否有cloudflareConfig
+            const cloudflareConfig = window.cloudflareConfig || {};
+            const useRealApi = cloudflareConfig.useRealApi === true;
+            
+            // 如果设置了useRealApi且不在GitHub Pages环境，或者不是API请求，则使用原始fetch
+            if (useRealApi || !isGitHubPages) {
+                return originalFetch.apply(this, arguments);
+            }
+            
             // 仅处理相对路径或指向当前域名的API请求
             const urlStr = url.toString();
             

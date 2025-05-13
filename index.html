@@ -982,11 +982,23 @@
         
         // 定义Cloudflare API配置
         const cloudflareConfig = {
-            apiUrl: 'https://ptvalert.pages.dev',
+            apiUrl: 'https://ptvalert.pages.dev', // 你的实际Cloudflare Worker URL
             dataEndpoint: '/api/reports',
             syncEndpoint: '/api/sync-from-firebase',
-            notificationEndpoint: '/api/send-notification'
+            notificationEndpoint: '/api/send-notification',
+            apiKey: 'your-secure-api-key-here', // 添加API密钥用于认证
+            useRealApi: true // 设置为true使用真实API，false使用模拟响应
         };
+        
+        /*
+         * 要使用真实的Cloudflare通信和推送通知，你需要:
+         * 1. 在Cloudflare Workers上部署适当的API端点
+         * 2. 设置cloudflareConfig.apiUrl为你的Worker URL
+         * 3. 生成并配置安全的API密钥
+         * 4. 确保cloudflareConfig.useRealApi设置为true
+         * 5. 生成并配置VAPID密钥用于Web Push API
+         * 6. 在notification-handler.js中更新vapidPublicKey
+         */
         
         // 初始化Firebase
         if (!firebase.apps.length) {
@@ -2452,11 +2464,19 @@
         function directSyncToCloudflare(reportData) {
             console.log("正在直接同步到Cloudflare API...", reportData.id);
             
+            // 准备请求头
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            // 如果存在API密钥，添加到认证头
+            if (cloudflareConfig.apiKey) {
+                headers['Authorization'] = `Bearer ${cloudflareConfig.apiKey}`;
+            }
+            
             return fetch(`${cloudflareConfig.apiUrl}${cloudflareConfig.dataEndpoint}/${reportData.id}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: headers,
                 body: JSON.stringify(reportData)
             })
             .then(response => {
@@ -2495,28 +2515,72 @@
         function sendNotificationForReport(reportData) {
             console.log("为报告发送通知...", reportData);
             
-            fetch(`${cloudflareConfig.apiUrl}/api/send-notification`, {
+            // 准备请求头
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            
+            // 如果存在API密钥，添加到认证头
+            if (cloudflareConfig.apiKey) {
+                headers['Authorization'] = `Bearer ${cloudflareConfig.apiKey}`;
+            }
+            
+            // 只有在设置了useRealApi才发送真实通知，否则模拟
+            if (!cloudflareConfig.useRealApi && window.location.hostname.includes('github.io')) {
+                console.log("GitHub Pages环境模拟通知发送");
+                sendDanmaku(currentLang === 'zh' ? 
+                    '模拟通知已发送' : 
+                    'Simulated notification sent'
+                );
+                return Promise.resolve({ success: true, message: '模拟通知发送成功' });
+            }
+            
+            return fetch(`${cloudflareConfig.apiUrl}/api/send-notification`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: headers,
                 body: JSON.stringify({
                     markerId: reportData.id,
-                    markerData: reportData
+                    markerData: reportData,
+                    notification: {
+                        title: '新报告添加',
+                        body: reportData.description || (currentLang === 'zh' ? '新的地图标记' : 'New map marker'),
+                        icon: './images/icon-192x192.png',
+                        badge: './images/badge-72x72.png',
+                        data: {
+                            markerId: reportData.id,
+                            time: Date.now()
+                        },
+                        requireInteraction: true,
+                        vibrate: [200, 100, 200],
+                        actions: [
+                            { action: 'view', title: currentLang === 'zh' ? '查看' : 'View' }
+                        ]
+                    }
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                console.log("通知发送结果:", data);
-                
-                // 显示成功消息
-                sendDanmaku(currentLang === 'zh' ? 
-                    '报告已保存并发送通知' : 
-                    'Report saved and notification sent'
-                );
+            .then(response => {
+                console.log("通知发送结果:", response.status);
+                if (response.ok) {
+                    sendDanmaku(currentLang === 'zh' ? 
+                        '报告已保存并发送通知' : 
+                        'Report saved and notification sent'
+                    );
+                    return { success: true, message: '通知发送成功' };
+                } else {
+                    sendDanmaku(currentLang === 'zh' ? 
+                        '保存报告并发送通知失败' : 
+                        'Failed to save report and send notification'
+                    );
+                    return { success: false, message: '通知发送失败' };
+                }
             })
-            .catch((error) => {
+            .catch(error => {
                 console.error("发送通知失败:", error);
+                sendDanmaku(currentLang === 'zh' ? 
+                    '发送通知时出错' : 
+                    'Error sending notification'
+                );
+                return { success: false, message: '通知发送失败' };
             });
         }
         
@@ -2524,25 +2588,53 @@
         function saveReportToCloudflare(reportData) {
             console.log("Saving report to Cloudflare Workers...", reportData);
             
-            fetch(`${cloudflareConfig.apiUrl}${cloudflareConfig.dataEndpoint}`, {
+            // 准备请求头
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            
+            // 如果存在API密钥，添加到认证头
+            if (cloudflareConfig.apiKey) {
+                headers['Authorization'] = `Bearer ${cloudflareConfig.apiKey}`;
+            }
+            
+            // 只有在设置了useRealApi且不在GitHub Pages环境时才使用真实API
+            if (!cloudflareConfig.useRealApi && window.location.hostname.includes('github.io')) {
+                console.log("GitHub Pages环境模拟数据保存");
+                
+                // 为了兼容性，保存到Firebase
+                saveReportToFirebase(reportData);
+                
+                // 发送通知
+                sendNotificationForReport(reportData);
+                
+                return Promise.resolve({ success: true, message: '模拟保存成功' });
+            }
+            
+            return fetch(`${cloudflareConfig.apiUrl}${cloudflareConfig.dataEndpoint}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: headers,
                 body: JSON.stringify(reportData)
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP错误 ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
             .then(data => {
-                console.log("Quick report saved to Cloudflare Workers", data);
+                console.log("报告已保存到Cloudflare Workers", data);
                 
                 // 为了兼容性，同时保存到Firebase
                 saveReportToFirebase(reportData);
                 
                 // 发送通知
                 sendNotificationForReport(reportData);
+                
+                return data;
             })
             .catch((error) => {
-                console.error("Error saving quick report to Cloudflare:", error);
+                console.error("保存报告到Cloudflare失败:", error);
                 
                 // 错误时回退到Firebase
                 saveReportToFirebase(reportData);
@@ -2551,6 +2643,8 @@
                     '保存到Cloudflare失败，已回退到Firebase' : 
                     'Failed to save to Cloudflare, fallback to Firebase'
                 );
+                
+                throw error;
             });
         }
         

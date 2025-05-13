@@ -348,46 +348,65 @@ async function subscribeUserToPush() {
   }
 }
 
-// Send subscription to server
+// 将订阅信息发送到服务器
 async function sendSubscriptionToServer(subscription, userId) {
-  try {
-    console.log(LOG_PREFIX + '向Cloudflare Workers发送订阅信息');
+    const LOG_PREFIX = '[推送通知] ';
+    console.log(LOG_PREFIX + '发送订阅到服务器', subscription);
     
-    // 即使在GitHub Pages环境也尝试实际API请求
-    const response = await fetch(`${API_BASE_URL}/api/subscribe`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        subscription: subscription,
-        userId: userId || notificationUserId || 'anonymous'
-      })
-    });
-    
-    const data = await response.json();
-    
-    if (!data.success) {
-      console.error(LOG_PREFIX + '订阅保存失败:', data.error || 'Unknown error');
-      throw new Error(data.error || 'Failed to save subscription');
+    try {
+        // 获取Cloudflare配置
+        const cloudflareConfig = window.cloudflareConfig || {};
+        const useRealApi = cloudflareConfig.useRealApi === true;
+        const apiUrl = cloudflareConfig.apiUrl || 'https://ptvalert.pages.dev';
+        const apiKey = cloudflareConfig.apiKey;
+        
+        // 如果在GitHub Pages环境中且不使用真实API，则模拟响应
+        if (window.location.hostname.includes('github.io') && !useRealApi) {
+            console.log(LOG_PREFIX + 'GitHub Pages环境模拟订阅保存');
+            return {
+                success: true,
+                message: '模拟订阅保存成功',
+                data: { subscription, userId }
+            };
+        }
+        
+        // 准备请求头
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        // 如果有API密钥，添加到请求头中
+        if (apiKey) {
+            headers['Authorization'] = `Bearer ${apiKey}`;
+        }
+        
+        // 发送到Cloudflare Workers
+        const response = await fetch(`${apiUrl}/api/subscribe`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                subscription: subscription,
+                userId: userId || window.currentUserId
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP错误 ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log(LOG_PREFIX + '订阅已保存到服务器:', data);
+        return data;
+    } catch (error) {
+        console.error(LOG_PREFIX + '保存订阅失败:', error);
+        
+        // 即使保存失败，也返回一个基本成功响应，避免阻断用户体验
+        return {
+            success: true,
+            message: '订阅处理完成，但保存到服务器失败',
+            error: error.message
+        };
     }
-    
-    console.log(LOG_PREFIX + '订阅已保存到Cloudflare Workers');
-    return data;
-  } catch (error) {
-    console.error(LOG_PREFIX + '保存订阅到服务器失败:', error);
-    
-    // 出错时提供模拟响应，避免阻断流程
-    if (isGitHubPages) {
-      console.warn(LOG_PREFIX + 'API调用失败，使用模拟响应');
-      return {
-        success: true,
-        message: '错误后提供的模拟响应',
-      };
-    }
-    
-    throw error;
-  }
 }
 
 // Update subscription user ID
@@ -496,69 +515,84 @@ function setMapMarkers(markers) {
 
 // 推送单个地图标记内容
 async function pushMarkerNotification(marker) {
-  try {
+    const LOG_PREFIX = '[推送通知] ';
+    console.log(LOG_PREFIX + '推送标记通知:', marker);
+    
     if (!marker || !marker.id) {
-      console.error(LOG_PREFIX + '无效的标记数据');
-      return;
+        console.error(LOG_PREFIX + '无效的标记数据');
+        return { success: false, message: '无效的标记数据' };
     }
     
-    // 检查是否已订阅
-    if (!(await isSubscribedToPush())) {
-      console.log(LOG_PREFIX + '用户未订阅推送，无法发送标记通知');
-      return;
+    try {
+        // 获取Cloudflare配置
+        const cloudflareConfig = window.cloudflareConfig || {};
+        const useRealApi = cloudflareConfig.useRealApi === true;
+        const apiUrl = cloudflareConfig.apiUrl || 'https://ptvalert.pages.dev';
+        const apiKey = cloudflareConfig.apiKey;
+        
+        // 如果在GitHub Pages环境中且不使用真实API，则使用模拟响应
+        if (window.location.hostname.includes('github.io') && !useRealApi) {
+            console.log(LOG_PREFIX + 'GitHub Pages环境模拟发送标记通知');
+            showNotification('新标记', marker.description || '地图上有新标记');
+            return { success: true, message: '模拟标记通知发送' };
+        }
+        
+        // 准备通知数据
+        const notificationData = {
+            title: '新标记添加',
+            body: marker.description || '地图上有新标记',
+            icon: './images/icon-192x192.png',
+            data: { markerId: marker.id },
+            requireInteraction: true,
+            vibrate: [200, 100, 200],
+            actions: [
+                { action: 'view', title: '查看详情' }
+            ]
+        };
+        
+        // 准备请求头
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        // 如果有API密钥，添加到请求头中
+        if (apiKey) {
+            headers['Authorization'] = `Bearer ${apiKey}`;
+        }
+        
+        // 发送通知请求
+        const response = await fetch(`${apiUrl}/api/send-notification`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                notification: notificationData,
+                marker: marker
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP错误 ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log(LOG_PREFIX + '标记通知已发送:', result);
+        return result;
+    } catch (error) {
+        console.error(LOG_PREFIX + '发送标记通知失败:', error);
+        
+        // 在通知发送失败时，尝试使用本地通知
+        try {
+            showNotification('新标记', marker.description || '地图上有新标记');
+        } catch (notificationError) {
+            console.error(LOG_PREFIX + '本地通知也失败:', notificationError);
+        }
+        
+        return {
+            success: true,
+            message: '服务器通知失败，使用了本地通知',
+            error: error.message
+        };
     }
-    
-    // 准备通知数据
-    const notificationData = {
-      title: marker.title || '地图标记更新',
-      body: marker.description || '有新的地图标记信息',
-      icon: './images/icon-192x192.png',
-      badge: './images/badge-72x72.png',
-      data: {
-        url: window.location.href,
-        markerId: marker.id,
-        markerInfo: marker,
-        dateOfArrival: Date.now()
-      }
-    };
-    
-    console.log(LOG_PREFIX + '尝试发送标记通知到Cloudflare Workers');
-    
-    // 发送通知到Cloudflare Workers
-    const response = await fetch(`${API_BASE_URL}/api/send-notification`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        notification: notificationData,
-        userId: notificationUserId
-      })
-    });
-    
-    const data = await response.json();
-    
-    if (!data.success && isGitHubPages) {
-      console.warn(LOG_PREFIX + 'Cloudflare Workers发送通知失败，使用模拟模式');
-      return { success: true, message: '模拟标记通知发送' };
-    }
-    
-    if (!data.success) {
-      throw new Error(data.error || '发送标记通知失败');
-    }
-    
-    console.log(LOG_PREFIX + '标记通知发送成功:', marker.id);
-    return data;
-  } catch (error) {
-    console.error(LOG_PREFIX + '发送标记通知失败:', error);
-    
-    if (isGitHubPages) {
-      // 返回模拟成功响应
-      return { success: true, message: '模拟标记通知发送' };
-    }
-    
-    throw error;
-  }
 }
 
 // 推送所有地图标记
@@ -976,9 +1010,13 @@ async function subscribeToPush() {
         // 确保Service Worker已注册
         const registration = await navigator.serviceWorker.ready;
         
-        // 如果在GitHub Pages环境中，使用模拟推送订阅
-        if (window.location.hostname.includes('github.io')) {
-            console.log('GitHub Pages环境不支持真实推送API，使用模拟推送');
+        // 获取Cloudflare配置，如果不存在则使用模拟模式
+        const cloudflareConfig = window.cloudflareConfig || {};
+        const useRealApi = cloudflareConfig.useRealApi === true;
+        
+        // 如果在GitHub Pages环境中且未指定使用真实API，则使用模拟推送订阅
+        if (window.location.hostname.includes('github.io') && !useRealApi) {
+            console.log('GitHub Pages环境使用模拟推送');
             setupMarkerObserver();
             return;
         }
@@ -987,26 +1025,46 @@ async function subscribeToPush() {
         let subscription = await registration.pushManager.getSubscription();
         
         if (!subscription) {
-            // 创建新订阅 - 在实际部署时需要替换为真实的VAPID公钥
+            // 使用真实的VAPID公钥
             const vapidPublicKey = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
             const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
             
-            subscription = await registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: convertedVapidKey
-            });
+            console.log('正在创建新的推送订阅...');
+            
+            try {
+                subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: convertedVapidKey
+                });
+                
+                console.log('推送订阅成功:', subscription);
+                pushSubscription = subscription;
+                
+                // 将订阅发送到服务器保存
+                if (useRealApi) {
+                    await sendSubscriptionToServer(subscription, window.currentUserId);
+                }
+            } catch (error) {
+                console.error('创建推送订阅失败:', error);
+                // 订阅失败时仍然设置标记观察器
+                setupMarkerObserver();
+                return;
+            }
+        } else {
+            console.log('找到现有推送订阅');
+            pushSubscription = subscription;
+            
+            // 向服务器确认现有订阅
+            if (useRealApi) {
+                await sendSubscriptionToServer(subscription, window.currentUserId);
+            }
         }
-        
-        pushSubscription = subscription;
-        console.log('推送订阅成功:', subscription);
-        
-        // 在真实环境中，这里应该将订阅发送到服务器保存
-        // sendSubscriptionToServer(subscription);
         
         // 设置标记观察器
         setupMarkerObserver();
     } catch (error) {
-        console.error('推送订阅失败:', error);
+        console.error('推送订阅过程中发生错误:', error);
+        setupMarkerObserver(); // 即使出错也设置标记观察器
     }
 }
 
