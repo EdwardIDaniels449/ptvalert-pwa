@@ -16,8 +16,6 @@
     <!-- 全局变量修复脚本 - 必须最先加载 -->
     <script src="./js/globals-fix.js"></script>
     <script src="./js/cache-functions.js"></script>
-    <!-- 强制使用真实API -->
-    <script src="force-real-api.js"></script>
     <script src="config.js"></script>
     <script src="vapid-keys.js"></script>
     
@@ -991,7 +989,7 @@
         
         // 定义Cloudflare API配置
         const cloudflareConfig = {
-            apiUrl: 'https://ptvalert.qingyangzhou85.workers.dev', // 你的实际Cloudflare Worker URL
+            apiUrl: 'https://ptvalert.pages.dev', // 你的实际Cloudflare Worker URL
             dataEndpoint: '/api/reports',
             syncEndpoint: '/api/sync-from-firebase',
             notificationEndpoint: '/api/send-notification',

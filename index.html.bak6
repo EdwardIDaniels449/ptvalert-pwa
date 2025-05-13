@@ -991,7 +991,7 @@
         
         // 定义Cloudflare API配置
         const cloudflareConfig = {
-            apiUrl: 'https://ptvalert.qingyangzhou85.workers.dev', // 你的实际Cloudflare Worker URL
+            apiUrl: 'https://ptvalert.pages.dev', // 你的实际Cloudflare Worker URL
             dataEndpoint: '/api/reports',
             syncEndpoint: '/api/sync-from-firebase',
             notificationEndpoint: '/api/send-notification',
