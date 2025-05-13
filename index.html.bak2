@@ -11,7 +11,6 @@
     
     <!-- 全局变量修复脚本 - 必须最先加载 -->
     <script src="./js/globals-fix.js"></script>
-    <script src="./js/cache-functions.js"></script>
     <script src="config.js"></script>
     <script src="vapid-keys.js"></script>
     
