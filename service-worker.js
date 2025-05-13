@@ -166,11 +166,12 @@ self.addEventListener('push', function(event) {
     title: '新地图标记',
     body: '地图上有新的标记信息',
     icon: './images/icon-192x192.png',
-    badge: './images/icon-72x72.png',
+    badge: './images/badge-72x72.png',
     vibrate: [200, 100, 200],
     tag: 'map-marker-notification',
     data: {
-      url: self.location.origin + getBasePath() // 使用正确的基础路径
+      url: self.location.origin + getBasePath(), // 使用正确的基础路径
+      timeStamp: Date.now()
     },
     actions: [
       { action: 'view', title: '查看地图' }
@@ -180,15 +181,62 @@ self.addEventListener('push', function(event) {
   // 尝试解析推送数据
   try {
     if (event.data) {
-      const data = event.data.json();
-      notificationData = {
-        ...notificationData,
-        ...data
-      };
+      console.log('[Service Worker] 推送载荷:', event.data.text());
+      let data;
+      try {
+        data = event.data.json();
+        console.log('[Service Worker] 解析的JSON推送数据:', data);
+      } catch (jsonError) {
+        // 如果不是JSON，尝试使用文本数据
+        const text = event.data.text();
+        console.log('[Service Worker] 非JSON推送数据:', text);
+        try {
+          // 再次尝试解析可能被包装的JSON
+          data = JSON.parse(text);
+        } catch (e) {
+          console.log('[Service Worker] 使用纯文本作为消息体');
+          data = { body: text };
+        }
+      }
+      
+      // 合并数据
+      if (data) {
+        console.log('[Service Worker] 使用推送数据更新通知');
+        
+        // 如果收到完整的通知对象
+        if (data.notification) {
+          notificationData = {
+            ...notificationData,
+            ...data.notification
+          };
+        } 
+        // 如果直接收到通知字段
+        else {
+          notificationData = {
+            ...notificationData,
+            ...data
+          };
+          
+          // 确保有标题
+          if (!notificationData.title && data.title) {
+            notificationData.title = data.title;
+          }
+          
+          // 提取标记信息
+          if (data.marker) {
+            notificationData.body = `新标记: ${data.marker.title || data.marker.description || '地图标记更新'}`;
+            notificationData.data = notificationData.data || {};
+            notificationData.data.markerId = data.marker.id;
+            notificationData.data.markerInfo = data.marker;
+          }
+        }
+      }
     }
   } catch (error) {
     console.error('[Service Worker] 解析推送数据失败:', error);
   }
+  
+  console.log('[Service Worker] 最终通知数据:', notificationData);
   
   event.waitUntil(
     self.registration.showNotification(notificationData.title, notificationData)
@@ -198,16 +246,26 @@ self.addEventListener('push', function(event) {
 // 通知点击处理
 self.addEventListener('notificationclick', function(event) {
   console.log('[Service Worker] 通知被点击', event.notification.tag);
+  console.log('[Service Worker] 通知数据:', event.notification.data);
   
   // 关闭通知
   event.notification.close();
   
+  // 获取通知数据
+  const notificationData = event.notification.data || {};
+  
+  // 准备URL
+  let url = notificationData.url || (self.location.origin + getBasePath());
+  
+  // 如果有标记ID，添加到URL
+  if (notificationData.markerId) {
+    url += `?marker=${notificationData.markerId}`;
+  }
+  
+  console.log('[Service Worker] 将打开URL:', url);
+  
   // 处理通知操作
   if (event.action === 'view' || !event.action) {
-    // 获取跳转URL
-    let url = (event.notification.data && event.notification.data.url) || 
-              (self.location.origin + getBasePath());
-              
     // 处理查看地图操作 - 打开或聚焦窗口
     event.waitUntil(
       clients.matchAll({
@@ -217,7 +275,12 @@ self.addEventListener('notificationclick', function(event) {
         // 查找已打开的窗口
         for (let i = 0; i < clientList.length; i++) {
           const client = clientList[i];
-          if (client.url === url && 'focus' in client) {
+          if ((new URL(client.url).origin === new URL(url).origin) && 'focus' in client) {
+            // 找到匹配的源，发送消息并聚焦
+            client.postMessage({
+              type: 'NOTIFICATION_CLICK',
+              data: notificationData
+            });
             return client.focus();
           }
         }

@@ -8,7 +8,7 @@
 
 // Base URL for the API - dynamically set based on environment
 const API_BASE_URL = window.location.hostname.includes('github.io') 
-    ? 'https://edwardidaniels449.github.io' 
+    ? 'https://ptvalert-push.edwardidaniels449.workers.dev' 
     : window.location.origin;
 
 // 调试日志前缀
@@ -295,37 +295,49 @@ async function subscribeUserToPush() {
       return subscription;
     }
     
-    // 使用硬编码的VAPID公钥，避免额外的API调用
-    const vapidPublicKey = 'BMJeWRPvptRxO8Qcr5Qy_nGbH4RTMB92IXZySCqVE5mwB8KYw6DFwzMDQJm_HCQWXnLQzR4P0pQQIi45VF8E1xQ';
+    // 使用Cloudflare Workers的VAPID公钥
+    const vapidPublicKey = 'BOz-QrPhJjxv5O_dVxL0Rt9-v_iTvpfSPVnOWc9Vob0zPKU8flcL2WUTe9UrVqLgLboeyOm4aUxp4pa1WJn-5Z4';
     
     // Convert VAPID public key to Uint8Array
     const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
     
     // Subscribe to push notifications
     try {
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: applicationServerKey
-      });
-      
-      console.log('Subscribed to push notifications:', subscription);
-      
-      // Send subscription to server
-      await sendSubscriptionToServer(subscription, notificationUserId);
-      
-      return subscription;
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: applicationServerKey
+    });
+    
+    console.log('Subscribed to push notifications:', subscription);
+    
+    // Send subscription to server
+    await sendSubscriptionToServer(subscription, notificationUserId);
+    
+    return subscription;
     } catch (subscribeError) {
       console.error('推送订阅失败:', subscribeError);
       
       if (isGitHubPages) {
-        console.log(LOG_PREFIX + 'GitHub Pages环境模拟订阅成功');
-        return {
-          endpoint: 'https://fcm.googleapis.com/fcm/send/mock-subscription-id',
-          keys: {
-            auth: 'mock-auth-token',
-            p256dh: 'mock-p256dh-key'
-          }
-        };
+        console.log(LOG_PREFIX + '尝试连接到Cloudflare Workers进行实际订阅');
+        try {
+          // 即使在GitHub Pages环境中也尝试实际订阅
+          const realSubscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: applicationServerKey
+          });
+          console.log(LOG_PREFIX + '成功连接到Cloudflare Workers订阅推送');
+          await sendSubscriptionToServer(realSubscription, notificationUserId);
+          return realSubscription;
+        } catch (realError) {
+          console.error(LOG_PREFIX + 'Cloudflare Workers订阅失败，回退到模拟:', realError);
+          return {
+            endpoint: 'https://fcm.googleapis.com/fcm/send/mock-subscription-id',
+            keys: {
+              auth: 'mock-auth-token',
+              p256dh: 'mock-p256dh-key'
+            }
+          };
+        }
       }
       
       throw subscribeError;
@@ -339,21 +351,9 @@ async function subscribeUserToPush() {
 // Send subscription to server
 async function sendSubscriptionToServer(subscription, userId) {
   try {
-    // 在GitHub Pages环境模拟API响应
-    if (isGitHubPages) {
-      console.log(LOG_PREFIX + 'GitHub Pages环境模拟API请求: /api/subscribe');
-      
-      // 返回模拟成功响应
-      const mockData = {
-        success: true,
-        message: '模拟订阅保存 - GitHub Pages不支持实际的API请求',
-      };
-      
-      console.log(LOG_PREFIX + '模拟响应:', mockData);
-      return mockData;
-    }
+    console.log(LOG_PREFIX + '向Cloudflare Workers发送订阅信息');
     
-    // 正常环境发送实际请求
+    // 即使在GitHub Pages环境也尝试实际API请求
     const response = await fetch(`${API_BASE_URL}/api/subscribe`, {
       method: 'POST',
       headers: {
@@ -368,16 +368,18 @@ async function sendSubscriptionToServer(subscription, userId) {
     const data = await response.json();
     
     if (!data.success) {
+      console.error(LOG_PREFIX + '订阅保存失败:', data.error || 'Unknown error');
       throw new Error(data.error || 'Failed to save subscription');
     }
     
-    console.log('Subscription saved on server');
+    console.log(LOG_PREFIX + '订阅已保存到Cloudflare Workers');
     return data;
   } catch (error) {
-    console.error('Error saving subscription on server:', error);
+    console.error(LOG_PREFIX + '保存订阅到服务器失败:', error);
     
     // 出错时提供模拟响应，避免阻断流程
     if (isGitHubPages) {
+      console.warn(LOG_PREFIX + 'API调用失败，使用模拟响应');
       return {
         success: true,
         message: '错误后提供的模拟响应',
@@ -510,24 +512,19 @@ async function pushMarkerNotification(marker) {
     const notificationData = {
       title: marker.title || '地图标记更新',
       body: marker.description || '有新的地图标记信息',
-      icon: '/images/icon-192x192.png',
-      badge: '/images/badge-72x72.png',
+      icon: './images/icon-192x192.png',
+      badge: './images/badge-72x72.png',
       data: {
-        url: '/',
+        url: window.location.href,
         markerId: marker.id,
         markerInfo: marker,
         dateOfArrival: Date.now()
       }
     };
     
-    // 在GitHub Pages环境模拟API响应
-    if (isGitHubPages) {
-      console.log(LOG_PREFIX + '在GitHub Pages环境模拟发送标记通知');
-      console.log(LOG_PREFIX + '标记通知模拟发送成功:', marker.id);
-      return mockApiResponse('/api/send-notification', { sent: true, markerId: marker.id });
-    }
+    console.log(LOG_PREFIX + '尝试发送标记通知到Cloudflare Workers');
     
-    // 发送通知
+    // 发送通知到Cloudflare Workers
     const response = await fetch(`${API_BASE_URL}/api/send-notification`, {
       method: 'POST',
       headers: {
@@ -540,6 +537,11 @@ async function pushMarkerNotification(marker) {
     });
     
     const data = await response.json();
+    
+    if (!data.success && isGitHubPages) {
+      console.warn(LOG_PREFIX + 'Cloudflare Workers发送通知失败，使用模拟模式');
+      return { success: true, message: '模拟标记通知发送' };
+    }
     
     if (!data.success) {
       throw new Error(data.error || '发送标记通知失败');

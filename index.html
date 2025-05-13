@@ -5563,5 +5563,115 @@
             }
         });
     </script>
+
+    <!-- 添加Service Worker消息处理 -->
+    <script>
+        // 监听来自Service Worker的消息
+        navigator.serviceWorker.addEventListener('message', function(event) {
+            console.log('收到Service Worker消息:', event.data);
+            
+            // 处理通知点击消息
+            if (event.data.type === 'NOTIFICATION_CLICK') {
+                const notificationData = event.data.data || {};
+                console.log('处理通知点击:', notificationData);
+                
+                // 如果有特定标记ID，跳转到该标记
+                if (notificationData.markerId && typeof window.showMarkerById === 'function') {
+                    console.log('显示标记:', notificationData.markerId);
+                    window.showMarkerById(notificationData.markerId, true);
+                    
+                    // 显示通知横幅
+                    if (notificationData.markerInfo) {
+                        showNotificationBanner(`标记: ${notificationData.markerInfo.title || '新标记'}`, 
+                            notificationData.markerInfo.description || '');
+                    }
+                }
+            }
+        });
+        
+        // 显示通知横幅
+        function showNotificationBanner(title, message) {
+            // 创建通知横幅
+            const banner = document.createElement('div');
+            banner.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: rgba(0,0,0,0.8);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                max-width: 90%;
+                min-width: 300px;
+                display: flex;
+                align-items: center;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+            
+            const iconDiv = document.createElement('div');
+            iconDiv.style.cssText = `
+                font-size: 24px;
+                margin-right: 10px;
+            `;
+            iconDiv.textContent = '📍';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.style.flexGrow = '1';
+            
+            const titleDiv = document.createElement('div');
+            titleDiv.style.fontWeight = 'bold';
+            titleDiv.style.marginBottom = '4px';
+            titleDiv.textContent = title;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.style.fontSize = '14px';
+            messageDiv.textContent = message;
+            
+            contentDiv.appendChild(titleDiv);
+            contentDiv.appendChild(messageDiv);
+            
+            banner.appendChild(iconDiv);
+            banner.appendChild(contentDiv);
+            
+            document.body.appendChild(banner);
+            
+            // 动画显示
+            setTimeout(() => {
+                banner.style.opacity = '1';
+            }, 10);
+            
+            // 5秒后自动消失
+            setTimeout(() => {
+                banner.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(banner);
+                }, 300);
+            }, 5000);
+        }
+        
+        // 添加测试功能
+        window.testPushNotification = function() {
+            if (window.notificationHandler && typeof window.notificationHandler.sendTestNotification === 'function') {
+                window.notificationHandler.sendTestNotification()
+                    .then(result => {
+                        console.log('测试通知发送结果:', result);
+                        alert('测试通知已发送');
+                    })
+                    .catch(error => {
+                        console.error('发送测试通知失败:', error);
+                        alert('发送测试通知失败: ' + error.message);
+                    });
+            } else {
+                alert('通知处理程序不可用');
+            }
+        };
+    </script>
+
+    <!-- 添加推送按钮事件处理 -->
+// ... existing code ...
 </body>
 </html>
