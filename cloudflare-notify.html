@@ -13,7 +13,7 @@
             line-height: 1.6;
         }
         
-        h1 {
+        h1, h2 {
             color: #333;
             border-bottom: 1px solid #eee;
             padding-bottom: 10px;
@@ -29,7 +29,7 @@
             font-weight: bold;
         }
         
-        input[type="text"], textarea {
+        input[type="text"], textarea, select {
             width: 100%;
             padding: 8px;
             border: 1px solid #ddd;
@@ -48,6 +48,7 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
+            margin-right: 10px;
         }
         
         button:hover {
@@ -71,16 +72,70 @@
             margin-bottom: 15px;
             display: none;
         }
+        
+        .success {
+            color: #5cb85c;
+            background: #dff0d8;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .info-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            border-left: 4px solid #0071e3;
+        }
+        
+        .advanced-options {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        .toggle-button {
+            background: none;
+            border: none;
+            color: #0071e3;
+            cursor: pointer;
+            padding: 0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .debug-panel {
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .debug-msg {
+            font-family: monospace;
+            background: #2d2d2d;
+            color: #e6e6e6;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            max-height: 200px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
     <h1>推送通知发送工具</h1>
     
     <div class="error" id="error-message"></div>
+    <div class="success" id="success-message"></div>
     
     <div class="form-group">
         <label for="worker-url">Cloudflare Worker URL:</label>
-        <input type="text" id="worker-url" value="https://push-notification-service.您的用户名.workers.dev/api/send-notification">
+        <input type="text" id="worker-url" value="https://push-notification-service.qingyangzhou85.workers.dev/api/send-notification">
     </div>
     
     <div class="form-group">
@@ -113,16 +168,111 @@
         <input type="text" id="lng" placeholder="121.4737">
     </div>
     
-    <button id="send-button">发送通知</button>
+    <button id="toggle-advanced">显示高级选项 ▼</button>
+    
+    <div class="advanced-options" id="advanced-options" style="display: none;">
+        <div class="form-group">
+            <label for="urgency">紧急程度:</label>
+            <select id="urgency">
+                <option value="normal">普通</option>
+                <option value="high">高</option>
+                <option value="low">低</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="ttl">通知有效期 (秒):</label>
+            <input type="text" id="ttl" value="86400">
+        </div>
+        
+        <div class="form-group">
+            <label for="test-config">测试配置 URL:</label>
+            <input type="text" id="test-config" placeholder="https://push-notification-service.qingyangzhou85.workers.dev/api/test-config">
+        </div>
+    </div>
+    
+    <div style="margin-top: 20px;">
+        <button id="send-button">发送通知</button>
+        <button id="test-config-button">测试 VAPID 配置</button>
+        <button id="clear-button">清除表单</button>
+    </div>
     
     <div class="result" id="result"></div>
     
+    <button id="toggle-debug" class="toggle-button">显示调试信息 ▼</button>
+    <div class="debug-panel" id="debug-panel">
+        <div class="debug-msg" id="debug-msg"></div>
+    </div>
+    
+    <div class="info-section">
+        <h2>常见问题解决</h2>
+        <ul>
+            <li><strong>通知未发送</strong> - 确保Worker URL正确，并且已正确设置VAPID公钥和私钥。</li>
+            <li><strong>404 错误</strong> - 检查API路径是否正确，应该是 <code>/api/send-notification</code>。</li>
+            <li><strong>500 错误</strong> - 查看Worker日志以获取详细错误信息。</li>
+            <li><strong>CORS 错误</strong> - Worker代码已配置CORS允许跨域请求，如仍有问题，请检查Origin设置。</li>
+            <li><strong>环境变量问题</strong> - 使用"测试VAPID配置"按钮确认环境变量是否正确设置。</li>
+        </ul>
+    </div>
+    
     <script>
+        // UI 控制
+        document.getElementById('toggle-advanced').addEventListener('click', function() {
+            const advancedOptions = document.getElementById('advanced-options');
+            const isHidden = advancedOptions.style.display === 'none';
+            advancedOptions.style.display = isHidden ? 'block' : 'none';
+            this.textContent = isHidden ? '隐藏高级选项 ▲' : '显示高级选项 ▼';
+        });
+        
+        document.getElementById('toggle-debug').addEventListener('click', function() {
+            const debugPanel = document.getElementById('debug-panel');
+            const isHidden = debugPanel.style.display === 'none';
+            debugPanel.style.display = isHidden ? 'block' : 'none';
+            this.textContent = isHidden ? '隐藏调试信息 ▲' : '显示调试信息 ▼';
+        });
+        
+        document.getElementById('clear-button').addEventListener('click', function() {
+            document.getElementById('marker-id').value = '';
+            document.getElementById('title').value = '';
+            document.getElementById('location').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('lat').value = '';
+            document.getElementById('lng').value = '';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('error-message').style.display = 'none';
+            document.getElementById('success-message').style.display = 'none';
+        });
+        
+        // 主要功能
         document.getElementById('send-button').addEventListener('click', sendNotification);
+        document.getElementById('test-config-button').addEventListener('click', testConfig);
+        
+        // 调试日志
+        function debugLog(message, data) {
+            const debugMsg = document.getElementById('debug-msg');
+            const timestamp = new Date().toISOString().split('T')[1].substring(0, 8);
+            let logEntry = `[${timestamp}] ${message}\n`;
+            
+            if (data) {
+                if (typeof data === 'object') {
+                    try {
+                        logEntry += JSON.stringify(data, null, 2) + '\n';
+                    } catch (e) {
+                        logEntry += `[Object cannot be stringified: ${e.message}]\n`;
+                    }
+                } else {
+                    logEntry += data + '\n';
+                }
+            }
+            
+            debugMsg.textContent = logEntry + debugMsg.textContent;
+        }
         
         async function sendNotification() {
             const errorMsg = document.getElementById('error-message');
+            const successMsg = document.getElementById('success-message');
             errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
             
             const resultDiv = document.getElementById('result');
             resultDiv.style.display = 'none';
@@ -134,6 +284,8 @@
             const description = document.getElementById('description').value.trim();
             const lat = parseFloat(document.getElementById('lat').value.trim()) || 0;
             const lng = parseFloat(document.getElementById('lng').value.trim()) || 0;
+            const urgency = document.getElementById('urgency').value;
+            const ttl = parseInt(document.getElementById('ttl').value.trim()) || 86400;
             
             if (!workerUrl) {
                 showError('请输入Worker URL');
@@ -145,6 +297,8 @@
                 return;
             }
             
+            debugLog('准备发送通知', { markerId, title, location });
+            
             try {
                 const markerData = {
                     id: markerId,
@@ -153,30 +307,84 @@
                     description: description || '',
                     lat: lat,
                     lng: lng,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    urgency: urgency
                 };
+                
+                const payload = {
+                    markerId: markerId,
+                    markerData: markerData,
+                    options: {
+                        ttl: ttl
+                    }
+                };
+                
+                debugLog('发送请求', { url: workerUrl, payload: payload });
                 
                 const response = await fetch(workerUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        markerId: markerId,
-                        markerData: markerData
-                    })
+                    body: JSON.stringify(payload)
                 });
                 
                 const result = await response.json();
+                debugLog('收到响应', result);
                 
                 resultDiv.textContent = JSON.stringify(result, null, 2);
                 resultDiv.style.display = 'block';
                 
                 if (!response.ok) {
                     showError('发送失败: ' + (result.error || response.statusText));
+                } else {
+                    showSuccess('通知发送成功! ' + (result.message || ''));
                 }
             } catch (error) {
+                debugLog('发送错误', error.message);
                 showError('发送失败: ' + error.message);
+            }
+        }
+        
+        async function testConfig() {
+            const errorMsg = document.getElementById('error-message');
+            const successMsg = document.getElementById('success-message');
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'none';
+            
+            let configUrl = document.getElementById('test-config').value.trim();
+            
+            if (!configUrl) {
+                const workerBaseUrl = document.getElementById('worker-url').value.trim().split('/api/')[0];
+                configUrl = workerBaseUrl ? `${workerBaseUrl}/api/test-config` : '';
+            }
+            
+            if (!configUrl) {
+                showError('请在高级选项中设置测试配置URL');
+                return;
+            }
+            
+            debugLog('测试VAPID配置', { url: configUrl });
+            
+            try {
+                const response = await fetch(configUrl);
+                const result = await response.json();
+                
+                debugLog('配置测试响应', result);
+                resultDiv.textContent = JSON.stringify(result, null, 2);
+                resultDiv.style.display = 'block';
+                
+                if (result.success) {
+                    showSuccess('VAPID配置正确! ' + (result.message || ''));
+                } else {
+                    showError('VAPID配置有问题: ' + (result.message || '检查环境变量是否正确设置'));
+                }
+            } catch (error) {
+                debugLog('配置测试错误', error.message);
+                showError('测试配置失败: ' + error.message);
             }
         }
         
@@ -184,7 +392,18 @@
             const errorMsg = document.getElementById('error-message');
             errorMsg.textContent = message;
             errorMsg.style.display = 'block';
+            debugLog('错误', message);
         }
+        
+        function showSuccess(message) {
+            const successMsg = document.getElementById('success-message');
+            successMsg.textContent = message;
+            successMsg.style.display = 'block';
+            debugLog('成功', message);
+        }
+        
+        // 初始化
+        debugLog('页面已加载，通知测试工具准备就绪');
     </script>
 </body>
 </html> 

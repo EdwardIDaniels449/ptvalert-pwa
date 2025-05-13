@@ -10,7 +10,7 @@ const vapidPrivateKey = functions.config().vapid?.private_key;
 
 // 配置VAPID详情
 webpush.setVapidDetails(
-  'mailto:您的邮箱@example.com',  // 需要您修改为真实联系邮箱
+  'mailto:qingyangzhou85@gmail.com',  // 需要您修改为真实联系邮箱
   vapidPublicKey,
   vapidPrivateKey
 );

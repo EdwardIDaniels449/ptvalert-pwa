@@ -119,7 +119,7 @@ function saveSubscription(subscription) {
   const userId = getCurrentUserId();
   
   // 发送到Cloudflare Worker
-  fetch('https://push-notification-service.您的用户名.workers.dev/api/subscribe', {
+  fetch('https://push-notification-service.qingyangzhou85.workers.dev/api/subscribe', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -144,13 +144,19 @@ function saveSubscription(subscription) {
 
 /**
  * 获取当前用户ID
- * 这里假设已经有firebase auth进行了用户认证
+ * 不再依赖Firebase，改用localStorage或生成唯一ID
  */
 function getCurrentUserId() {
-  if (firebase.auth().currentUser) {
-    return firebase.auth().currentUser.uid;
+  // 从localStorage获取用户ID，如果不存在则创建一个
+  let userId = localStorage.getItem('ptvAlertUserId');
+  
+  if (!userId) {
+    // 生成一个随机ID
+    userId = 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+    localStorage.setItem('ptvAlertUserId', userId);
   }
-  return 'anonymous';
+  
+  return userId;
 }
 
 /**
@@ -183,7 +189,7 @@ function unsubscribeFromPush() {
 function deleteSubscriptionFromServer(subscription) {
   const subscriptionJson = subscription.toJSON();
   
-  fetch('https://push-notification-service.您的用户名.workers.dev/api/subscribe', {
+  fetch('https://push-notification-service.qingyangzhou85.workers.dev/api/subscribe', {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json'
