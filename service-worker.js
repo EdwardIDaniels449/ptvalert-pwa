@@ -3,25 +3,27 @@ const CACHE_NAME = 'ptvalert-cache-v3';
 const APP_NAME = '网站地图标记';
 const APP_VERSION = '1.0.3';
 
-// 要缓存的资源
+// 要缓存的资源 - 修正路径问题
 const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json',
-  './offline.html',
-  './push-client.js',
-  './styles.css',
-  // 图标和图片
-  './images/icon-72x72.png',
-  './images/icon-96x96.png',
-  './images/icon-128x128.png',
-  './images/icon-144x144.png',
-  './images/icon-152x152.png',
-  './images/icon-192x192.png',
-  './images/icon-384x384.png',
-  './images/icon-512x512.png',
-  './images/badge-72x72.png',
-  './images/offline-image.png'
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/offline.html',
+  '/push-client.js',
+  '/styles.css',
+  // 图标和图片 - 不存在的资源先注释掉
+  /*
+  '/images/icon-72x72.png',
+  '/images/icon-96x96.png',
+  '/images/icon-128x128.png',
+  '/images/icon-144x144.png',
+  '/images/icon-152x152.png',
+  '/images/icon-192x192.png',
+  '/images/icon-384x384.png',
+  '/images/icon-512x512.png',
+  '/images/badge-72x72.png',
+  '/images/offline-image.png'
+  */
 ];
 
 // 安装Service Worker
