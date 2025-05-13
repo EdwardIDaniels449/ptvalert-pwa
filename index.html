@@ -4499,6 +4499,13 @@
                         if (notificationSupported) {
                             console.log('推送通知功能已初始化');
                             
+                            // 主动请求通知权限
+                            if (Notification.permission === 'default') {
+                                console.log('主动请求通知权限...');
+                                const permission = await Notification.requestPermission();
+                                console.log('通知权限请求结果:', permission);
+                            }
+                            
                             // 如果有权限，尝试订阅
                             if (Notification.permission === 'granted') {
                                 try {
@@ -4519,6 +4526,242 @@
                 }
             });
         }
+    </script>
+    
+    <!-- 添加通知权限请求按钮 -->
+    <div id="notificationPrompt" style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background-color:rgba(0,0,0,0.8);color:white;padding:12px 20px;border-radius:10px;font-size:14px;text-align:center;display:none;z-index:2000;box-shadow:0 4px 12px rgba(0,0,0,0.3);width:90%;max-width:300px;">
+        <p style="margin:0 0 10px 0;">允许接收最新的地图标记通知？</p>
+        <div style="display:flex;justify-content:space-between;gap:10px;">
+            <button id="enableNotifications" style="background:#0071e3;border:none;color:white;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;flex:1;">启用通知</button>
+            <button id="dismissPrompt" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 16px;border-radius:6px;cursor:pointer;flex:1;">取消</button>
+        </div>
+    </div>
+    
+    <script>
+        // 显示通知权限提示
+        setTimeout(function() {
+            // 如果通知权限状态是默认(未决定)，显示提示
+            if (Notification.permission === 'default') {
+                document.getElementById('notificationPrompt').style.display = 'block';
+            }
+        }, 3000); // 页面加载3秒后显示
+        
+        // 启用通知按钮点击事件
+        document.getElementById('enableNotifications').addEventListener('click', async function() {
+            try {
+                // 请求权限
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    // 订阅推送
+                    await window.notificationHandler.subscribeUserToPush();
+                    alert('推送通知已启用，你将收到新标记的通知！');
+                }
+            } catch (error) {
+                console.error('启用通知失败:', error);
+            } finally {
+                // 隐藏提示
+                document.getElementById('notificationPrompt').style.display = 'none';
+            }
+        });
+        
+        // 取消按钮点击事件
+        document.getElementById('dismissPrompt').addEventListener('click', function() {
+            document.getElementById('notificationPrompt').style.display = 'none';
+        });
+    </script>
+
+    <!-- 添加通知按钮到页面导航/控制区域 -->
+    <div class="map-control-buttons" style="position:fixed;top:15px;right:15px;z-index:1000;display:flex;flex-direction:column;gap:10px;">
+        <!-- 通知按钮 -->
+        <button id="notificationBtn" style="background-color:white;width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:none;box-shadow:0 2px 6px rgba(0,0,0,0.3);cursor:pointer;font-size:20px;color:#333;">🔔</button>
+        
+        <!-- 语言切换按钮 (保留原有的) -->
+        <button id="langSwitchBtn" style="background-color:white;width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:none;box-shadow:0 2px 6px rgba(0,0,0,0.3);cursor:pointer;color:#333;font-weight:bold;">
+            <span id="langSwitchText">中</span>
+        </button>
+    </div>
+
+    <!-- 添加通知按钮的事件处理 -->
+    <script>
+        // 通知按钮点击事件（切换通知订阅状态）
+        document.getElementById('notificationBtn').addEventListener('click', async function() {
+            try {
+                // 根据当前权限状态处理
+                switch (Notification.permission) {
+                    case 'granted':
+                        // 已有权限，检查是否已订阅
+                        const isSubscribed = await window.notificationHandler.isSubscribedToPush();
+                        if (isSubscribed) {
+                            if (confirm(currentLang === 'zh' ? 
+                                '你已开启通知。是否要关闭推送通知？' : 
+                                'You have enabled notifications. Do you want to disable them?')) {
+                                await window.notificationHandler.unsubscribeFromPush();
+                                alert(currentLang === 'zh' ? 
+                                    '通知已关闭' : 
+                                    'Notifications disabled');
+                                this.innerText = '🔕';
+                            }
+                        } else {
+                            // 有权限但未订阅
+                            await window.notificationHandler.subscribeUserToPush();
+                            alert(currentLang === 'zh' ? 
+                                '通知已开启，你将收到新标记的提醒' : 
+                                'Notifications enabled. You will be notified of new markers');
+                            this.innerText = '🔔';
+                        }
+                        break;
+                    
+                    case 'default':
+                        // 请求权限
+                        const permission = await Notification.requestPermission();
+                        if (permission === 'granted') {
+                            await window.notificationHandler.subscribeUserToPush();
+                            alert(currentLang === 'zh' ? 
+                                '通知已开启，你将收到新标记的提醒' : 
+                                'Notifications enabled. You will be notified of new markers');
+                            this.innerText = '🔔';
+                        }
+                        break;
+                    
+                    case 'denied':
+                        // 权限被拒绝，提醒用户在浏览器设置中更改
+                        alert(currentLang === 'zh' ? 
+                            '通知权限已被拒绝。请在浏览器设置中允许通知以接收更新。' : 
+                            'Notification permission denied. Please enable notifications in your browser settings to receive updates.');
+                        this.innerText = '🔕';
+                        break;
+                }
+            } catch (error) {
+                console.error('通知操作失败:', error);
+                alert(currentLang === 'zh' ? 
+                    '设置通知时出错' : 
+                    'Error while setting up notifications');
+            }
+        });
+        
+        // 添加长按发送测试通知功能
+        let pressTimer;
+        let isLongPress = false;
+
+        document.getElementById('notificationBtn').addEventListener('mousedown', function() {
+            // 开始计时
+            isLongPress = false;
+            pressTimer = window.setTimeout(function() {
+                isLongPress = true;
+                sendTestNotification();
+            }, 800); // 长按800毫秒
+        });
+
+        document.getElementById('notificationBtn').addEventListener('mouseup', function() {
+            // 清除计时器
+            clearTimeout(pressTimer);
+        });
+
+        document.getElementById('notificationBtn').addEventListener('mouseleave', function() {
+            // 如果鼠标离开按钮，也清除计时器
+            clearTimeout(pressTimer);
+        });
+        
+        // 移动设备支持
+        document.getElementById('notificationBtn').addEventListener('touchstart', function(e) {
+            // 开始计时
+            isLongPress = false;
+            pressTimer = window.setTimeout(function() {
+                isLongPress = true;
+                sendTestNotification();
+            }, 800); // 长按800毫秒
+            e.preventDefault(); // 防止触发点击事件
+        });
+
+        document.getElementById('notificationBtn').addEventListener('touchend', function() {
+            // 清除计时器
+            clearTimeout(pressTimer);
+            if (!isLongPress) {
+                // 如果不是长按，模拟点击事件
+                this.click();
+            }
+        });
+        
+        // 测试通知函数
+        async function sendTestNotification() {
+            if (Notification.permission !== 'granted') {
+                alert(currentLang === 'zh' ? 
+                    '需要先授予通知权限' : 
+                    'Notification permission needed first');
+                return;
+            }
+            
+            try {
+                // 检查是否已订阅
+                const isSubscribed = await window.notificationHandler.isSubscribedToPush();
+                
+                if (!isSubscribed) {
+                    if (confirm(currentLang === 'zh' ? 
+                        '需要先订阅推送通知才能测试。是否现在订阅？' : 
+                        'You need to subscribe to push notifications first. Subscribe now?')) {
+                        await window.notificationHandler.subscribeUserToPush();
+                    } else {
+                        return;
+                    }
+                }
+                
+                // 发送测试通知
+                if ('serviceWorker' in navigator) {
+                    const registration = await navigator.serviceWorker.ready;
+                    
+                    // 本地测试通知
+                    registration.showNotification('PtvAlert 测试通知', {
+                        body: currentLang === 'zh' ? 
+                            '这是一条测试通知，推送功能工作正常！' : 
+                            'This is a test notification. Push function works!',
+                        icon: './images/icon-192x192.png',
+                        badge: './images/icon-72x72.png',
+                        vibrate: [100, 50, 100],
+                        data: {
+                            time: new Date().getTime(),
+                            url: './'
+                        },
+                        actions: [
+                            {
+                                action: 'view',
+                                title: currentLang === 'zh' ? '查看' : 'View'
+                            }
+                        ]
+                    });
+                    
+                    // 尝试也通过服务器发送测试通知
+                    try {
+                        await window.notificationHandler.sendTestNotification();
+                    } catch (error) {
+                        console.warn('服务器测试通知失败，但本地测试通知已发送:', error);
+                    }
+                }
+            } catch (error) {
+                console.error('发送测试通知失败:', error);
+                alert(currentLang === 'zh' ? 
+                    '发送测试通知失败: ' + error.message : 
+                    'Failed to send test notification: ' + error.message);
+            }
+        }
+        
+        // 初始化通知按钮状态
+        window.addEventListener('load', async function() {
+            const notificationBtn = document.getElementById('notificationBtn');
+            
+            if (Notification.permission === 'granted') {
+                const isSubscribed = await window.notificationHandler.isSubscribedToPush()
+                    .catch(() => false);
+                
+                notificationBtn.innerText = isSubscribed ? '🔔' : '🔕';
+            } else {
+                notificationBtn.innerText = '🔕';
+            }
+            
+            // 添加提示工具提示
+            notificationBtn.title = currentLang === 'zh' ? 
+                '点击开启/关闭通知，长按发送测试通知' : 
+                'Click to enable/disable notifications, long press to send a test notification';
+        });
     </script>
 </body>
 </html>
