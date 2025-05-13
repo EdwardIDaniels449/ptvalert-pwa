@@ -1,6 +1,6 @@
 // 定义缓存名称和应用版本
-const CACHE_NAME = 'ptvalert-cache-v1';
-const APP_VERSION = '1.0.0';
+const CACHE_NAME = 'ptvalert-cache-v2';
+const APP_VERSION = '1.0.1';
 
 // 需要缓存的核心资源
 const urlsToCache = [
@@ -145,30 +145,38 @@ self.addEventListener('fetch', event => {
 
 // 监听推送事件
 self.addEventListener('push', event => {
-  console.log('[Service Worker] 收到推送通知');
+  console.log('[Service Worker] 收到推送通知', event);
   
   let notificationData = {};
   
   try {
-    notificationData = event.data.json();
+    if (event.data) {
+      console.log('推送数据:', event.data.text());
+      notificationData = event.data.json();
+    } else {
+      console.log('推送事件没有数据');
+    }
   } catch (e) {
+    console.error('解析推送数据出错:', e);
     notificationData = {
       title: 'PtvAlert通知',
       body: event.data ? event.data.text() : '有新的消息',
       icon: '/ptvalert-pwa/images/icon-192x192.png',
-      badge: '/ptvalert-pwa/images/badge-96x96.png',
+      badge: '/ptvalert-pwa/images/badge-72x72.png',
       data: {
         url: '/ptvalert-pwa/'
       }
     };
   }
   
+  console.log('处理的通知数据:', notificationData);
+  
   // Cloudflare Worker 格式的推送通知处理
   if (notificationData.title && notificationData.data && notificationData.data.url) {
     const options = {
       body: notificationData.body,
       icon: notificationData.icon || '/ptvalert-pwa/images/icon-192x192.png',
-      badge: notificationData.badge || '/ptvalert-pwa/images/badge-96x96.png',
+      badge: notificationData.badge || '/ptvalert-pwa/images/badge-72x72.png',
       vibrate: [100, 50, 100],
       data: notificationData.data || {},
       actions: notificationData.actions || [
@@ -178,6 +186,7 @@ self.addEventListener('push', event => {
     
     // 如果有markerId，认为是地图标记通知
     if (notificationData.data.markerId) {
+      console.log('显示地图标记通知:', notificationData.data.markerId);
       // 保存/更新地图标记数据到IndexedDB
       if (notificationData.data.markerInfo) {
         updateLocalMarkers(notificationData.data.markerInfo);
@@ -186,6 +195,8 @@ self.addEventListener('push', event => {
     
     event.waitUntil(
       self.registration.showNotification(notificationData.title, options)
+        .then(() => console.log('通知显示成功'))
+        .catch(err => console.error('显示通知失败:', err))
     );
     
     return;

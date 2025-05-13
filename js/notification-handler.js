@@ -24,23 +24,39 @@ function initNotifications() {
     console.log('推送通知不受支持');
     return;
   }
-
-  // 获取Service Worker注册
-  navigator.serviceWorker.ready.then(registration => {
+  
+  console.log('开始初始化通知系统...');
+  
+  // 注册或更新 Service Worker
+  navigator.serviceWorker.register('/ptvalert-pwa/service-worker.js', { 
+    scope: '/ptvalert-pwa/'
+  })
+  .then(registration => {
+    console.log('Service Worker 注册成功:', registration.scope);
+    
+    // 在SW就绪后获取引用
+    return navigator.serviceWorker.ready;
+  })
+  .then(registration => {
     swRegistration = registration;
+    console.log('Service Worker 就绪');
     
     // 检查当前订阅状态
-    swRegistration.pushManager.getSubscription()
-      .then(subscription => {
-        isSubscribed = subscription !== null;
-        
-        if (isSubscribed) {
-          console.log('用户已订阅推送通知');
-        } else {
-          // 尝试获取通知权限并订阅
-          requestNotificationPermission();
-        }
-      });
+    return swRegistration.pushManager.getSubscription();
+  })
+  .then(subscription => {
+    isSubscribed = subscription !== null;
+    
+    if (isSubscribed) {
+      console.log('用户已订阅推送通知', subscription);
+    } else {
+      console.log('用户未订阅，将尝试获取通知权限');
+      // 尝试获取通知权限并订阅
+      requestNotificationPermission();
+    }
+  })
+  .catch(error => {
+    console.error('Service Worker 注册失败:', error);
   });
 }
 
