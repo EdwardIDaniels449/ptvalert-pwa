@@ -637,4 +637,113 @@ document.addEventListener('DOMContentLoaded', function() {
             imageUpload.click();
         });
     }
-}); 
+    
+    // Apply CSS fixes to ensure buttons are clickable
+    applyCSSFixes();
+});
+
+// Apply CSS fixes to ensure all UI elements work correctly
+function applyCSSFixes() {
+    console.log('[UI Controller] Applying CSS fixes for button clickability');
+    
+    // Create a style element
+    const styleEl = document.createElement('style');
+    styleEl.type = 'text/css';
+    styleEl.innerHTML = `
+        /* Ensure buttons have higher z-index and proper pointer events */
+        #addReportBtn, #quickAddBtn, #langSwitchBtn, .user-menu, 
+        #formClose, #submitReport, #cancelReport, 
+        #resetLocationBtn, #currentLocationBtn, #geocodeLocationBtn {
+            position: relative;
+            z-index: 1000 !important;
+            pointer-events: auto !important;
+            cursor: pointer !important;
+        }
+        
+        /* Make sure the report form appears above everything else */
+        #reportForm {
+            z-index: 1001 !important;
+            pointer-events: auto !important;
+        }
+        
+        /* Ensure language switcher and user menu are clickable */
+        .top-right-container {
+            z-index: 1000 !important;
+            pointer-events: auto !important;
+        }
+        
+        /* Fix overlay elements that might prevent clicking */
+        .report-button-container, .bottom-button-container {
+            z-index: 999 !important;
+            pointer-events: auto !important;
+        }
+        
+        /* Fix map interactivity */
+        #map {
+            touch-action: manipulation;
+            pointer-events: auto !important;
+        }
+        
+        /* Fix popup z-index */
+        #reportCounterPopup {
+            z-index: 1500 !important;
+        }
+        
+        /* Fix status display */
+        #geocodeStatus {
+            z-index: 1200 !important;
+        }
+        
+        /* Fix any overlays that might block clicks */
+        #addReportTip {
+            z-index: 1100 !important;
+            pointer-events: none !important; /* This should not block clicks */
+        }
+        
+        /* Improve button visibility */
+        .report-button-container button,
+        .bottom-button-container button {
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+            transition: transform 0.1s, box-shadow 0.1s !important;
+        }
+        
+        .report-button-container button:active,
+        .bottom-button-container button:active {
+            transform: translateY(1px) !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+        }
+    `;
+    
+    // Add the style element to the head
+    document.head.appendChild(styleEl);
+    
+    // Ensure buttons have proper event listeners by adding touch events for mobile
+    const buttons = document.querySelectorAll('button, .button, [role="button"]');
+    buttons.forEach(button => {
+        // Add touch events to ensure mobile responsiveness
+        button.addEventListener('touchstart', function(e) {
+            // Prevent default to avoid double-firing with click
+            e.preventDefault();
+            // Use a custom attribute to track touch starts
+            this.setAttribute('data-touch-active', 'true');
+        }, {passive: false});
+        
+        button.addEventListener('touchend', function(e) {
+            if (this.getAttribute('data-touch-active') === 'true') {
+                // Prevent default to avoid double-firing with click
+                e.preventDefault();
+                // Remove the tracking attribute
+                this.removeAttribute('data-touch-active');
+                // Manually trigger the click event
+                this.click();
+            }
+        }, {passive: false});
+        
+        // Handle touch cancel
+        button.addEventListener('touchcancel', function() {
+            this.removeAttribute('data-touch-active');
+        }, {passive: true});
+    });
+    
+    console.log('[UI Controller] CSS fixes applied');
+} 
