@@ -1,0 +1,1805 @@
+0 verbose cli /usr/local/bin/node /usr/local/bin/npm
+1 info using npm@10.9.0
+2 info using node@v22.11.0
+3 silly config load:file:/usr/local/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/xcape/网页/google/.npmrc
+5 silly config load:file:/Users/xcape/.npmrc
+6 silly config load:file:/usr/local/etc/npmrc
+7 verbose title npm install wrangler
+8 verbose argv "install" "wrangler" "--save-dev" "--cache" ".npm-cache"
+9 verbose logfile logs-max:10 dir:/Users/xcape/网页/google/.npm-cache/_logs/2025-05-13T18_21_23_960Z-
+10 verbose logfile /Users/xcape/网页/google/.npm-cache/_logs/2025-05-13T18_21_23_960Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+13 http fetch GET 200 https://registry.npmjs.org/npm 209ms
+14 silly idealTree buildDeps
+15 silly fetch manifest web-push@^3.5.0
+16 silly packumentCache full:https://registry.npmjs.org/web-push cache-miss
+17 http fetch GET 200 https://registry.npmjs.org/web-push 42ms (cache miss)
+18 silly packumentCache full:https://registry.npmjs.org/web-push set size:undefined disposed:false
+19 silly fetch manifest wrangler@^2.19.0
+20 silly packumentCache full:https://registry.npmjs.org/wrangler cache-miss
+21 http fetch GET 200 https://registry.npmjs.org/wrangler 326ms (cache miss)
+22 silly packumentCache full:https://registry.npmjs.org/wrangler set size:undefined disposed:false
+23 silly placeDep ROOT web-push@3.6.7 OK for: ptvalert@1.0.0 want: ^3.5.0
+24 silly placeDep ROOT wrangler@2.21.3 OK for: ptvalert@1.0.0 want: ^2.19.0
+25 silly fetch manifest asn1.js@^5.3.0
+26 silly packumentCache full:https://registry.npmjs.org/asn1.js cache-miss
+27 silly fetch manifest http_ece@1.2.0
+28 silly packumentCache full:https://registry.npmjs.org/http_ece cache-miss
+29 silly fetch manifest minimist@^1.2.5
+30 silly packumentCache full:https://registry.npmjs.org/minimist cache-miss
+31 silly fetch manifest nanoid@^3.3.3
+32 silly packumentCache full:https://registry.npmjs.org/nanoid cache-miss
+33 silly fetch manifest esbuild@0.16.3
+34 silly packumentCache full:https://registry.npmjs.org/esbuild cache-miss
+35 silly fetch manifest chokidar@^3.5.3
+36 silly packumentCache full:https://registry.npmjs.org/chokidar cache-miss
+37 silly fetch manifest miniflare@2.14.4
+38 silly packumentCache full:https://registry.npmjs.org/miniflare cache-miss
+39 http fetch GET 200 https://registry.npmjs.org/asn1.js 64ms (cache miss)
+40 silly packumentCache full:https://registry.npmjs.org/asn1.js set size:undefined disposed:false
+41 silly fetch manifest selfsigned@^2.0.1
+42 silly packumentCache full:https://registry.npmjs.org/selfsigned cache-miss
+43 http fetch GET 200 https://registry.npmjs.org/http_ece 89ms (cache miss)
+44 silly packumentCache full:https://registry.npmjs.org/http_ece set size:undefined disposed:false
+45 silly fetch manifest source-map@^0.7.4
+46 silly packumentCache full:https://registry.npmjs.org/source-map cache-miss
+47 http fetch GET 200 https://registry.npmjs.org/minimist 109ms (cache miss)
+48 silly packumentCache full:https://registry.npmjs.org/minimist set size:undefined disposed:false
+49 silly fetch manifest blake3-wasm@^2.1.5
+50 silly packumentCache full:https://registry.npmjs.org/blake3-wasm cache-miss
+51 http fetch GET 200 https://registry.npmjs.org/selfsigned 46ms (cache miss)
+52 silly packumentCache full:https://registry.npmjs.org/selfsigned set size:undefined disposed:false
+53 silly fetch manifest xxhash-wasm@^1.0.1
+54 silly packumentCache full:https://registry.npmjs.org/xxhash-wasm cache-miss
+55 http fetch GET 200 https://registry.npmjs.org/chokidar 120ms (cache miss)
+56 silly packumentCache full:https://registry.npmjs.org/chokidar set size:undefined disposed:false
+57 silly fetch manifest @miniflare/d1@2.14.4
+58 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fd1 cache-miss
+59 http fetch GET 200 https://registry.npmjs.org/nanoid 130ms (cache miss)
+60 silly packumentCache full:https://registry.npmjs.org/nanoid set size:undefined disposed:false
+61 silly fetch manifest path-to-regexp@^6.2.0
+62 silly packumentCache full:https://registry.npmjs.org/path-to-regexp cache-miss
+63 http fetch GET 200 https://registry.npmjs.org/blake3-wasm 36ms (cache miss)
+64 silly packumentCache full:https://registry.npmjs.org/blake3-wasm set size:undefined disposed:false
+65 silly fetch manifest @miniflare/core@2.14.4
+66 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fcore cache-miss
+67 http fetch GET 200 https://registry.npmjs.org/xxhash-wasm 36ms (cache miss)
+68 silly packumentCache full:https://registry.npmjs.org/xxhash-wasm set size:undefined disposed:false
+69 silly fetch manifest @miniflare/durable-objects@2.14.4
+70 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fdurable-objects cache-miss
+71 http fetch GET 200 https://registry.npmjs.org/source-map 62ms (cache miss)
+72 silly packumentCache full:https://registry.npmjs.org/source-map set size:undefined disposed:false
+73 silly fetch manifest @cloudflare/kv-asset-handler@^0.2.0
+74 silly packumentCache full:https://registry.npmjs.org/@cloudflare%2fkv-asset-handler cache-miss
+75 http fetch GET 200 https://registry.npmjs.org/esbuild 160ms (cache miss)
+76 silly packumentCache full:https://registry.npmjs.org/esbuild set size:undefined disposed:false
+77 silly fetch manifest @esbuild-plugins/node-globals-polyfill@^0.1.1
+78 silly packumentCache full:https://registry.npmjs.org/@esbuild-plugins%2fnode-globals-polyfill cache-miss
+79 http fetch GET 200 https://registry.npmjs.org/path-to-regexp 40ms (cache miss)
+80 silly packumentCache full:https://registry.npmjs.org/path-to-regexp set size:undefined disposed:false
+81 silly fetch manifest @esbuild-plugins/node-modules-polyfill@^0.1.4
+82 silly packumentCache full:https://registry.npmjs.org/@esbuild-plugins%2fnode-modules-polyfill cache-miss
+83 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fd1 53ms (cache miss)
+84 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fd1 set size:undefined disposed:false
+85 silly fetch manifest fsevents@~2.3.2
+86 silly packumentCache full:https://registry.npmjs.org/fsevents cache-miss
+87 http fetch GET 200 https://registry.npmjs.org/@cloudflare%2fkv-asset-handler 45ms (cache miss)
+88 silly packumentCache full:https://registry.npmjs.org/@cloudflare%2fkv-asset-handler set size:undefined disposed:false
+89 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fdurable-objects 54ms (cache miss)
+90 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fdurable-objects set size:undefined disposed:false
+91 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fcore 56ms (cache miss)
+92 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fcore set size:undefined disposed:false
+93 http fetch GET 200 https://registry.npmjs.org/@esbuild-plugins%2fnode-modules-polyfill 38ms (cache miss)
+94 silly packumentCache full:https://registry.npmjs.org/@esbuild-plugins%2fnode-modules-polyfill set size:undefined disposed:false
+95 http fetch GET 200 https://registry.npmjs.org/fsevents 38ms (cache miss)
+96 silly packumentCache full:https://registry.npmjs.org/fsevents set size:undefined disposed:false
+97 http fetch GET 200 https://registry.npmjs.org/@esbuild-plugins%2fnode-globals-polyfill 55ms (cache miss)
+98 silly packumentCache full:https://registry.npmjs.org/@esbuild-plugins%2fnode-globals-polyfill set size:undefined disposed:false
+99 http fetch GET 200 https://registry.npmjs.org/miniflare 749ms (cache miss)
+100 silly packumentCache full:https://registry.npmjs.org/miniflare set size:undefined disposed:false
+101 silly placeDep ROOT asn1.js@5.4.1 OK for: web-push@3.6.7 want: ^5.3.0
+102 silly placeDep ROOT http_ece@1.2.0 OK for: web-push@3.6.7 want: 1.2.0
+103 silly placeDep ROOT minimist@1.2.8 OK for: web-push@3.6.7 want: ^1.2.5
+104 silly fetch manifest bn.js@^4.0.0
+105 silly packumentCache full:https://registry.npmjs.org/bn.js cache-miss
+106 silly fetch manifest minimalistic-assert@^1.0.0
+107 silly packumentCache full:https://registry.npmjs.org/minimalistic-assert cache-miss
+108 silly fetch manifest safer-buffer@^2.1.0
+109 silly packumentCache full:https://registry.npmjs.org/safer-buffer cache-miss
+110 http fetch GET 200 https://registry.npmjs.org/safer-buffer 38ms (cache miss)
+111 silly packumentCache full:https://registry.npmjs.org/safer-buffer set size:undefined disposed:false
+112 http fetch GET 200 https://registry.npmjs.org/bn.js 39ms (cache miss)
+113 silly packumentCache full:https://registry.npmjs.org/bn.js set size:undefined disposed:false
+114 http fetch GET 200 https://registry.npmjs.org/minimalistic-assert 43ms (cache miss)
+115 silly packumentCache full:https://registry.npmjs.org/minimalistic-assert set size:undefined disposed:false
+116 silly placeDep ROOT bn.js@4.12.2 OK for: asn1.js@5.4.1 want: ^4.0.0
+117 silly placeDep ROOT minimalistic-assert@1.0.1 OK for: asn1.js@5.4.1 want: ^1.0.0
+118 silly placeDep ROOT safer-buffer@2.1.2 OK for: asn1.js@5.4.1 want: ^2.1.0
+119 silly fetch manifest @miniflare/storage-redis@2.14.4
+120 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fstorage-redis cache-miss
+121 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fstorage-redis 36ms (cache miss)
+122 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fstorage-redis set size:undefined disposed:false
+123 silly fetch manifest cron-schedule@^3.0.4
+124 silly packumentCache full:https://registry.npmjs.org/cron-schedule cache-miss
+125 http fetch GET 200 https://registry.npmjs.org/cron-schedule 39ms (cache miss)
+126 silly packumentCache full:https://registry.npmjs.org/cron-schedule set size:undefined disposed:false
+127 silly fetch manifest ioredis@^4.27.9
+128 silly packumentCache full:https://registry.npmjs.org/ioredis cache-miss
+129 http fetch GET 200 https://registry.npmjs.org/ioredis 56ms (cache miss)
+130 silly packumentCache full:https://registry.npmjs.org/ioredis set size:undefined disposed:false
+131 silly placeDep ROOT @cloudflare/kv-asset-handler@0.2.0 OK for: wrangler@2.21.3 want: ^0.2.0
+132 silly placeDep ROOT @esbuild-plugins/node-globals-polyfill@0.1.1 OK for: wrangler@2.21.3 want: ^0.1.1
+133 silly placeDep ROOT esbuild@0.16.3 OK for: @esbuild-plugins/node-globals-polyfill@0.1.1 want: *
+134 silly placeDep ROOT @esbuild-plugins/node-modules-polyfill@0.1.4 OK for: wrangler@2.21.3 want: ^0.1.4
+135 silly placeDep ROOT @miniflare/core@2.14.4 OK for: wrangler@2.21.3 want: 2.14.4
+136 silly placeDep ROOT @miniflare/d1@2.14.4 OK for: wrangler@2.21.3 want: 2.14.4
+137 silly placeDep ROOT @miniflare/durable-objects@2.14.4 OK for: wrangler@2.21.3 want: 2.14.4
+138 silly placeDep ROOT blake3-wasm@2.1.5 OK for: wrangler@2.21.3 want: ^2.1.5
+139 silly placeDep ROOT chokidar@3.6.0 OK for: wrangler@2.21.3 want: ^3.5.3
+140 silly placeDep ROOT fsevents@2.3.3 OK for: wrangler@2.21.3 want: ~2.3.2
+141 silly placeDep ROOT miniflare@2.14.4 OK for: wrangler@2.21.3 want: 2.14.4
+142 silly placeDep ROOT nanoid@3.3.11 OK for: wrangler@2.21.3 want: ^3.3.3
+143 silly placeDep ROOT path-to-regexp@6.3.0 OK for: wrangler@2.21.3 want: ^6.2.0
+144 silly placeDep ROOT selfsigned@2.4.1 OK for: wrangler@2.21.3 want: ^2.0.1
+145 silly placeDep ROOT source-map@0.7.4 OK for: wrangler@2.21.3 want: ^0.7.4
+146 silly placeDep ROOT xxhash-wasm@1.1.0 OK for: wrangler@2.21.3 want: ^1.0.1
+147 silly fetch manifest @esbuild/linux-arm@0.16.3
+148 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-arm cache-miss
+149 silly fetch manifest @esbuild/linux-x64@0.16.3
+150 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-x64 cache-miss
+151 silly fetch manifest @esbuild/sunos-x64@0.16.3
+152 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fsunos-x64 cache-miss
+153 silly fetch manifest @esbuild/win32-x64@0.16.3
+154 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fwin32-x64 cache-miss
+155 silly fetch manifest @esbuild/darwin-x64@0.16.3
+156 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fdarwin-x64 cache-miss
+157 silly fetch manifest @esbuild/linux-ia32@0.16.3
+158 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-ia32 cache-miss
+159 silly fetch manifest @esbuild/netbsd-x64@0.16.3
+160 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fnetbsd-x64 cache-miss
+161 http fetch GET 200 https://registry.npmjs.org/@esbuild%2flinux-arm 802ms (cache miss)
+162 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-arm set size:undefined disposed:false
+163 silly fetch manifest @esbuild/win32-ia32@0.16.3
+164 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fwin32-ia32 cache-miss
+165 http fetch GET 200 https://registry.npmjs.org/@esbuild%2fdarwin-x64 804ms (cache miss)
+166 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fdarwin-x64 set size:undefined disposed:false
+167 silly fetch manifest @esbuild/android-arm@0.16.3
+168 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fandroid-arm cache-miss
+169 http fetch GET 200 https://registry.npmjs.org/@esbuild%2fnetbsd-x64 858ms (cache miss)
+170 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fnetbsd-x64 set size:undefined disposed:false
+171 silly fetch manifest @esbuild/android-x64@0.16.3
+172 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fandroid-x64 cache-miss
+173 http fetch GET 200 https://registry.npmjs.org/@esbuild%2fsunos-x64 904ms (cache miss)
+174 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fsunos-x64 set size:undefined disposed:false
+175 silly fetch manifest @esbuild/freebsd-x64@0.16.3
+176 silly packumentCache full:https://registry.npmjs.org/@esbuild%2ffreebsd-x64 cache-miss
+177 http fetch GET 200 https://registry.npmjs.org/@esbuild%2fwin32-ia32 319ms (cache miss)
+178 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fwin32-ia32 set size:undefined disposed:false
+179 silly fetch manifest @esbuild/linux-arm64@0.16.3
+180 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-arm64 cache-miss
+181 http fetch GET 200 https://registry.npmjs.org/@esbuild%2fandroid-arm 321ms (cache miss)
+182 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fandroid-arm set size:undefined disposed:false
+183 silly fetch manifest @esbuild/linux-ppc64@0.16.3
+184 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-ppc64 cache-miss
+185 http fetch GET 200 https://registry.npmjs.org/@esbuild%2fandroid-x64 339ms (cache miss)
+186 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fandroid-x64 set size:undefined disposed:false
+187 silly fetch manifest @esbuild/linux-s390x@0.16.3
+188 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-s390x cache-miss
+189 http fetch GET 200 https://registry.npmjs.org/@esbuild%2flinux-ia32 1397ms (cache miss)
+190 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-ia32 set size:undefined disposed:false
+191 silly fetch manifest @esbuild/openbsd-x64@0.16.3
+192 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fopenbsd-x64 cache-miss
+193 http fetch GET 200 https://registry.npmjs.org/@esbuild%2flinux-x64 1402ms (cache miss)
+194 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-x64 set size:undefined disposed:false
+195 silly fetch manifest @esbuild/win32-arm64@0.16.3
+196 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fwin32-arm64 cache-miss
+197 http fetch GET 200 https://registry.npmjs.org/@esbuild%2flinux-ppc64 309ms (cache miss)
+198 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-ppc64 set size:undefined disposed:false
+199 silly fetch manifest @esbuild/darwin-arm64@0.16.3
+200 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fdarwin-arm64 cache-miss
+201 http fetch GET 200 https://registry.npmjs.org/@esbuild%2flinux-s390x 331ms (cache miss)
+202 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-s390x set size:undefined disposed:false
+203 silly fetch manifest @esbuild/android-arm64@0.16.3
+204 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fandroid-arm64 cache-miss
+205 http fetch GET 200 https://registry.npmjs.org/@esbuild%2fwin32-x64 1617ms (cache miss)
+206 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fwin32-x64 set size:undefined disposed:false
+207 silly fetch manifest @esbuild/freebsd-arm64@0.16.3
+208 silly packumentCache full:https://registry.npmjs.org/@esbuild%2ffreebsd-arm64 cache-miss
+209 http fetch GET 200 https://registry.npmjs.org/@esbuild%2fopenbsd-x64 298ms (cache miss)
+210 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fopenbsd-x64 set size:undefined disposed:false
+211 silly fetch manifest @esbuild/linux-loong64@0.16.3
+212 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-loong64 cache-miss
+213 http fetch GET 200 https://registry.npmjs.org/@esbuild%2fdarwin-arm64 307ms (cache miss)
+214 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fdarwin-arm64 set size:undefined disposed:false
+215 silly fetch manifest @esbuild/linux-riscv64@0.16.3
+216 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-riscv64 cache-miss
+217 http fetch GET 200 https://registry.npmjs.org/@esbuild%2ffreebsd-x64 845ms (cache miss)
+218 silly packumentCache full:https://registry.npmjs.org/@esbuild%2ffreebsd-x64 set size:undefined disposed:false
+219 silly fetch manifest @esbuild/linux-mips64el@0.16.3
+220 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-mips64el cache-miss
+221 http fetch GET 200 https://registry.npmjs.org/@esbuild%2ffreebsd-arm64 306ms (cache miss)
+222 silly packumentCache full:https://registry.npmjs.org/@esbuild%2ffreebsd-arm64 set size:undefined disposed:false
+223 silly fetch manifest escape-string-regexp@^4.0.0
+224 silly packumentCache full:https://registry.npmjs.org/escape-string-regexp cache-miss
+225 http fetch GET 200 https://registry.npmjs.org/escape-string-regexp 31ms (cache miss)
+226 silly packumentCache full:https://registry.npmjs.org/escape-string-regexp set size:undefined disposed:false
+227 silly fetch manifest rollup-plugin-node-polyfills@^0.2.1
+228 silly packumentCache full:https://registry.npmjs.org/rollup-plugin-node-polyfills cache-miss
+229 http fetch GET 200 https://registry.npmjs.org/rollup-plugin-node-polyfills 36ms (cache miss)
+230 silly packumentCache full:https://registry.npmjs.org/rollup-plugin-node-polyfills set size:undefined disposed:false
+231 silly fetch manifest kleur@^4.1.4
+232 silly packumentCache full:https://registry.npmjs.org/kleur cache-miss
+233 http fetch GET 200 https://registry.npmjs.org/@esbuild%2flinux-arm64 889ms (cache miss)
+234 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-arm64 set size:undefined disposed:false
+235 silly fetch manifest busboy@^1.6.0
+236 silly packumentCache full:https://registry.npmjs.org/busboy cache-miss
+237 http fetch GET 200 https://registry.npmjs.org/kleur 33ms (cache miss)
+238 silly packumentCache full:https://registry.npmjs.org/kleur set size:undefined disposed:false
+239 silly fetch manifest dotenv@^10.0.0
+240 silly packumentCache full:https://registry.npmjs.org/dotenv cache-miss
+241 http fetch GET 200 https://registry.npmjs.org/busboy 29ms (cache miss)
+242 silly packumentCache full:https://registry.npmjs.org/busboy set size:undefined disposed:false
+243 silly fetch manifest undici@5.28.4
+244 silly packumentCache full:https://registry.npmjs.org/undici cache-miss
+245 http fetch GET 200 https://registry.npmjs.org/dotenv 35ms (cache miss)
+246 silly packumentCache full:https://registry.npmjs.org/dotenv set size:undefined disposed:false
+247 silly fetch manifest @iarna/toml@^2.2.5
+248 silly packumentCache full:https://registry.npmjs.org/@iarna%2ftoml cache-miss
+249 http fetch GET 200 https://registry.npmjs.org/undici 39ms (cache miss)
+250 silly packumentCache full:https://registry.npmjs.org/undici set size:undefined disposed:false
+251 silly fetch manifest @miniflare/queues@2.14.4
+252 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fqueues cache-miss
+253 http fetch GET 200 https://registry.npmjs.org/@iarna%2ftoml 59ms (cache miss)
+254 silly packumentCache full:https://registry.npmjs.org/@iarna%2ftoml set size:undefined disposed:false
+255 silly fetch manifest @miniflare/shared@2.14.4
+256 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fshared cache-miss
+257 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fqueues 42ms (cache miss)
+258 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fqueues set size:undefined disposed:false
+259 silly fetch manifest set-cookie-parser@^2.4.8
+260 silly packumentCache full:https://registry.npmjs.org/set-cookie-parser cache-miss
+261 http fetch GET 200 https://registry.npmjs.org/set-cookie-parser 28ms (cache miss)
+262 silly packumentCache full:https://registry.npmjs.org/set-cookie-parser set size:undefined disposed:false
+263 silly fetch manifest @miniflare/watcher@2.14.4
+264 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fwatcher cache-miss
+265 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fshared 46ms (cache miss)
+266 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fshared set size:undefined disposed:false
+267 silly fetch manifest urlpattern-polyfill@^4.0.3
+268 silly packumentCache full:https://registry.npmjs.org/urlpattern-polyfill cache-miss
+269 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fwatcher 47ms (cache miss)
+270 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fwatcher set size:undefined disposed:false
+271 silly fetch manifest @miniflare/storage-memory@2.14.4
+272 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fstorage-memory cache-miss
+273 http fetch GET 200 https://registry.npmjs.org/@esbuild%2fwin32-arm64 823ms (cache miss)
+274 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fwin32-arm64 set size:undefined disposed:false
+275 silly fetch manifest braces@~3.0.2
+276 silly packumentCache full:https://registry.npmjs.org/braces cache-miss
+277 http fetch GET 200 https://registry.npmjs.org/braces 32ms (cache miss)
+278 silly packumentCache full:https://registry.npmjs.org/braces set size:undefined disposed:false
+279 silly fetch manifest is-glob@~4.0.1
+280 silly packumentCache full:https://registry.npmjs.org/is-glob cache-miss
+281 http fetch GET 200 https://registry.npmjs.org/is-glob 35ms (cache miss)
+282 silly packumentCache full:https://registry.npmjs.org/is-glob set size:undefined disposed:false
+283 silly fetch manifest anymatch@~3.1.2
+284 silly packumentCache full:https://registry.npmjs.org/anymatch cache-miss
+285 http fetch GET 200 https://registry.npmjs.org/anymatch 30ms (cache miss)
+286 silly packumentCache full:https://registry.npmjs.org/anymatch set size:undefined disposed:false
+287 silly fetch manifest readdirp@~3.6.0
+288 silly packumentCache full:https://registry.npmjs.org/readdirp cache-miss
+289 http fetch GET 200 https://registry.npmjs.org/readdirp 32ms (cache miss)
+290 silly packumentCache full:https://registry.npmjs.org/readdirp set size:undefined disposed:false
+291 silly fetch manifest glob-parent@~5.1.2
+292 silly packumentCache full:https://registry.npmjs.org/glob-parent cache-miss
+293 http fetch GET 200 https://registry.npmjs.org/glob-parent 32ms (cache miss)
+294 silly packumentCache full:https://registry.npmjs.org/glob-parent set size:undefined disposed:false
+295 silly fetch manifest is-binary-path@~2.1.0
+296 silly packumentCache full:https://registry.npmjs.org/is-binary-path cache-miss
+297 http fetch GET 200 https://registry.npmjs.org/is-binary-path 31ms (cache miss)
+298 silly packumentCache full:https://registry.npmjs.org/is-binary-path set size:undefined disposed:false
+299 silly fetch manifest normalize-path@~3.0.0
+300 silly packumentCache full:https://registry.npmjs.org/normalize-path cache-miss
+301 http fetch GET 200 https://registry.npmjs.org/normalize-path 39ms (cache miss)
+302 silly packumentCache full:https://registry.npmjs.org/normalize-path set size:undefined disposed:false
+303 silly fetch manifest semiver@^1.1.0
+304 silly packumentCache full:https://registry.npmjs.org/semiver cache-miss
+305 http fetch GET 200 https://registry.npmjs.org/semiver 29ms (cache miss)
+306 silly packumentCache full:https://registry.npmjs.org/semiver set size:undefined disposed:false
+307 silly fetch manifest @miniflare/kv@2.14.4
+308 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fkv cache-miss
+309 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fkv 47ms (cache miss)
+310 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fkv set size:undefined disposed:false
+311 silly fetch manifest @miniflare/r2@2.14.4
+312 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fr2 cache-miss
+313 http fetch GET 200 https://registry.npmjs.org/@esbuild%2flinux-mips64el 815ms (cache miss)
+314 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-mips64el set size:undefined disposed:false
+315 silly fetch manifest @miniflare/cache@2.14.4
+316 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fcache cache-miss
+317 http fetch GET 200 https://registry.npmjs.org/@esbuild%2flinux-riscv64 827ms (cache miss)
+318 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-riscv64 set size:undefined disposed:false
+319 silly fetch manifest @miniflare/sites@2.14.4
+320 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fsites cache-miss
+321 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fr2 47ms (cache miss)
+322 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fr2 set size:undefined disposed:false
+323 silly fetch manifest source-map-support@^0.5.20
+324 silly packumentCache full:https://registry.npmjs.org/source-map-support cache-miss
+325 http fetch GET 200 https://registry.npmjs.org/@esbuild%2flinux-loong64 901ms (cache miss)
+326 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-loong64 set size:undefined disposed:false
+327 silly fetch manifest @miniflare/runner-vm@2.14.4
+328 silly packumentCache full:https://registry.npmjs.org/@miniflare%2frunner-vm cache-miss
+329 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fcache 42ms (cache miss)
+330 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fcache set size:undefined disposed:false
+331 silly fetch manifest @miniflare/scheduler@2.14.4
+332 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fscheduler cache-miss
+333 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fsites 44ms (cache miss)
+334 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fsites set size:undefined disposed:false
+335 silly fetch manifest @miniflare/cli-parser@2.14.4
+336 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fcli-parser cache-miss
+337 http fetch GET 200 https://registry.npmjs.org/source-map-support 32ms (cache miss)
+338 silly packumentCache full:https://registry.npmjs.org/source-map-support set size:undefined disposed:false
+339 silly fetch manifest @miniflare/http-server@2.14.4
+340 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fhttp-server cache-miss
+341 http fetch GET 200 https://registry.npmjs.org/@miniflare%2frunner-vm 41ms (cache miss)
+342 silly packumentCache full:https://registry.npmjs.org/@miniflare%2frunner-vm set size:undefined disposed:false
+343 silly fetch manifest @miniflare/web-sockets@2.14.4
+344 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fweb-sockets cache-miss
+345 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fscheduler 46ms (cache miss)
+346 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fscheduler set size:undefined disposed:false
+347 silly fetch manifest @miniflare/storage-file@2.14.4
+348 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fstorage-file cache-miss
+349 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fcli-parser 42ms (cache miss)
+350 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fcli-parser set size:undefined disposed:false
+351 silly fetch manifest @miniflare/html-rewriter@2.14.4
+352 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fhtml-rewriter cache-miss
+353 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fhttp-server 43ms (cache miss)
+354 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fhttp-server set size:undefined disposed:false
+355 silly fetch manifest @miniflare/storage-memory@2.14.4
+356 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fstorage-memory cache-miss
+357 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fweb-sockets 44ms (cache miss)
+358 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fweb-sockets set size:undefined disposed:false
+359 silly fetch manifest @types/node-forge@^1.3.0
+360 silly packumentCache full:https://registry.npmjs.org/@types%2fnode-forge cache-miss
+361 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fstorage-file 45ms (cache miss)
+362 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fstorage-file set size:undefined disposed:false
+363 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fhtml-rewriter 50ms (cache miss)
+364 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fhtml-rewriter set size:undefined disposed:false
+365 http fetch GET 200 https://registry.npmjs.org/@types%2fnode-forge 38ms (cache miss)
+366 silly packumentCache full:https://registry.npmjs.org/@types%2fnode-forge set size:undefined disposed:false
+367 http fetch GET 200 https://registry.npmjs.org/urlpattern-polyfill 627ms (cache miss)
+368 silly packumentCache full:https://registry.npmjs.org/urlpattern-polyfill set size:undefined disposed:false
+369 http fetch GET 200 https://registry.npmjs.org/@esbuild%2fandroid-arm64 1416ms (cache miss)
+370 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fandroid-arm64 set size:undefined disposed:false
+371 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fstorage-memory 837ms (cache miss)
+372 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fstorage-memory set size:undefined disposed:false
+373 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fstorage-memory 625ms (cache miss)
+374 silly packumentCache full:https://registry.npmjs.org/@miniflare%2fstorage-memory set size:undefined disposed:false
+375 silly placeDep ROOT escape-string-regexp@4.0.0 OK for: @esbuild-plugins/node-modules-polyfill@0.1.4 want: ^4.0.0
+376 silly placeDep ROOT rollup-plugin-node-polyfills@0.2.1 OK for: @esbuild-plugins/node-modules-polyfill@0.1.4 want: ^0.2.1
+377 silly fetch manifest rollup-plugin-inject@^3.0.0
+378 silly packumentCache full:https://registry.npmjs.org/rollup-plugin-inject cache-miss
+379 http fetch GET 200 https://registry.npmjs.org/rollup-plugin-inject 36ms (cache miss)
+380 silly packumentCache full:https://registry.npmjs.org/rollup-plugin-inject set size:undefined disposed:false
+381 silly placeDep ROOT @iarna/toml@2.2.5 OK for: @miniflare/core@2.14.4 want: ^2.2.5
+382 silly placeDep ROOT @miniflare/queues@2.14.4 OK for: @miniflare/core@2.14.4 want: 2.14.4
+383 silly placeDep ROOT @miniflare/shared@2.14.4 OK for: @miniflare/core@2.14.4 want: 2.14.4
+384 silly placeDep ROOT @miniflare/watcher@2.14.4 OK for: @miniflare/core@2.14.4 want: 2.14.4
+385 silly placeDep ROOT busboy@1.6.0 OK for: @miniflare/core@2.14.4 want: ^1.6.0
+386 silly placeDep node_modules/@miniflare/core dotenv@10.0.0 OK for: @miniflare/core@2.14.4 want: ^10.0.0
+387 silly placeDep ROOT kleur@4.1.5 OK for: @miniflare/core@2.14.4 want: ^4.1.4
+388 silly placeDep ROOT set-cookie-parser@2.7.1 OK for: @miniflare/core@2.14.4 want: ^2.4.8
+389 silly placeDep ROOT undici@5.28.4 OK for: @miniflare/core@2.14.4 want: 5.28.4
+390 silly placeDep ROOT urlpattern-polyfill@4.0.3 OK for: @miniflare/core@2.14.4 want: ^4.0.3
+391 silly fetch manifest picomatch@^2.3.1
+392 silly packumentCache full:https://registry.npmjs.org/picomatch cache-miss
+393 silly fetch manifest npx-import@^1.1.4
+394 silly packumentCache full:https://registry.npmjs.org/npx-import cache-miss
+395 silly fetch manifest @types/better-sqlite3@^7.6.0
+396 silly packumentCache full:https://registry.npmjs.org/@types%2fbetter-sqlite3 cache-miss
+397 silly fetch manifest streamsearch@^1.1.0
+398 silly packumentCache full:https://registry.npmjs.org/streamsearch cache-miss
+399 silly fetch manifest @fastify/busboy@^2.0.0
+400 silly packumentCache full:https://registry.npmjs.org/@fastify%2fbusboy cache-miss
+401 http fetch GET 200 https://registry.npmjs.org/npx-import 41ms (cache miss)
+402 silly packumentCache full:https://registry.npmjs.org/npx-import set size:undefined disposed:false
+403 http fetch GET 200 https://registry.npmjs.org/streamsearch 43ms (cache miss)
+404 silly packumentCache full:https://registry.npmjs.org/streamsearch set size:undefined disposed:false
+405 http fetch GET 200 https://registry.npmjs.org/picomatch 45ms (cache miss)
+406 silly packumentCache full:https://registry.npmjs.org/picomatch set size:undefined disposed:false
+407 http fetch GET 200 https://registry.npmjs.org/@types%2fbetter-sqlite3 51ms (cache miss)
+408 silly packumentCache full:https://registry.npmjs.org/@types%2fbetter-sqlite3 set size:undefined disposed:false
+409 http fetch GET 200 https://registry.npmjs.org/@fastify%2fbusboy 309ms (cache miss)
+410 silly packumentCache full:https://registry.npmjs.org/@fastify%2fbusboy set size:undefined disposed:false
+411 silly placeDep ROOT @miniflare/storage-memory@2.14.4 OK for: @miniflare/durable-objects@2.14.4 want: 2.14.4
+412 silly placeDep ROOT @types/better-sqlite3@7.6.13 OK for: @miniflare/shared@2.14.4 want: ^7.6.0
+413 silly placeDep ROOT npx-import@1.1.4 OK for: @miniflare/shared@2.14.4 want: ^1.1.4
+414 silly placeDep ROOT picomatch@2.3.1 OK for: @miniflare/shared@2.14.4 want: ^2.3.1
+415 silly fetch manifest execa@^6.1.0
+416 silly packumentCache full:https://registry.npmjs.org/execa cache-miss
+417 silly fetch manifest parse-package-name@^1.0.0
+418 silly packumentCache full:https://registry.npmjs.org/parse-package-name cache-miss
+419 silly fetch manifest validate-npm-package-name@^4.0.0
+420 silly packumentCache full:https://registry.npmjs.org/validate-npm-package-name cache-miss
+421 http fetch GET 200 https://registry.npmjs.org/validate-npm-package-name 35ms (cache miss)
+422 silly packumentCache full:https://registry.npmjs.org/validate-npm-package-name set size:undefined disposed:false
+423 http fetch GET 200 https://registry.npmjs.org/parse-package-name 37ms (cache miss)
+424 silly packumentCache full:https://registry.npmjs.org/parse-package-name set size:undefined disposed:false
+425 http fetch GET 200 https://registry.npmjs.org/execa 41ms (cache miss)
+426 silly packumentCache full:https://registry.npmjs.org/execa set size:undefined disposed:false
+427 silly placeDep ROOT streamsearch@1.1.0 OK for: busboy@1.6.0 want: ^1.1.0
+428 silly placeDep ROOT anymatch@3.1.3 OK for: chokidar@3.6.0 want: ~3.1.2
+429 silly placeDep ROOT braces@3.0.3 OK for: chokidar@3.6.0 want: ~3.0.2
+430 silly placeDep ROOT glob-parent@5.1.2 OK for: chokidar@3.6.0 want: ~5.1.2
+431 silly placeDep ROOT is-binary-path@2.1.0 OK for: chokidar@3.6.0 want: ~2.1.0
+432 silly placeDep ROOT is-glob@4.0.3 OK for: chokidar@3.6.0 want: ~4.0.1
+433 silly placeDep ROOT normalize-path@3.0.0 OK for: chokidar@3.6.0 want: ~3.0.0
+434 silly placeDep ROOT readdirp@3.6.0 OK for: chokidar@3.6.0 want: ~3.6.0
+435 silly fetch manifest normalize-path@^3.0.0
+436 silly packumentCache full:https://registry.npmjs.org/normalize-path cache-miss
+437 silly fetch manifest fill-range@^7.1.1
+438 silly packumentCache full:https://registry.npmjs.org/fill-range cache-miss
+439 silly fetch manifest is-glob@^4.0.1
+440 silly packumentCache full:https://registry.npmjs.org/is-glob cache-miss
+441 silly fetch manifest binary-extensions@^2.0.0
+442 silly packumentCache full:https://registry.npmjs.org/binary-extensions cache-miss
+443 silly fetch manifest is-extglob@^2.1.1
+444 silly packumentCache full:https://registry.npmjs.org/is-extglob cache-miss
+445 http fetch GET 200 https://registry.npmjs.org/normalize-path 10ms (cache hit)
+446 silly packumentCache full:https://registry.npmjs.org/normalize-path set size:28713 disposed:false
+447 http fetch GET 200 https://registry.npmjs.org/is-glob 10ms (cache hit)
+448 silly packumentCache full:https://registry.npmjs.org/is-glob set size:40530 disposed:false
+449 http fetch GET 200 https://registry.npmjs.org/fill-range 32ms (cache miss)
+450 silly packumentCache full:https://registry.npmjs.org/fill-range set size:undefined disposed:false
+451 http fetch GET 200 https://registry.npmjs.org/is-extglob 33ms (cache miss)
+452 silly packumentCache full:https://registry.npmjs.org/is-extglob set size:undefined disposed:false
+453 http fetch GET 200 https://registry.npmjs.org/binary-extensions 40ms (cache miss)
+454 silly packumentCache full:https://registry.npmjs.org/binary-extensions set size:undefined disposed:false
+455 silly placeDep ROOT fill-range@7.1.1 OK for: braces@3.0.3 want: ^7.1.1
+456 silly fetch manifest to-regex-range@^5.0.1
+457 silly packumentCache full:https://registry.npmjs.org/to-regex-range cache-miss
+458 http fetch GET 200 https://registry.npmjs.org/to-regex-range 29ms (cache miss)
+459 silly packumentCache full:https://registry.npmjs.org/to-regex-range set size:undefined disposed:false
+460 silly placeDep ROOT @esbuild/android-arm@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+461 silly placeDep ROOT @esbuild/android-arm64@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+462 silly placeDep ROOT @esbuild/android-x64@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+463 silly placeDep ROOT @esbuild/darwin-arm64@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+464 silly placeDep ROOT @esbuild/darwin-x64@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+465 silly placeDep ROOT @esbuild/freebsd-arm64@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+466 silly placeDep ROOT @esbuild/freebsd-x64@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+467 silly placeDep ROOT @esbuild/linux-arm@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+468 silly placeDep ROOT @esbuild/linux-arm64@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+469 silly placeDep ROOT @esbuild/linux-ia32@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+470 silly placeDep ROOT @esbuild/linux-loong64@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+471 silly placeDep ROOT @esbuild/linux-mips64el@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+472 silly placeDep ROOT @esbuild/linux-ppc64@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+473 silly placeDep ROOT @esbuild/linux-riscv64@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+474 silly placeDep ROOT @esbuild/linux-s390x@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+475 silly placeDep ROOT @esbuild/linux-x64@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+476 silly placeDep ROOT @esbuild/netbsd-x64@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+477 silly placeDep ROOT @esbuild/openbsd-x64@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+478 silly placeDep ROOT @esbuild/sunos-x64@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+479 silly placeDep ROOT @esbuild/win32-arm64@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+480 silly placeDep ROOT @esbuild/win32-ia32@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+481 silly placeDep ROOT @esbuild/win32-x64@0.16.3 OK for: esbuild@0.16.3 want: 0.16.3
+482 silly placeDep ROOT to-regex-range@5.0.1 OK for: fill-range@7.1.1 want: ^5.0.1
+483 silly fetch manifest is-number@^7.0.0
+484 silly packumentCache full:https://registry.npmjs.org/is-number cache-miss
+485 http fetch GET 200 https://registry.npmjs.org/is-number 37ms (cache miss)
+486 silly packumentCache full:https://registry.npmjs.org/is-number set size:undefined disposed:false
+487 silly placeDep ROOT binary-extensions@2.3.0 OK for: is-binary-path@2.1.0 want: ^2.0.0
+488 silly placeDep ROOT is-extglob@2.1.1 OK for: is-glob@4.0.3 want: ^2.1.1
+489 silly placeDep ROOT @miniflare/cache@2.14.4 OK for: miniflare@2.14.4 want: 2.14.4
+490 silly placeDep ROOT @miniflare/cli-parser@2.14.4 OK for: miniflare@2.14.4 want: 2.14.4
+491 silly placeDep ROOT @miniflare/html-rewriter@2.14.4 OK for: miniflare@2.14.4 want: 2.14.4
+492 silly placeDep ROOT @miniflare/http-server@2.14.4 OK for: miniflare@2.14.4 want: 2.14.4
+493 silly placeDep ROOT @miniflare/kv@2.14.4 OK for: miniflare@2.14.4 want: 2.14.4
+494 silly placeDep ROOT @miniflare/r2@2.14.4 OK for: miniflare@2.14.4 want: 2.14.4
+495 silly placeDep ROOT @miniflare/runner-vm@2.14.4 OK for: miniflare@2.14.4 want: 2.14.4
+496 silly placeDep ROOT @miniflare/scheduler@2.14.4 OK for: miniflare@2.14.4 want: 2.14.4
+497 silly placeDep ROOT @miniflare/sites@2.14.4 OK for: miniflare@2.14.4 want: 2.14.4
+498 silly placeDep ROOT @miniflare/storage-file@2.14.4 OK for: miniflare@2.14.4 want: 2.14.4
+499 silly placeDep ROOT @miniflare/web-sockets@2.14.4 OK for: miniflare@2.14.4 want: 2.14.4
+500 silly placeDep ROOT semiver@1.1.0 OK for: miniflare@2.14.4 want: ^1.1.0
+501 silly placeDep ROOT source-map-support@0.5.21 OK for: miniflare@2.14.4 want: ^0.5.20
+502 silly fetch manifest http-cache-semantics@^4.1.0
+503 silly packumentCache full:https://registry.npmjs.org/http-cache-semantics cache-miss
+504 silly fetch manifest html-rewriter-wasm@^0.4.1
+505 silly packumentCache full:https://registry.npmjs.org/html-rewriter-wasm cache-miss
+506 silly fetch manifest ws@^8.2.2
+507 silly packumentCache full:https://registry.npmjs.org/ws cache-miss
+508 silly fetch manifest youch@^2.2.2
+509 silly packumentCache full:https://registry.npmjs.org/youch cache-miss
+510 silly fetch manifest ws@^8.2.2
+511 silly packumentCache full:https://registry.npmjs.org/ws cache-miss
+512 silly fetch manifest buffer-from@^1.0.0
+513 silly packumentCache full:https://registry.npmjs.org/buffer-from cache-miss
+514 silly fetch manifest source-map@^0.6.0
+515 silly packumentCache full:https://registry.npmjs.org/source-map cache-miss
+516 http fetch GET 200 https://registry.npmjs.org/source-map 9ms (cache hit)
+517 silly packumentCache full:https://registry.npmjs.org/source-map set size:243370 disposed:false
+518 http fetch GET 200 https://registry.npmjs.org/html-rewriter-wasm 31ms (cache miss)
+519 silly packumentCache full:https://registry.npmjs.org/html-rewriter-wasm set size:undefined disposed:false
+520 http fetch GET 200 https://registry.npmjs.org/youch 44ms (cache miss)
+521 silly packumentCache full:https://registry.npmjs.org/youch set size:undefined disposed:false
+522 http fetch GET 200 https://registry.npmjs.org/http-cache-semantics 47ms (cache miss)
+523 silly packumentCache full:https://registry.npmjs.org/http-cache-semantics set size:undefined disposed:false
+524 http fetch GET 200 https://registry.npmjs.org/buffer-from 46ms (cache miss)
+525 silly packumentCache full:https://registry.npmjs.org/buffer-from set size:undefined disposed:false
+526 http fetch GET 200 https://registry.npmjs.org/ws 51ms (cache miss)
+527 silly packumentCache full:https://registry.npmjs.org/ws set size:undefined disposed:false
+528 http fetch GET 200 https://registry.npmjs.org/ws 55ms (cache miss)
+529 silly packumentCache full:https://registry.npmjs.org/ws set size:undefined disposed:false
+530 silly placeDep ROOT http-cache-semantics@4.2.0 OK for: @miniflare/cache@2.14.4 want: ^4.1.0
+531 silly placeDep ROOT html-rewriter-wasm@0.4.1 OK for: @miniflare/html-rewriter@2.14.4 want: ^0.4.1
+532 silly fetch manifest bufferutil@^4.0.1
+533 silly packumentCache full:https://registry.npmjs.org/bufferutil cache-miss
+534 http fetch GET 200 https://registry.npmjs.org/bufferutil 28ms (cache miss)
+535 silly packumentCache full:https://registry.npmjs.org/bufferutil set size:undefined disposed:false
+536 silly fetch manifest utf-8-validate@>=5.0.2
+537 silly packumentCache full:https://registry.npmjs.org/utf-8-validate cache-miss
+538 http fetch GET 200 https://registry.npmjs.org/utf-8-validate 28ms (cache miss)
+539 silly packumentCache full:https://registry.npmjs.org/utf-8-validate set size:undefined disposed:false
+540 silly placeDep ROOT ws@8.18.2 OK for: @miniflare/http-server@2.14.4 want: ^8.2.2
+541 silly placeDep ROOT youch@2.2.2 OK for: @miniflare/http-server@2.14.4 want: ^2.2.2
+542 silly fetch manifest cookie@^0.4.1
+543 silly packumentCache full:https://registry.npmjs.org/cookie cache-miss
+544 silly fetch manifest mustache@^4.2.0
+545 silly packumentCache full:https://registry.npmjs.org/mustache cache-miss
+546 silly fetch manifest stack-trace@0.0.10
+547 silly packumentCache full:https://registry.npmjs.org/stack-trace cache-miss
+548 silly fetch manifest @types/stack-trace@0.0.29
+549 silly packumentCache full:https://registry.npmjs.org/@types%2fstack-trace cache-miss
+550 http fetch GET 200 https://registry.npmjs.org/cookie 33ms (cache miss)
+551 silly packumentCache full:https://registry.npmjs.org/cookie set size:undefined disposed:false
+552 http fetch GET 200 https://registry.npmjs.org/stack-trace 34ms (cache miss)
+553 silly packumentCache full:https://registry.npmjs.org/stack-trace set size:undefined disposed:false
+554 http fetch GET 200 https://registry.npmjs.org/@types%2fstack-trace 38ms (cache miss)
+555 silly packumentCache full:https://registry.npmjs.org/@types%2fstack-trace set size:undefined disposed:false
+556 http fetch GET 200 https://registry.npmjs.org/mustache 619ms (cache miss)
+557 silly packumentCache full:https://registry.npmjs.org/mustache set size:undefined disposed:false
+558 silly placeDep ROOT cron-schedule@3.0.6 OK for: @miniflare/scheduler@2.14.4 want: ^3.0.4
+559 silly placeDep ROOT execa@6.1.0 OK for: npx-import@1.1.4 want: ^6.1.0
+560 silly placeDep ROOT parse-package-name@1.0.0 OK for: npx-import@1.1.4 want: ^1.0.0
+561 silly placeDep ROOT validate-npm-package-name@4.0.0 OK for: npx-import@1.1.4 want: ^4.0.0
+562 silly fetch manifest onetime@^6.0.0
+563 silly packumentCache full:https://registry.npmjs.org/onetime cache-miss
+564 silly fetch manifest is-stream@^3.0.0
+565 silly packumentCache full:https://registry.npmjs.org/is-stream cache-miss
+566 silly fetch manifest get-stream@^6.0.1
+567 silly packumentCache full:https://registry.npmjs.org/get-stream cache-miss
+568 silly fetch manifest cross-spawn@^7.0.3
+569 silly packumentCache full:https://registry.npmjs.org/cross-spawn cache-miss
+570 silly fetch manifest signal-exit@^3.0.7
+571 silly packumentCache full:https://registry.npmjs.org/signal-exit cache-miss
+572 silly fetch manifest merge-stream@^2.0.0
+573 silly packumentCache full:https://registry.npmjs.org/merge-stream cache-miss
+574 silly fetch manifest npm-run-path@^5.1.0
+575 silly packumentCache full:https://registry.npmjs.org/npm-run-path cache-miss
+576 http fetch GET 200 https://registry.npmjs.org/is-stream 42ms (cache miss)
+577 silly packumentCache full:https://registry.npmjs.org/is-stream set size:undefined disposed:false
+578 silly fetch manifest human-signals@^3.0.1
+579 silly packumentCache full:https://registry.npmjs.org/human-signals cache-miss
+580 http fetch GET 200 https://registry.npmjs.org/onetime 46ms (cache miss)
+581 silly packumentCache full:https://registry.npmjs.org/onetime set size:undefined disposed:false
+582 silly fetch manifest strip-final-newline@^3.0.0
+583 silly packumentCache full:https://registry.npmjs.org/strip-final-newline cache-miss
+584 http fetch GET 200 https://registry.npmjs.org/npm-run-path 46ms (cache miss)
+585 silly packumentCache full:https://registry.npmjs.org/npm-run-path set size:undefined disposed:false
+586 silly fetch manifest builtins@^5.0.0
+587 silly packumentCache full:https://registry.npmjs.org/builtins cache-miss
+588 http fetch GET 200 https://registry.npmjs.org/merge-stream 47ms (cache miss)
+589 silly packumentCache full:https://registry.npmjs.org/merge-stream set size:undefined disposed:false
+590 http fetch GET 200 https://registry.npmjs.org/get-stream 51ms (cache miss)
+591 silly packumentCache full:https://registry.npmjs.org/get-stream set size:undefined disposed:false
+592 http fetch GET 200 https://registry.npmjs.org/signal-exit 51ms (cache miss)
+593 silly packumentCache full:https://registry.npmjs.org/signal-exit set size:undefined disposed:false
+594 http fetch GET 200 https://registry.npmjs.org/cross-spawn 52ms (cache miss)
+595 silly packumentCache full:https://registry.npmjs.org/cross-spawn set size:undefined disposed:false
+596 http fetch GET 200 https://registry.npmjs.org/human-signals 31ms (cache miss)
+597 silly packumentCache full:https://registry.npmjs.org/human-signals set size:undefined disposed:false
+598 http fetch GET 200 https://registry.npmjs.org/builtins 34ms (cache miss)
+599 silly packumentCache full:https://registry.npmjs.org/builtins set size:undefined disposed:false
+600 http fetch GET 200 https://registry.npmjs.org/strip-final-newline 38ms (cache miss)
+601 silly packumentCache full:https://registry.npmjs.org/strip-final-newline set size:undefined disposed:false
+602 silly placeDep ROOT cross-spawn@7.0.6 OK for: execa@6.1.0 want: ^7.0.3
+603 silly placeDep ROOT get-stream@6.0.1 OK for: execa@6.1.0 want: ^6.0.1
+604 silly placeDep ROOT human-signals@3.0.1 OK for: execa@6.1.0 want: ^3.0.1
+605 silly placeDep node_modules/execa is-stream@3.0.0 OK for: execa@6.1.0 want: ^3.0.0
+606 silly placeDep ROOT merge-stream@2.0.0 OK for: execa@6.1.0 want: ^2.0.0
+607 silly placeDep ROOT npm-run-path@5.3.0 OK for: execa@6.1.0 want: ^5.1.0
+608 silly placeDep ROOT onetime@6.0.0 OK for: execa@6.1.0 want: ^6.0.0
+609 silly placeDep ROOT signal-exit@3.0.7 OK for: execa@6.1.0 want: ^3.0.7
+610 silly placeDep ROOT strip-final-newline@3.0.0 OK for: execa@6.1.0 want: ^3.0.0
+611 silly fetch manifest which@^2.0.1
+612 silly packumentCache full:https://registry.npmjs.org/which cache-miss
+613 silly fetch manifest path-key@^3.1.0
+614 silly packumentCache full:https://registry.npmjs.org/path-key cache-miss
+615 silly fetch manifest shebang-command@^2.0.0
+616 silly packumentCache full:https://registry.npmjs.org/shebang-command cache-miss
+617 silly fetch manifest path-key@^4.0.0
+618 silly packumentCache full:https://registry.npmjs.org/path-key cache-miss
+619 silly fetch manifest mimic-fn@^4.0.0
+620 silly packumentCache full:https://registry.npmjs.org/mimic-fn cache-miss
+621 http fetch GET 200 https://registry.npmjs.org/path-key 27ms (cache miss)
+622 silly packumentCache full:https://registry.npmjs.org/path-key set size:undefined disposed:false
+623 http fetch GET 200 https://registry.npmjs.org/path-key 36ms (cache miss)
+624 silly packumentCache full:https://registry.npmjs.org/path-key set size:undefined disposed:false
+625 http fetch GET 200 https://registry.npmjs.org/mimic-fn 38ms (cache miss)
+626 silly packumentCache full:https://registry.npmjs.org/mimic-fn set size:undefined disposed:false
+627 http fetch GET 200 https://registry.npmjs.org/shebang-command 40ms (cache miss)
+628 silly packumentCache full:https://registry.npmjs.org/shebang-command set size:undefined disposed:false
+629 http fetch GET 200 https://registry.npmjs.org/which 41ms (cache miss)
+630 silly packumentCache full:https://registry.npmjs.org/which set size:undefined disposed:false
+631 silly placeDep ROOT path-key@3.1.1 OK for: cross-spawn@7.0.6 want: ^3.1.0
+632 silly placeDep ROOT shebang-command@2.0.0 OK for: cross-spawn@7.0.6 want: ^2.0.0
+633 silly placeDep ROOT which@2.0.2 OK for: cross-spawn@7.0.6 want: ^2.0.1
+634 silly fetch manifest shebang-regex@^3.0.0
+635 silly packumentCache full:https://registry.npmjs.org/shebang-regex cache-miss
+636 silly fetch manifest isexe@^2.0.0
+637 silly packumentCache full:https://registry.npmjs.org/isexe cache-miss
+638 http fetch GET 200 https://registry.npmjs.org/isexe 32ms (cache miss)
+639 silly packumentCache full:https://registry.npmjs.org/isexe set size:undefined disposed:false
+640 http fetch GET 200 https://registry.npmjs.org/shebang-regex 43ms (cache miss)
+641 silly packumentCache full:https://registry.npmjs.org/shebang-regex set size:undefined disposed:false
+642 silly placeDep node_modules/npm-run-path path-key@4.0.0 OK for: npm-run-path@5.3.0 want: ^4.0.0
+643 silly placeDep ROOT mimic-fn@4.0.0 OK for: onetime@6.0.0 want: ^4.0.0
+644 silly placeDep ROOT rollup-plugin-inject@3.0.2 OK for: rollup-plugin-node-polyfills@0.2.1 want: ^3.0.0
+645 silly fetch manifest estree-walker@^0.6.1
+646 silly packumentCache full:https://registry.npmjs.org/estree-walker cache-miss
+647 silly fetch manifest magic-string@^0.25.3
+648 silly packumentCache full:https://registry.npmjs.org/magic-string cache-miss
+649 silly fetch manifest rollup-pluginutils@^2.8.1
+650 silly packumentCache full:https://registry.npmjs.org/rollup-pluginutils cache-miss
+651 http fetch GET 200 https://registry.npmjs.org/estree-walker 38ms (cache miss)
+652 silly packumentCache full:https://registry.npmjs.org/estree-walker set size:undefined disposed:false
+653 http fetch GET 200 https://registry.npmjs.org/magic-string 40ms (cache miss)
+654 silly packumentCache full:https://registry.npmjs.org/magic-string set size:undefined disposed:false
+655 http fetch GET 200 https://registry.npmjs.org/rollup-pluginutils 625ms (cache miss)
+656 silly packumentCache full:https://registry.npmjs.org/rollup-pluginutils set size:undefined disposed:false
+657 silly placeDep ROOT estree-walker@0.6.1 OK for: rollup-plugin-inject@3.0.2 want: ^0.6.1
+658 silly placeDep ROOT magic-string@0.25.9 OK for: rollup-plugin-inject@3.0.2 want: ^0.25.3
+659 silly placeDep ROOT rollup-pluginutils@2.8.2 OK for: rollup-plugin-inject@3.0.2 want: ^2.8.1
+660 silly fetch manifest sourcemap-codec@^1.4.8
+661 silly packumentCache full:https://registry.npmjs.org/sourcemap-codec cache-miss
+662 http fetch GET 200 https://registry.npmjs.org/sourcemap-codec 608ms (cache miss)
+663 silly packumentCache full:https://registry.npmjs.org/sourcemap-codec set size:undefined disposed:false
+664 silly placeDep ROOT sourcemap-codec@1.4.8 OK for: magic-string@0.25.9 want: ^1.4.8
+665 silly placeDep ROOT @types/node-forge@1.3.11 OK for: selfsigned@2.4.1 want: ^1.3.0
+666 silly placeDep ROOT shebang-regex@3.0.0 OK for: shebang-command@2.0.0 want: ^3.0.0
+667 silly placeDep ROOT buffer-from@1.1.2 OK for: source-map-support@0.5.21 want: ^1.0.0
+668 silly placeDep node_modules/source-map-support source-map@0.6.1 OK for: source-map-support@0.5.21 want: ^0.6.0
+669 silly placeDep ROOT is-number@7.0.0 OK for: to-regex-range@5.0.1 want: ^7.0.0
+670 silly placeDep node_modules/undici @fastify/busboy@2.1.1 OK for: undici@5.28.4 want: ^2.0.0
+671 silly placeDep ROOT builtins@5.1.0 OK for: validate-npm-package-name@4.0.0 want: ^5.0.0
+672 silly placeDep ROOT isexe@2.0.0 OK for: which@2.0.2 want: ^2.0.0
+673 silly placeDep ROOT @types/stack-trace@0.0.29 OK for: youch@2.2.2 want: 0.0.29
+674 silly placeDep ROOT cookie@0.4.2 OK for: youch@2.2.2 want: ^0.4.1
+675 silly placeDep ROOT mustache@4.2.0 OK for: youch@2.2.2 want: ^4.2.0
+676 silly placeDep ROOT stack-trace@0.0.10 OK for: youch@2.2.2 want: 0.0.10
+677 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/abort-controller' ]
+678 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/ansi-regex' ]
+679 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/ansi-styles' ]
+680 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/arrify' ]
+681 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/async-retry' ]
+682 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/base64-js' ]
+683 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/asynckit' ]
+684 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/bignumber.js' ]
+685 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/call-bind-apply-helpers' ]
+686 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/cliui' ]
+687 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/color-convert' ]
+688 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/color-name' ]
+689 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/combined-stream' ]
+690 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/delayed-stream' ]
+691 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/dotenv' ]
+692 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/dunder-proto' ]
+693 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/duplexify' ]
+694 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/emoji-regex' ]
+695 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/end-of-stream' ]
+696 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/es-errors' ]
+697 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/es-define-property' ]
+698 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/es-set-tostringtag' ]
+699 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/escalade' ]
+700 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/es-object-atoms' ]
+701 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/event-target-shim' ]
+702 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/farmhash-modern' ]
+703 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/extend' ]
+704 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/fast-deep-equal' ]
+705 silly reify mark retired [
+705 silly reify   '/Users/xcape/网页/google/node_modules/fast-xml-parser',
+705 silly reify   '/Users/xcape/网页/google/node_modules/.bin/fxparser'
+705 silly reify ]
+706 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/faye-websocket' ]
+707 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/firebase-admin' ]
+708 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/form-data' ]
+709 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/function-bind' ]
+710 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/gaxios' ]
+711 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/functional-red-black-tree' ]
+712 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/gcp-metadata' ]
+713 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/get-caller-file' ]
+714 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/get-proto' ]
+715 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/get-intrinsic' ]
+716 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/google-auth-library' ]
+717 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/google-gax' ]
+718 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/google-logging-utils' ]
+719 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/gopd' ]
+720 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/gtoken' ]
+721 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/has-tostringtag' ]
+722 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/has-symbols' ]
+723 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/hasown' ]
+724 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/html-entities' ]
+725 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/http-parser-js' ]
+726 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/http-proxy-agent' ]
+727 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/is-fullwidth-code-point' ]
+728 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/is-stream' ]
+729 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/jsonwebtoken' ]
+730 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/jose' ]
+731 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/jwks-rsa' ]
+732 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/json-bigint' ]
+733 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/limiter' ]
+734 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/lodash.camelcase' ]
+735 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/lodash.clonedeep' ]
+736 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/lodash.isboolean' ]
+737 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/lodash.includes' ]
+738 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/lodash.isinteger' ]
+739 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/lodash.isnumber' ]
+740 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/lodash.isplainobject' ]
+741 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/lodash.isstring' ]
+742 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/lodash.once' ]
+743 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/long' ]
+744 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/lru-cache' ]
+745 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/lru-memoizer' ]
+746 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/math-intrinsics' ]
+747 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/mime-db' ]
+748 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/mime-types' ]
+749 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/node-fetch' ]
+750 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/object-hash' ]
+751 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/once' ]
+752 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/p-limit' ]
+753 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/proto3-json-serializer' ]
+754 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/protobufjs' ]
+755 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/readable-stream' ]
+756 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/require-directory' ]
+757 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/retry' ]
+758 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/retry-request' ]
+759 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/stream-events' ]
+760 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/stream-shift' ]
+761 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/string-width' ]
+762 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/string_decoder' ]
+763 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/strip-ansi' ]
+764 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/strnum' ]
+765 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/stubs' ]
+766 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/teeny-request' ]
+767 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/tr46' ]
+768 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/tslib' ]
+769 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/util-deprecate' ]
+770 silly reify mark retired [
+770 silly reify   '/Users/xcape/网页/google/node_modules/uuid',
+770 silly reify   '/Users/xcape/网页/google/node_modules/.bin/uuid'
+770 silly reify ]
+771 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/webidl-conversions' ]
+772 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/websocket-extensions' ]
+773 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/websocket-driver' ]
+774 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/whatwg-url' ]
+775 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/wrap-ansi' ]
+776 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/wrappy' ]
+777 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/y18n' ]
+778 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/yallist' ]
+779 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/yargs' ]
+780 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/yargs-parser' ]
+781 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/yocto-queue' ]
+782 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@fastify/busboy' ]
+783 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@google-cloud/firestore' ]
+784 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@google-cloud/projectify' ]
+785 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@google-cloud/paginator' ]
+786 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@google-cloud/promisify' ]
+787 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@google-cloud/storage' ]
+788 silly reify mark retired [
+788 silly reify   '/Users/xcape/网页/google/node_modules/@firebase/app-check-interop-types'
+788 silly reify ]
+789 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@firebase/app-types' ]
+790 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@firebase/auth-interop-types' ]
+791 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@firebase/component' ]
+792 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@firebase/database' ]
+793 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@firebase/database-compat' ]
+794 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@firebase/database-types' ]
+795 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@firebase/logger' ]
+796 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@firebase/util' ]
+797 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@grpc/grpc-js' ]
+798 silly reify mark retired [
+798 silly reify   '/Users/xcape/网页/google/node_modules/@grpc/proto-loader',
+798 silly reify   '/Users/xcape/网页/google/node_modules/.bin/proto-loader-gen-types'
+798 silly reify ]
+799 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@js-sdsl/ordered-map' ]
+800 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@protobufjs/base64' ]
+801 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@protobufjs/aspromise' ]
+802 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@protobufjs/eventemitter' ]
+803 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@protobufjs/codegen' ]
+804 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@protobufjs/fetch' ]
+805 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@protobufjs/float' ]
+806 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@protobufjs/inquire' ]
+807 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@protobufjs/path' ]
+808 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@protobufjs/pool' ]
+809 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@protobufjs/utf8' ]
+810 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@opentelemetry/api' ]
+811 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@tootallnate/once' ]
+812 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@types/caseless' ]
+813 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@types/body-parser' ]
+814 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@types/connect' ]
+815 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@types/express' ]
+816 silly reify mark retired [
+816 silly reify   '/Users/xcape/网页/google/node_modules/@types/express-serve-static-core'
+816 silly reify ]
+817 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@types/http-errors' ]
+818 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@types/jsonwebtoken' ]
+819 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@types/long' ]
+820 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@types/mime' ]
+821 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@types/ms' ]
+822 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@types/qs' ]
+823 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@types/range-parser' ]
+824 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@types/request' ]
+825 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@types/send' ]
+826 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@types/serve-static' ]
+827 silly reify mark retired [ '/Users/xcape/网页/google/node_modules/@types/tough-cookie' ]
+828 silly reify moves {
+828 silly reify   '/Users/xcape/网页/google/node_modules/abort-controller': '/Users/xcape/网页/google/node_modules/.abort-controller-BfvNUqzX',
+828 silly reify   '/Users/xcape/网页/google/node_modules/ansi-regex': '/Users/xcape/网页/google/node_modules/.ansi-regex-P3KJ4VZa',
+828 silly reify   '/Users/xcape/网页/google/node_modules/ansi-styles': '/Users/xcape/网页/google/node_modules/.ansi-styles-MMuw9loi',
+828 silly reify   '/Users/xcape/网页/google/node_modules/arrify': '/Users/xcape/网页/google/node_modules/.arrify-iIcfKrYw',
+828 silly reify   '/Users/xcape/网页/google/node_modules/async-retry': '/Users/xcape/网页/google/node_modules/.async-retry-pYQvMUSE',
+828 silly reify   '/Users/xcape/网页/google/node_modules/base64-js': '/Users/xcape/网页/google/node_modules/.base64-js-KHIff548',
+828 silly reify   '/Users/xcape/网页/google/node_modules/asynckit': '/Users/xcape/网页/google/node_modules/.asynckit-9qMCQ258',
+828 silly reify   '/Users/xcape/网页/google/node_modules/bignumber.js': '/Users/xcape/网页/google/node_modules/.bignumber.js-QzFXK7xE',
+828 silly reify   '/Users/xcape/网页/google/node_modules/call-bind-apply-helpers': '/Users/xcape/网页/google/node_modules/.call-bind-apply-helpers-EfjYGxNY',
+828 silly reify   '/Users/xcape/网页/google/node_modules/cliui': '/Users/xcape/网页/google/node_modules/.cliui-oUAURnQN',
+828 silly reify   '/Users/xcape/网页/google/node_modules/color-convert': '/Users/xcape/网页/google/node_modules/.color-convert-BdDyZcL4',
+828 silly reify   '/Users/xcape/网页/google/node_modules/color-name': '/Users/xcape/网页/google/node_modules/.color-name-uPD3L4Bc',
+828 silly reify   '/Users/xcape/网页/google/node_modules/combined-stream': '/Users/xcape/网页/google/node_modules/.combined-stream-sO1Sd02A',
+828 silly reify   '/Users/xcape/网页/google/node_modules/delayed-stream': '/Users/xcape/网页/google/node_modules/.delayed-stream-euMUmS6d',
+828 silly reify   '/Users/xcape/网页/google/node_modules/dotenv': '/Users/xcape/网页/google/node_modules/.dotenv-3vnLbxs8',
+828 silly reify   '/Users/xcape/网页/google/node_modules/dunder-proto': '/Users/xcape/网页/google/node_modules/.dunder-proto-Jmf3VY11',
+828 silly reify   '/Users/xcape/网页/google/node_modules/duplexify': '/Users/xcape/网页/google/node_modules/.duplexify-CFxwKtEV',
+828 silly reify   '/Users/xcape/网页/google/node_modules/emoji-regex': '/Users/xcape/网页/google/node_modules/.emoji-regex-vSWKXjsW',
+828 silly reify   '/Users/xcape/网页/google/node_modules/end-of-stream': '/Users/xcape/网页/google/node_modules/.end-of-stream-z87udB37',
+828 silly reify   '/Users/xcape/网页/google/node_modules/es-errors': '/Users/xcape/网页/google/node_modules/.es-errors-Dbm8W1nq',
+828 silly reify   '/Users/xcape/网页/google/node_modules/es-define-property': '/Users/xcape/网页/google/node_modules/.es-define-property-n1c2PG7X',
+828 silly reify   '/Users/xcape/网页/google/node_modules/es-set-tostringtag': '/Users/xcape/网页/google/node_modules/.es-set-tostringtag-oTE53ksA',
+828 silly reify   '/Users/xcape/网页/google/node_modules/escalade': '/Users/xcape/网页/google/node_modules/.escalade-FrIP03Yv',
+828 silly reify   '/Users/xcape/网页/google/node_modules/es-object-atoms': '/Users/xcape/网页/google/node_modules/.es-object-atoms-8HQ8R2pP',
+828 silly reify   '/Users/xcape/网页/google/node_modules/event-target-shim': '/Users/xcape/网页/google/node_modules/.event-target-shim-lrJKcs4k',
+828 silly reify   '/Users/xcape/网页/google/node_modules/farmhash-modern': '/Users/xcape/网页/google/node_modules/.farmhash-modern-f3Z3U6QW',
+828 silly reify   '/Users/xcape/网页/google/node_modules/extend': '/Users/xcape/网页/google/node_modules/.extend-76W4uQea',
+828 silly reify   '/Users/xcape/网页/google/node_modules/fast-deep-equal': '/Users/xcape/网页/google/node_modules/.fast-deep-equal-feACyTCC',
+828 silly reify   '/Users/xcape/网页/google/node_modules/fast-xml-parser': '/Users/xcape/网页/google/node_modules/.fast-xml-parser-jhE8peW2',
+828 silly reify   '/Users/xcape/网页/google/node_modules/.bin/fxparser': '/Users/xcape/网页/google/node_modules/.bin/.fxparser-MyYbFOOd',
+828 silly reify   '/Users/xcape/网页/google/node_modules/faye-websocket': '/Users/xcape/网页/google/node_modules/.faye-websocket-ITbv7W2B',
+828 silly reify   '/Users/xcape/网页/google/node_modules/firebase-admin': '/Users/xcape/网页/google/node_modules/.firebase-admin-mFjsPXme',
+828 silly reify   '/Users/xcape/网页/google/node_modules/form-data': '/Users/xcape/网页/google/node_modules/.form-data-YXrEbply',
+828 silly reify   '/Users/xcape/网页/google/node_modules/function-bind': '/Users/xcape/网页/google/node_modules/.function-bind-XYhfSt19',
+828 silly reify   '/Users/xcape/网页/google/node_modules/gaxios': '/Users/xcape/网页/google/node_modules/.gaxios-h8TRhbb0',
+828 silly reify   '/Users/xcape/网页/google/node_modules/functional-red-black-tree': '/Users/xcape/网页/google/node_modules/.functional-red-black-tree-9uqn0DoL',
+828 silly reify   '/Users/xcape/网页/google/node_modules/gcp-metadata': '/Users/xcape/网页/google/node_modules/.gcp-metadata-gVOKThHU',
+828 silly reify   '/Users/xcape/网页/google/node_modules/get-caller-file': '/Users/xcape/网页/google/node_modules/.get-caller-file-7TQk1f6A',
+828 silly reify   '/Users/xcape/网页/google/node_modules/get-proto': '/Users/xcape/网页/google/node_modules/.get-proto-UOhAQ0ZV',
+828 silly reify   '/Users/xcape/网页/google/node_modules/get-intrinsic': '/Users/xcape/网页/google/node_modules/.get-intrinsic-pM6i2mkG',
+828 silly reify   '/Users/xcape/网页/google/node_modules/google-auth-library': '/Users/xcape/网页/google/node_modules/.google-auth-library-VNXZjo0v',
+828 silly reify   '/Users/xcape/网页/google/node_modules/google-gax': '/Users/xcape/网页/google/node_modules/.google-gax-fNKeUG6L',
+828 silly reify   '/Users/xcape/网页/google/node_modules/google-logging-utils': '/Users/xcape/网页/google/node_modules/.google-logging-utils-mYLQQ4UD',
+828 silly reify   '/Users/xcape/网页/google/node_modules/gopd': '/Users/xcape/网页/google/node_modules/.gopd-bFKYQanY',
+828 silly reify   '/Users/xcape/网页/google/node_modules/gtoken': '/Users/xcape/网页/google/node_modules/.gtoken-usej5vfh',
+828 silly reify   '/Users/xcape/网页/google/node_modules/has-tostringtag': '/Users/xcape/网页/google/node_modules/.has-tostringtag-H4zcuSLc',
+828 silly reify   '/Users/xcape/网页/google/node_modules/has-symbols': '/Users/xcape/网页/google/node_modules/.has-symbols-9w99myFW',
+828 silly reify   '/Users/xcape/网页/google/node_modules/hasown': '/Users/xcape/网页/google/node_modules/.hasown-MRh2xU1Y',
+828 silly reify   '/Users/xcape/网页/google/node_modules/html-entities': '/Users/xcape/网页/google/node_modules/.html-entities-BmennDL8',
+828 silly reify   '/Users/xcape/网页/google/node_modules/http-parser-js': '/Users/xcape/网页/google/node_modules/.http-parser-js-jNngggBS',
+828 silly reify   '/Users/xcape/网页/google/node_modules/http-proxy-agent': '/Users/xcape/网页/google/node_modules/.http-proxy-agent-cIJQK36n',
+828 silly reify   '/Users/xcape/网页/google/node_modules/is-fullwidth-code-point': '/Users/xcape/网页/google/node_modules/.is-fullwidth-code-point-ZXhdS9Df',
+828 silly reify   '/Users/xcape/网页/google/node_modules/is-stream': '/Users/xcape/网页/google/node_modules/.is-stream-uV34xlok',
+828 silly reify   '/Users/xcape/网页/google/node_modules/jsonwebtoken': '/Users/xcape/网页/google/node_modules/.jsonwebtoken-qswjrzzS',
+828 silly reify   '/Users/xcape/网页/google/node_modules/jose': '/Users/xcape/网页/google/node_modules/.jose-YYd4Yj7u',
+828 silly reify   '/Users/xcape/网页/google/node_modules/jwks-rsa': '/Users/xcape/网页/google/node_modules/.jwks-rsa-aFsXD4x5',
+828 silly reify   '/Users/xcape/网页/google/node_modules/json-bigint': '/Users/xcape/网页/google/node_modules/.json-bigint-LUQR79Q7',
+828 silly reify   '/Users/xcape/网页/google/node_modules/limiter': '/Users/xcape/网页/google/node_modules/.limiter-GKso8Czh',
+828 silly reify   '/Users/xcape/网页/google/node_modules/lodash.camelcase': '/Users/xcape/网页/google/node_modules/.lodash.camelcase-FNq2glEG',
+828 silly reify   '/Users/xcape/网页/google/node_modules/lodash.clonedeep': '/Users/xcape/网页/google/node_modules/.lodash.clonedeep-4f7KyeGi',
+828 silly reify   '/Users/xcape/网页/google/node_modules/lodash.isboolean': '/Users/xcape/网页/google/node_modules/.lodash.isboolean-OmMmzXbj',
+828 silly reify   '/Users/xcape/网页/google/node_modules/lodash.includes': '/Users/xcape/网页/google/node_modules/.lodash.includes-FMyXl1hJ',
+828 silly reify   '/Users/xcape/网页/google/node_modules/lodash.isinteger': '/Users/xcape/网页/google/node_modules/.lodash.isinteger-gpPVezct',
+828 silly reify   '/Users/xcape/网页/google/node_modules/lodash.isnumber': '/Users/xcape/网页/google/node_modules/.lodash.isnumber-MfV0HGtl',
+828 silly reify   '/Users/xcape/网页/google/node_modules/lodash.isplainobject': '/Users/xcape/网页/google/node_modules/.lodash.isplainobject-wTbgcLeh',
+828 silly reify   '/Users/xcape/网页/google/node_modules/lodash.isstring': '/Users/xcape/网页/google/node_modules/.lodash.isstring-0wiDZ3u3',
+828 silly reify   '/Users/xcape/网页/google/node_modules/lodash.once': '/Users/xcape/网页/google/node_modules/.lodash.once-uRWeO1Ax',
+828 silly reify   '/Users/xcape/网页/google/node_modules/long': '/Users/xcape/网页/google/node_modules/.long-REpWuCpJ',
+828 silly reify   '/Users/xcape/网页/google/node_modules/lru-cache': '/Users/xcape/网页/google/node_modules/.lru-cache-G9Eveexb',
+828 silly reify   '/Users/xcape/网页/google/node_modules/lru-memoizer': '/Users/xcape/网页/google/node_modules/.lru-memoizer-sfWVxgPQ',
+828 silly reify   '/Users/xcape/网页/google/node_modules/math-intrinsics': '/Users/xcape/网页/google/node_modules/.math-intrinsics-wmmUL755',
+828 silly reify   '/Users/xcape/网页/google/node_modules/mime-db': '/Users/xcape/网页/google/node_modules/.mime-db-XVDr5w9R',
+828 silly reify   '/Users/xcape/网页/google/node_modules/mime-types': '/Users/xcape/网页/google/node_modules/.mime-types-E2zc4Ons',
+828 silly reify   '/Users/xcape/网页/google/node_modules/node-fetch': '/Users/xcape/网页/google/node_modules/.node-fetch-AqbFRKNg',
+828 silly reify   '/Users/xcape/网页/google/node_modules/object-hash': '/Users/xcape/网页/google/node_modules/.object-hash-sBXYuTxt',
+828 silly reify   '/Users/xcape/网页/google/node_modules/once': '/Users/xcape/网页/google/node_modules/.once-7ytkaNdS',
+828 silly reify   '/Users/xcape/网页/google/node_modules/p-limit': '/Users/xcape/网页/google/node_modules/.p-limit-UMR7yFN1',
+828 silly reify   '/Users/xcape/网页/google/node_modules/proto3-json-serializer': '/Users/xcape/网页/google/node_modules/.proto3-json-serializer-q4Z6OC8Z',
+828 silly reify   '/Users/xcape/网页/google/node_modules/protobufjs': '/Users/xcape/网页/google/node_modules/.protobufjs-3xBVGFAU',
+828 silly reify   '/Users/xcape/网页/google/node_modules/readable-stream': '/Users/xcape/网页/google/node_modules/.readable-stream-Mwe82C6P',
+828 silly reify   '/Users/xcape/网页/google/node_modules/require-directory': '/Users/xcape/网页/google/node_modules/.require-directory-w6yGRmzc',
+828 silly reify   '/Users/xcape/网页/google/node_modules/retry': '/Users/xcape/网页/google/node_modules/.retry-WGXYNO6T',
+828 silly reify   '/Users/xcape/网页/google/node_modules/retry-request': '/Users/xcape/网页/google/node_modules/.retry-request-pQ27MuQM',
+828 silly reify   '/Users/xcape/网页/google/node_modules/stream-events': '/Users/xcape/网页/google/node_modules/.stream-events-5TGAPIAJ',
+828 silly reify   '/Users/xcape/网页/google/node_modules/stream-shift': '/Users/xcape/网页/google/node_modules/.stream-shift-qMA3Ov7T',
+828 silly reify   '/Users/xcape/网页/google/node_modules/string-width': '/Users/xcape/网页/google/node_modules/.string-width-ZgBoOum4',
+828 silly reify   '/Users/xcape/网页/google/node_modules/string_decoder': '/Users/xcape/网页/google/node_modules/.string_decoder-0NZRhQyW',
+828 silly reify   '/Users/xcape/网页/google/node_modules/strip-ansi': '/Users/xcape/网页/google/node_modules/.strip-ansi-MG6LdAtv',
+828 silly reify   '/Users/xcape/网页/google/node_modules/strnum': '/Users/xcape/网页/google/node_modules/.strnum-momSlhE3',
+828 silly reify   '/Users/xcape/网页/google/node_modules/stubs': '/Users/xcape/网页/google/node_modules/.stubs-OfuondKv',
+828 silly reify   '/Users/xcape/网页/google/node_modules/teeny-request': '/Users/xcape/网页/google/node_modules/.teeny-request-CXfP3Boi',
+828 silly reify   '/Users/xcape/网页/google/node_modules/tr46': '/Users/xcape/网页/google/node_modules/.tr46-oE9yhTFR',
+828 silly reify   '/Users/xcape/网页/google/node_modules/tslib': '/Users/xcape/网页/google/node_modules/.tslib-EujK9XRP',
+828 silly reify   '/Users/xcape/网页/google/node_modules/util-deprecate': '/Users/xcape/网页/google/node_modules/.util-deprecate-EGqbiHSH',
+828 silly reify   '/Users/xcape/网页/google/node_modules/uuid': '/Users/xcape/网页/google/node_modules/.uuid-ij65W0Ns',
+828 silly reify   '/Users/xcape/网页/google/node_modules/.bin/uuid': '/Users/xcape/网页/google/node_modules/.bin/.uuid-C06NU0zo',
+828 silly reify   '/Users/xcape/网页/google/node_modules/webidl-conversions': '/Users/xcape/网页/google/node_modules/.webidl-conversions-k6jg888J',
+828 silly reify   '/Users/xcape/网页/google/node_modules/websocket-extensions': '/Users/xcape/网页/google/node_modules/.websocket-extensions-R4fSl3zV',
+828 silly reify   '/Users/xcape/网页/google/node_modules/websocket-driver': '/Users/xcape/网页/google/node_modules/.websocket-driver-BYAu3W6v',
+828 silly reify   '/Users/xcape/网页/google/node_modules/whatwg-url': '/Users/xcape/网页/google/node_modules/.whatwg-url-Ji4gewfs',
+828 silly reify   '/Users/xcape/网页/google/node_modules/wrap-ansi': '/Users/xcape/网页/google/node_modules/.wrap-ansi-l5TXgOk3',
+828 silly reify   '/Users/xcape/网页/google/node_modules/wrappy': '/Users/xcape/网页/google/node_modules/.wrappy-moedNYul',
+828 silly reify   '/Users/xcape/网页/google/node_modules/y18n': '/Users/xcape/网页/google/node_modules/.y18n-VJZJwjRO',
+828 silly reify   '/Users/xcape/网页/google/node_modules/yallist': '/Users/xcape/网页/google/node_modules/.yallist-NaNKgbQC',
+828 silly reify   '/Users/xcape/网页/google/node_modules/yargs': '/Users/xcape/网页/google/node_modules/.yargs-jVdltxsc',
+828 silly reify   '/Users/xcape/网页/google/node_modules/yargs-parser': '/Users/xcape/网页/google/node_modules/.yargs-parser-I7kb0iZJ',
+828 silly reify   '/Users/xcape/网页/google/node_modules/yocto-queue': '/Users/xcape/网页/google/node_modules/.yocto-queue-b2Qpp0DK',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@fastify/busboy': '/Users/xcape/网页/google/node_modules/@fastify/.busboy-Kqm5E3Ey',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@google-cloud/firestore': '/Users/xcape/网页/google/node_modules/@google-cloud/.firestore-FaFfNVFC',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@google-cloud/projectify': '/Users/xcape/网页/google/node_modules/@google-cloud/.projectify-ooeqlXxA',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@google-cloud/paginator': '/Users/xcape/网页/google/node_modules/@google-cloud/.paginator-6KrUHBim',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@google-cloud/promisify': '/Users/xcape/网页/google/node_modules/@google-cloud/.promisify-e4SAV0yv',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@google-cloud/storage': '/Users/xcape/网页/google/node_modules/@google-cloud/.storage-le5WLIsM',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@firebase/app-check-interop-types': '/Users/xcape/网页/google/node_modules/@firebase/.app-check-interop-types-2NMSIssS',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@firebase/app-types': '/Users/xcape/网页/google/node_modules/@firebase/.app-types-lTJqRSpb',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@firebase/auth-interop-types': '/Users/xcape/网页/google/node_modules/@firebase/.auth-interop-types-KvQR8FKN',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@firebase/component': '/Users/xcape/网页/google/node_modules/@firebase/.component-WyGvl7p4',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@firebase/database': '/Users/xcape/网页/google/node_modules/@firebase/.database-gmtOaXZn',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@firebase/database-compat': '/Users/xcape/网页/google/node_modules/@firebase/.database-compat-ZyWx9qv3',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@firebase/database-types': '/Users/xcape/网页/google/node_modules/@firebase/.database-types-5esB5XtT',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@firebase/logger': '/Users/xcape/网页/google/node_modules/@firebase/.logger-OHTemepI',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@firebase/util': '/Users/xcape/网页/google/node_modules/@firebase/.util-iT6vWID6',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@grpc/grpc-js': '/Users/xcape/网页/google/node_modules/@grpc/.grpc-js-XIvitc1W',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@grpc/proto-loader': '/Users/xcape/网页/google/node_modules/@grpc/.proto-loader-Y7FYshjM',
+828 silly reify   '/Users/xcape/网页/google/node_modules/.bin/proto-loader-gen-types': '/Users/xcape/网页/google/node_modules/.bin/.proto-loader-gen-types-EHmP5HlL',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@js-sdsl/ordered-map': '/Users/xcape/网页/google/node_modules/@js-sdsl/.ordered-map-MYt81API',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@protobufjs/base64': '/Users/xcape/网页/google/node_modules/@protobufjs/.base64-wpMKx64C',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@protobufjs/aspromise': '/Users/xcape/网页/google/node_modules/@protobufjs/.aspromise-GfAdqdAR',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@protobufjs/eventemitter': '/Users/xcape/网页/google/node_modules/@protobufjs/.eventemitter-4rbtrsuG',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@protobufjs/codegen': '/Users/xcape/网页/google/node_modules/@protobufjs/.codegen-HqJqdGi9',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@protobufjs/fetch': '/Users/xcape/网页/google/node_modules/@protobufjs/.fetch-P6o7ub7N',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@protobufjs/float': '/Users/xcape/网页/google/node_modules/@protobufjs/.float-42eTt0nT',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@protobufjs/inquire': '/Users/xcape/网页/google/node_modules/@protobufjs/.inquire-U5c80mHx',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@protobufjs/path': '/Users/xcape/网页/google/node_modules/@protobufjs/.path-deYKNxYV',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@protobufjs/pool': '/Users/xcape/网页/google/node_modules/@protobufjs/.pool-hM6asZEu',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@protobufjs/utf8': '/Users/xcape/网页/google/node_modules/@protobufjs/.utf8-rumLTe6j',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@opentelemetry/api': '/Users/xcape/网页/google/node_modules/@opentelemetry/.api-RDNTfov7',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@tootallnate/once': '/Users/xcape/网页/google/node_modules/@tootallnate/.once-ofUSSNUM',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@types/caseless': '/Users/xcape/网页/google/node_modules/@types/.caseless-0yRdIZGf',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@types/body-parser': '/Users/xcape/网页/google/node_modules/@types/.body-parser-38oUnjmg',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@types/connect': '/Users/xcape/网页/google/node_modules/@types/.connect-d9guekjR',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@types/express': '/Users/xcape/网页/google/node_modules/@types/.express-ZkpJtZ8n',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@types/express-serve-static-core': '/Users/xcape/网页/google/node_modules/@types/.express-serve-static-core-x6gg1nR4',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@types/http-errors': '/Users/xcape/网页/google/node_modules/@types/.http-errors-QXhZD7Vo',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@types/jsonwebtoken': '/Users/xcape/网页/google/node_modules/@types/.jsonwebtoken-UYjFijA4',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@types/long': '/Users/xcape/网页/google/node_modules/@types/.long-Zi8x6jI4',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@types/mime': '/Users/xcape/网页/google/node_modules/@types/.mime-YxPiJ4rG',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@types/ms': '/Users/xcape/网页/google/node_modules/@types/.ms-nRB5fJIW',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@types/qs': '/Users/xcape/网页/google/node_modules/@types/.qs-C3ycZS6h',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@types/range-parser': '/Users/xcape/网页/google/node_modules/@types/.range-parser-b0oixKaU',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@types/request': '/Users/xcape/网页/google/node_modules/@types/.request-iQ4ZYgiV',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@types/send': '/Users/xcape/网页/google/node_modules/@types/.send-XxNXxs2m',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@types/serve-static': '/Users/xcape/网页/google/node_modules/@types/.serve-static-JgKHDbwf',
+828 silly reify   '/Users/xcape/网页/google/node_modules/@types/tough-cookie': '/Users/xcape/网页/google/node_modules/@types/.tough-cookie-xc3eT1ZO'
+828 silly reify }
+829 silly audit bulk request {
+829 silly audit   'agent-base': [ '7.1.3' ],
+829 silly audit   'buffer-equal-constant-time': [ '1.0.1' ],
+829 silly audit   debug: [ '4.4.0' ],
+829 silly audit   dotenv: [ '10.0.0' ],
+829 silly audit   'ecdsa-sig-formatter': [ '1.0.11' ],
+829 silly audit   'https-proxy-agent': [ '7.0.6' ],
+829 silly audit   inherits: [ '2.0.4' ],
+829 silly audit   'is-stream': [ '3.0.0' ],
+829 silly audit   jwa: [ '2.0.1' ],
+829 silly audit   jws: [ '4.0.0' ],
+829 silly audit   mime: [ '3.0.0' ],
+829 silly audit   ms: [ '2.1.3' ],
+829 silly audit   'node-forge': [ '1.3.1' ],
+829 silly audit   'safe-buffer': [ '5.2.1' ],
+829 silly audit   semver: [ '7.7.2' ],
+829 silly audit   'undici-types': [ '6.21.0' ],
+829 silly audit   '@fastify/busboy': [ '2.1.1' ],
+829 silly audit   '@types/node': [ '22.15.17' ],
+829 silly audit   'web-push': [ '3.6.7' ],
+829 silly audit   wrangler: [ '2.21.3' ],
+829 silly audit   'asn1.js': [ '5.4.1' ],
+829 silly audit   http_ece: [ '1.2.0' ],
+829 silly audit   minimist: [ '1.2.8' ],
+829 silly audit   'bn.js': [ '4.12.2' ],
+829 silly audit   'minimalistic-assert': [ '1.0.1' ],
+829 silly audit   'safer-buffer': [ '2.1.2' ],
+829 silly audit   '@cloudflare/kv-asset-handler': [ '0.2.0' ],
+829 silly audit   '@esbuild-plugins/node-globals-polyfill': [ '0.1.1' ],
+829 silly audit   esbuild: [ '0.16.3' ],
+829 silly audit   '@esbuild-plugins/node-modules-polyfill': [ '0.1.4' ],
+829 silly audit   '@miniflare/core': [ '2.14.4' ],
+829 silly audit   '@miniflare/d1': [ '2.14.4' ],
+829 silly audit   '@miniflare/durable-objects': [ '2.14.4' ],
+829 silly audit   'blake3-wasm': [ '2.1.5' ],
+829 silly audit   chokidar: [ '3.6.0' ],
+829 silly audit   fsevents: [ '2.3.3' ],
+829 silly audit   miniflare: [ '2.14.4' ],
+829 silly audit   nanoid: [ '3.3.11' ],
+829 silly audit   'path-to-regexp': [ '6.3.0' ],
+829 silly audit   selfsigned: [ '2.4.1' ],
+829 silly audit   'source-map': [ '0.7.4', '0.6.1' ],
+829 silly audit   'xxhash-wasm': [ '1.1.0' ],
+829 silly audit   'escape-string-regexp': [ '4.0.0' ],
+829 silly audit   'rollup-plugin-node-polyfills': [ '0.2.1' ],
+829 silly audit   '@iarna/toml': [ '2.2.5' ],
+829 silly audit   '@miniflare/queues': [ '2.14.4' ],
+829 silly audit   '@miniflare/shared': [ '2.14.4' ],
+829 silly audit   '@miniflare/watcher': [ '2.14.4' ],
+829 silly audit   busboy: [ '1.6.0' ],
+829 silly audit   kleur: [ '4.1.5' ],
+829 silly audit   'set-cookie-parser': [ '2.7.1' ],
+829 silly audit   undici: [ '5.28.4' ],
+829 silly audit   'urlpattern-polyfill': [ '4.0.3' ],
+829 silly audit   '@miniflare/storage-memory': [ '2.14.4' ],
+829 silly audit   '@types/better-sqlite3': [ '7.6.13' ],
+829 silly audit   'npx-import': [ '1.1.4' ],
+829 silly audit   picomatch: [ '2.3.1' ],
+829 silly audit   streamsearch: [ '1.1.0' ],
+829 silly audit   anymatch: [ '3.1.3' ],
+829 silly audit   braces: [ '3.0.3' ],
+829 silly audit   'glob-parent': [ '5.1.2' ],
+829 silly audit   'is-binary-path': [ '2.1.0' ],
+829 silly audit   'is-glob': [ '4.0.3' ],
+829 silly audit   'normalize-path': [ '3.0.0' ],
+829 silly audit   readdirp: [ '3.6.0' ],
+829 silly audit   'fill-range': [ '7.1.1' ],
+829 silly audit   '@esbuild/android-arm': [ '0.16.3' ],
+829 silly audit   '@esbuild/android-arm64': [ '0.16.3' ],
+829 silly audit   '@esbuild/android-x64': [ '0.16.3' ],
+829 silly audit   '@esbuild/darwin-arm64': [ '0.16.3' ],
+829 silly audit   '@esbuild/darwin-x64': [ '0.16.3' ],
+829 silly audit   '@esbuild/freebsd-arm64': [ '0.16.3' ],
+829 silly audit   '@esbuild/freebsd-x64': [ '0.16.3' ],
+829 silly audit   '@esbuild/linux-arm': [ '0.16.3' ],
+829 silly audit   '@esbuild/linux-arm64': [ '0.16.3' ],
+829 silly audit   '@esbuild/linux-ia32': [ '0.16.3' ],
+829 silly audit   '@esbuild/linux-loong64': [ '0.16.3' ],
+829 silly audit   '@esbuild/linux-mips64el': [ '0.16.3' ],
+829 silly audit   '@esbuild/linux-ppc64': [ '0.16.3' ],
+829 silly audit   '@esbuild/linux-riscv64': [ '0.16.3' ],
+829 silly audit   '@esbuild/linux-s390x': [ '0.16.3' ],
+829 silly audit   '@esbuild/linux-x64': [ '0.16.3' ],
+829 silly audit   '@esbuild/netbsd-x64': [ '0.16.3' ],
+829 silly audit   '@esbuild/openbsd-x64': [ '0.16.3' ],
+829 silly audit   '@esbuild/sunos-x64': [ '0.16.3' ],
+829 silly audit   '@esbuild/win32-arm64': [ '0.16.3' ],
+829 silly audit   '@esbuild/win32-ia32': [ '0.16.3' ],
+829 silly audit   '@esbuild/win32-x64': [ '0.16.3' ],
+829 silly audit   'to-regex-range': [ '5.0.1' ],
+829 silly audit   'binary-extensions': [ '2.3.0' ],
+829 silly audit   'is-extglob': [ '2.1.1' ],
+829 silly audit   '@miniflare/cache': [ '2.14.4' ],
+829 silly audit   '@miniflare/cli-parser': [ '2.14.4' ],
+829 silly audit   '@miniflare/html-rewriter': [ '2.14.4' ],
+829 silly audit   '@miniflare/http-server': [ '2.14.4' ],
+829 silly audit   '@miniflare/kv': [ '2.14.4' ],
+829 silly audit   '@miniflare/r2': [ '2.14.4' ],
+829 silly audit   '@miniflare/runner-vm': [ '2.14.4' ],
+829 silly audit   '@miniflare/scheduler': [ '2.14.4' ],
+829 silly audit   '@miniflare/sites': [ '2.14.4' ],
+829 silly audit   '@miniflare/storage-file': [ '2.14.4' ],
+829 silly audit   '@miniflare/web-sockets': [ '2.14.4' ],
+829 silly audit   semiver: [ '1.1.0' ],
+829 silly audit   'source-map-support': [ '0.5.21' ],
+829 silly audit   'http-cache-semantics': [ '4.2.0' ],
+829 silly audit   'html-rewriter-wasm': [ '0.4.1' ],
+829 silly audit   ws: [ '8.18.2' ],
+829 silly audit   youch: [ '2.2.2' ],
+829 silly audit   'cron-schedule': [ '3.0.6' ],
+829 silly audit   execa: [ '6.1.0' ],
+829 silly audit   'parse-package-name': [ '1.0.0' ],
+829 silly audit   'validate-npm-package-name': [ '4.0.0' ],
+829 silly audit   'cross-spawn': [ '7.0.6' ],
+829 silly audit   'get-stream': [ '6.0.1' ],
+829 silly audit   'human-signals': [ '3.0.1' ],
+829 silly audit   'merge-stream': [ '2.0.0' ],
+829 silly audit   'npm-run-path': [ '5.3.0' ],
+829 silly audit   onetime: [ '6.0.0' ],
+829 silly audit   'signal-exit': [ '3.0.7' ],
+829 silly audit   'strip-final-newline': [ '3.0.0' ],
+829 silly audit   'path-key': [ '3.1.1', '4.0.0' ],
+829 silly audit   'shebang-command': [ '2.0.0' ],
+829 silly audit   which: [ '2.0.2' ],
+829 silly audit   'mimic-fn': [ '4.0.0' ],
+829 silly audit   'rollup-plugin-inject': [ '3.0.2' ],
+829 silly audit   'estree-walker': [ '0.6.1' ],
+829 silly audit   'magic-string': [ '0.25.9' ],
+829 silly audit   'rollup-pluginutils': [ '2.8.2' ],
+829 silly audit   'sourcemap-codec': [ '1.4.8' ],
+829 silly audit   '@types/node-forge': [ '1.3.11' ],
+829 silly audit   'shebang-regex': [ '3.0.0' ],
+829 silly audit   'buffer-from': [ '1.1.2' ],
+829 silly audit   'is-number': [ '7.0.0' ],
+829 silly audit   builtins: [ '5.1.0' ],
+829 silly audit   isexe: [ '2.0.0' ],
+829 silly audit   '@types/stack-trace': [ '0.0.29' ],
+829 silly audit   cookie: [ '0.4.2' ],
+829 silly audit   mustache: [ '4.2.0' ],
+829 silly audit   'stack-trace': [ '0.0.10' ]
+829 silly audit }
+830 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/win32-x64
+831 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/win32-x64' ]
+832 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/win32-ia32
+833 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/win32-ia32' ]
+834 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/win32-arm64
+835 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/win32-arm64' ]
+836 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/sunos-x64
+837 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/sunos-x64' ]
+838 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/openbsd-x64
+839 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/openbsd-x64' ]
+840 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/netbsd-x64
+841 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/netbsd-x64' ]
+842 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/linux-x64
+843 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/linux-x64' ]
+844 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/linux-s390x
+845 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/linux-s390x' ]
+846 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/linux-riscv64
+847 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/linux-riscv64' ]
+848 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/linux-ppc64
+849 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/linux-ppc64' ]
+850 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/linux-mips64el
+851 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/linux-mips64el' ]
+852 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/linux-loong64
+853 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/linux-loong64' ]
+854 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/linux-ia32
+855 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/linux-ia32' ]
+856 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/linux-arm64
+857 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/linux-arm64' ]
+858 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/linux-arm
+859 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/linux-arm' ]
+860 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/freebsd-x64
+861 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/freebsd-x64' ]
+862 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/freebsd-arm64
+863 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/freebsd-arm64' ]
+864 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/darwin-arm64
+865 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/darwin-arm64' ]
+866 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/android-x64
+867 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/android-x64' ]
+868 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/android-arm64
+869 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/android-arm64' ]
+870 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/@esbuild/android-arm
+871 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/@esbuild/android-arm' ]
+872 silly tarball no local data for stack-trace@https://registry.npmjs.org/stack-trace/-/stack-trace-0.0.10.tgz. Extracting by manifest.
+873 silly tarball no local data for mustache@https://registry.npmjs.org/mustache/-/mustache-4.2.0.tgz. Extracting by manifest.
+874 silly tarball no local data for cookie@https://registry.npmjs.org/cookie/-/cookie-0.4.2.tgz. Extracting by manifest.
+875 silly tarball no local data for isexe@https://registry.npmjs.org/isexe/-/isexe-2.0.0.tgz. Extracting by manifest.
+876 silly tarball no local data for builtins@https://registry.npmjs.org/builtins/-/builtins-5.1.0.tgz. Extracting by manifest.
+877 silly tarball no local data for @types/stack-trace@https://registry.npmjs.org/@types/stack-trace/-/stack-trace-0.0.29.tgz. Extracting by manifest.
+878 silly tarball no local data for buffer-from@https://registry.npmjs.org/buffer-from/-/buffer-from-1.1.2.tgz. Extracting by manifest.
+879 silly tarball no local data for shebang-regex@https://registry.npmjs.org/shebang-regex/-/shebang-regex-3.0.0.tgz. Extracting by manifest.
+880 silly tarball no local data for @types/node-forge@https://registry.npmjs.org/@types/node-forge/-/node-forge-1.3.11.tgz. Extracting by manifest.
+881 silly tarball no local data for is-number@https://registry.npmjs.org/is-number/-/is-number-7.0.0.tgz. Extracting by manifest.
+882 silly tarball no local data for magic-string@https://registry.npmjs.org/magic-string/-/magic-string-0.25.9.tgz. Extracting by manifest.
+883 silly tarball no local data for sourcemap-codec@https://registry.npmjs.org/sourcemap-codec/-/sourcemap-codec-1.4.8.tgz. Extracting by manifest.
+884 silly tarball no local data for rollup-pluginutils@https://registry.npmjs.org/rollup-pluginutils/-/rollup-pluginutils-2.8.2.tgz. Extracting by manifest.
+885 silly tarball no local data for estree-walker@https://registry.npmjs.org/estree-walker/-/estree-walker-0.6.1.tgz. Extracting by manifest.
+886 silly tarball no local data for shebang-command@https://registry.npmjs.org/shebang-command/-/shebang-command-2.0.0.tgz. Extracting by manifest.
+887 silly tarball no local data for rollup-plugin-inject@https://registry.npmjs.org/rollup-plugin-inject/-/rollup-plugin-inject-3.0.2.tgz. Extracting by manifest.
+888 silly tarball no local data for which@https://registry.npmjs.org/which/-/which-2.0.2.tgz. Extracting by manifest.
+889 silly tarball no local data for strip-final-newline@https://registry.npmjs.org/strip-final-newline/-/strip-final-newline-3.0.0.tgz. Extracting by manifest.
+890 silly tarball no local data for mimic-fn@https://registry.npmjs.org/mimic-fn/-/mimic-fn-4.0.0.tgz. Extracting by manifest.
+891 silly tarball no local data for npm-run-path@https://registry.npmjs.org/npm-run-path/-/npm-run-path-5.3.0.tgz. Extracting by manifest.
+892 silly tarball no local data for signal-exit@https://registry.npmjs.org/signal-exit/-/signal-exit-3.0.7.tgz. Extracting by manifest.
+893 silly tarball no local data for merge-stream@https://registry.npmjs.org/merge-stream/-/merge-stream-2.0.0.tgz. Extracting by manifest.
+894 silly tarball no local data for onetime@https://registry.npmjs.org/onetime/-/onetime-6.0.0.tgz. Extracting by manifest.
+895 silly tarball no local data for human-signals@https://registry.npmjs.org/human-signals/-/human-signals-3.0.1.tgz. Extracting by manifest.
+896 silly tarball no local data for cross-spawn@https://registry.npmjs.org/cross-spawn/-/cross-spawn-7.0.6.tgz. Extracting by manifest.
+897 silly tarball no local data for validate-npm-package-name@https://registry.npmjs.org/validate-npm-package-name/-/validate-npm-package-name-4.0.0.tgz. Extracting by manifest.
+898 silly tarball no local data for path-key@https://registry.npmjs.org/path-key/-/path-key-3.1.1.tgz. Extracting by manifest.
+899 silly tarball no local data for parse-package-name@https://registry.npmjs.org/parse-package-name/-/parse-package-name-1.0.0.tgz. Extracting by manifest.
+900 silly tarball no local data for get-stream@https://registry.npmjs.org/get-stream/-/get-stream-6.0.1.tgz. Extracting by manifest.
+901 silly tarball no local data for execa@https://registry.npmjs.org/execa/-/execa-6.1.0.tgz. Extracting by manifest.
+902 silly tarball no local data for ws@https://registry.npmjs.org/ws/-/ws-8.18.2.tgz. Extracting by manifest.
+903 silly tarball no local data for html-rewriter-wasm@https://registry.npmjs.org/html-rewriter-wasm/-/html-rewriter-wasm-0.4.1.tgz. Extracting by manifest.
+904 silly tarball no local data for cron-schedule@https://registry.npmjs.org/cron-schedule/-/cron-schedule-3.0.6.tgz. Extracting by manifest.
+905 silly tarball no local data for http-cache-semantics@https://registry.npmjs.org/http-cache-semantics/-/http-cache-semantics-4.2.0.tgz. Extracting by manifest.
+906 silly tarball no local data for source-map-support@https://registry.npmjs.org/source-map-support/-/source-map-support-0.5.21.tgz. Extracting by manifest.
+907 silly tarball no local data for youch@https://registry.npmjs.org/youch/-/youch-2.2.2.tgz. Extracting by manifest.
+908 silly tarball no local data for @miniflare/web-sockets@https://registry.npmjs.org/@miniflare/web-sockets/-/web-sockets-2.14.4.tgz. Extracting by manifest.
+909 silly tarball no local data for semiver@https://registry.npmjs.org/semiver/-/semiver-1.1.0.tgz. Extracting by manifest.
+910 silly tarball no local data for @miniflare/storage-file@https://registry.npmjs.org/@miniflare/storage-file/-/storage-file-2.14.4.tgz. Extracting by manifest.
+911 silly tarball no local data for @miniflare/sites@https://registry.npmjs.org/@miniflare/sites/-/sites-2.14.4.tgz. Extracting by manifest.
+912 silly tarball no local data for @miniflare/scheduler@https://registry.npmjs.org/@miniflare/scheduler/-/scheduler-2.14.4.tgz. Extracting by manifest.
+913 silly tarball no local data for @miniflare/r2@https://registry.npmjs.org/@miniflare/r2/-/r2-2.14.4.tgz. Extracting by manifest.
+914 silly tarball no local data for @miniflare/runner-vm@https://registry.npmjs.org/@miniflare/runner-vm/-/runner-vm-2.14.4.tgz. Extracting by manifest.
+915 silly tarball no local data for @miniflare/html-rewriter@https://registry.npmjs.org/@miniflare/html-rewriter/-/html-rewriter-2.14.4.tgz. Extracting by manifest.
+916 silly tarball no local data for @miniflare/cli-parser@https://registry.npmjs.org/@miniflare/cli-parser/-/cli-parser-2.14.4.tgz. Extracting by manifest.
+917 silly tarball no local data for @miniflare/http-server@https://registry.npmjs.org/@miniflare/http-server/-/http-server-2.14.4.tgz. Extracting by manifest.
+918 silly tarball no local data for @miniflare/cache@https://registry.npmjs.org/@miniflare/cache/-/cache-2.14.4.tgz. Extracting by manifest.
+919 silly tarball no local data for @miniflare/kv@https://registry.npmjs.org/@miniflare/kv/-/kv-2.14.4.tgz. Extracting by manifest.
+920 silly tarball no local data for is-extglob@https://registry.npmjs.org/is-extglob/-/is-extglob-2.1.1.tgz. Extracting by manifest.
+921 silly tarball no local data for binary-extensions@https://registry.npmjs.org/binary-extensions/-/binary-extensions-2.3.0.tgz. Extracting by manifest.
+922 silly tarball no local data for fill-range@https://registry.npmjs.org/fill-range/-/fill-range-7.1.1.tgz. Extracting by manifest.
+923 silly tarball no local data for to-regex-range@https://registry.npmjs.org/to-regex-range/-/to-regex-range-5.0.1.tgz. Extracting by manifest.
+924 silly tarball no local data for readdirp@https://registry.npmjs.org/readdirp/-/readdirp-3.6.0.tgz. Extracting by manifest.
+925 silly tarball no local data for is-glob@https://registry.npmjs.org/is-glob/-/is-glob-4.0.3.tgz. Extracting by manifest.
+926 silly tarball no local data for normalize-path@https://registry.npmjs.org/normalize-path/-/normalize-path-3.0.0.tgz. Extracting by manifest.
+927 silly tarball no local data for @esbuild/darwin-x64@https://registry.npmjs.org/@esbuild/darwin-x64/-/darwin-x64-0.16.3.tgz. Extracting by manifest.
+928 silly tarball no local data for is-binary-path@https://registry.npmjs.org/is-binary-path/-/is-binary-path-2.1.0.tgz. Extracting by manifest.
+929 silly tarball no local data for braces@https://registry.npmjs.org/braces/-/braces-3.0.3.tgz. Extracting by manifest.
+930 silly tarball no local data for glob-parent@https://registry.npmjs.org/glob-parent/-/glob-parent-5.1.2.tgz. Extracting by manifest.
+931 silly tarball no local data for anymatch@https://registry.npmjs.org/anymatch/-/anymatch-3.1.3.tgz. Extracting by manifest.
+932 silly tarball no local data for streamsearch@https://registry.npmjs.org/streamsearch/-/streamsearch-1.1.0.tgz. Extracting by manifest.
+933 silly tarball no local data for npx-import@https://registry.npmjs.org/npx-import/-/npx-import-1.1.4.tgz. Extracting by manifest.
+934 silly tarball no local data for picomatch@https://registry.npmjs.org/picomatch/-/picomatch-2.3.1.tgz. Extracting by manifest.
+935 silly tarball no local data for @types/better-sqlite3@https://registry.npmjs.org/@types/better-sqlite3/-/better-sqlite3-7.6.13.tgz. Extracting by manifest.
+936 silly tarball no local data for urlpattern-polyfill@https://registry.npmjs.org/urlpattern-polyfill/-/urlpattern-polyfill-4.0.3.tgz. Extracting by manifest.
+937 silly tarball no local data for undici@https://registry.npmjs.org/undici/-/undici-5.28.4.tgz. Extracting by manifest.
+938 silly tarball no local data for @miniflare/storage-memory@https://registry.npmjs.org/@miniflare/storage-memory/-/storage-memory-2.14.4.tgz. Extracting by manifest.
+939 silly tarball no local data for kleur@https://registry.npmjs.org/kleur/-/kleur-4.1.5.tgz. Extracting by manifest.
+940 silly tarball no local data for @miniflare/watcher@https://registry.npmjs.org/@miniflare/watcher/-/watcher-2.14.4.tgz. Extracting by manifest.
+941 silly tarball no local data for busboy@https://registry.npmjs.org/busboy/-/busboy-1.6.0.tgz. Extracting by manifest.
+942 silly tarball no local data for set-cookie-parser@https://registry.npmjs.org/set-cookie-parser/-/set-cookie-parser-2.7.1.tgz. Extracting by manifest.
+943 silly tarball no local data for @miniflare/shared@https://registry.npmjs.org/@miniflare/shared/-/shared-2.14.4.tgz. Extracting by manifest.
+944 silly tarball no local data for @miniflare/queues@https://registry.npmjs.org/@miniflare/queues/-/queues-2.14.4.tgz. Extracting by manifest.
+945 silly tarball no local data for rollup-plugin-node-polyfills@https://registry.npmjs.org/rollup-plugin-node-polyfills/-/rollup-plugin-node-polyfills-0.2.1.tgz. Extracting by manifest.
+946 silly tarball no local data for @iarna/toml@https://registry.npmjs.org/@iarna/toml/-/toml-2.2.5.tgz. Extracting by manifest.
+947 silly tarball no local data for escape-string-regexp@https://registry.npmjs.org/escape-string-regexp/-/escape-string-regexp-4.0.0.tgz. Extracting by manifest.
+948 silly tarball no local data for source-map@https://registry.npmjs.org/source-map/-/source-map-0.7.4.tgz. Extracting by manifest.
+949 silly tarball no local data for xxhash-wasm@https://registry.npmjs.org/xxhash-wasm/-/xxhash-wasm-1.1.0.tgz. Extracting by manifest.
+950 silly tarball no local data for selfsigned@https://registry.npmjs.org/selfsigned/-/selfsigned-2.4.1.tgz. Extracting by manifest.
+951 silly tarball no local data for path-to-regexp@https://registry.npmjs.org/path-to-regexp/-/path-to-regexp-6.3.0.tgz. Extracting by manifest.
+952 silly tarball no local data for nanoid@https://registry.npmjs.org/nanoid/-/nanoid-3.3.11.tgz. Extracting by manifest.
+953 silly tarball no local data for miniflare@https://registry.npmjs.org/miniflare/-/miniflare-2.14.4.tgz. Extracting by manifest.
+954 silly tarball no local data for fsevents@https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz. Extracting by manifest.
+955 silly tarball no local data for chokidar@https://registry.npmjs.org/chokidar/-/chokidar-3.6.0.tgz. Extracting by manifest.
+956 silly tarball no local data for blake3-wasm@https://registry.npmjs.org/blake3-wasm/-/blake3-wasm-2.1.5.tgz. Extracting by manifest.
+957 silly tarball no local data for @miniflare/durable-objects@https://registry.npmjs.org/@miniflare/durable-objects/-/durable-objects-2.14.4.tgz. Extracting by manifest.
+958 silly tarball no local data for @miniflare/d1@https://registry.npmjs.org/@miniflare/d1/-/d1-2.14.4.tgz. Extracting by manifest.
+959 silly tarball no local data for @esbuild-plugins/node-modules-polyfill@https://registry.npmjs.org/@esbuild-plugins/node-modules-polyfill/-/node-modules-polyfill-0.1.4.tgz. Extracting by manifest.
+960 silly tarball no local data for @miniflare/core@https://registry.npmjs.org/@miniflare/core/-/core-2.14.4.tgz. Extracting by manifest.
+961 silly tarball no local data for esbuild@https://registry.npmjs.org/esbuild/-/esbuild-0.16.3.tgz. Extracting by manifest.
+962 silly tarball no local data for @esbuild-plugins/node-globals-polyfill@https://registry.npmjs.org/@esbuild-plugins/node-globals-polyfill/-/node-globals-polyfill-0.1.1.tgz. Extracting by manifest.
+963 silly tarball no local data for @cloudflare/kv-asset-handler@https://registry.npmjs.org/@cloudflare/kv-asset-handler/-/kv-asset-handler-0.2.0.tgz. Extracting by manifest.
+964 silly tarball no local data for safer-buffer@https://registry.npmjs.org/safer-buffer/-/safer-buffer-2.1.2.tgz. Extracting by manifest.
+965 silly tarball no local data for minimalistic-assert@https://registry.npmjs.org/minimalistic-assert/-/minimalistic-assert-1.0.1.tgz. Extracting by manifest.
+966 silly tarball no local data for bn.js@https://registry.npmjs.org/bn.js/-/bn.js-4.12.2.tgz. Extracting by manifest.
+967 silly tarball no local data for minimist@https://registry.npmjs.org/minimist/-/minimist-1.2.8.tgz. Extracting by manifest.
+968 silly tarball no local data for wrangler@https://registry.npmjs.org/wrangler/-/wrangler-2.21.3.tgz. Extracting by manifest.
+969 silly tarball no local data for web-push@https://registry.npmjs.org/web-push/-/web-push-3.6.7.tgz. Extracting by manifest.
+970 silly tarball no local data for asn1.js@https://registry.npmjs.org/asn1.js/-/asn1.js-5.4.1.tgz. Extracting by manifest.
+971 silly tarball no local data for http_ece@https://registry.npmjs.org/http_ece/-/http_ece-1.2.0.tgz. Extracting by manifest.
+972 silly tarball no local data for path-key@https://registry.npmjs.org/path-key/-/path-key-4.0.0.tgz. Extracting by manifest.
+973 silly tarball no local data for is-stream@https://registry.npmjs.org/is-stream/-/is-stream-3.0.0.tgz. Extracting by manifest.
+974 silly tarball no local data for @fastify/busboy@https://registry.npmjs.org/@fastify/busboy/-/busboy-2.1.1.tgz. Extracting by manifest.
+975 silly tarball no local data for dotenv@https://registry.npmjs.org/dotenv/-/dotenv-10.0.0.tgz. Extracting by manifest.
+976 silly tarball no local data for source-map@https://registry.npmjs.org/source-map/-/source-map-0.6.1.tgz. Extracting by manifest.
+977 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 280ms
+978 silly audit report {
+978 silly audit report   esbuild: [
+978 silly audit report     {
+978 silly audit report       id: 1102341,
+978 silly audit report       url: 'https://github.com/advisories/GHSA-67mh-4wv8-2f99',
+978 silly audit report       title: 'esbuild enables any website to send any requests to the development server and read the response',
+978 silly audit report       severity: 'moderate',
+978 silly audit report       vulnerable_versions: '<=0.24.2',
+978 silly audit report       cwe: [Array],
+978 silly audit report       cvss: [Object]
+978 silly audit report     }
+978 silly audit report   ],
+978 silly audit report   undici: [
+978 silly audit report     {
+978 silly audit report       id: 1101610,
+978 silly audit report       url: 'https://github.com/advisories/GHSA-c76h-2ccp-4975',
+978 silly audit report       title: 'Use of Insufficiently Random Values in undici',
+978 silly audit report       severity: 'moderate',
+978 silly audit report       vulnerable_versions: '>=4.5.0 <5.28.5',
+978 silly audit report       cwe: [Array],
+978 silly audit report       cvss: [Object]
+978 silly audit report     }
+978 silly audit report   ],
+978 silly audit report   cookie: [
+978 silly audit report     {
+978 silly audit report       id: 1103907,
+978 silly audit report       url: 'https://github.com/advisories/GHSA-pxg6-pf52-xh8x',
+978 silly audit report       title: 'cookie accepts cookie name, path, and domain with out of bounds characters',
+978 silly audit report       severity: 'low',
+978 silly audit report       vulnerable_versions: '<0.7.0',
+978 silly audit report       cwe: [Array],
+978 silly audit report       cvss: [Object]
+978 silly audit report     }
+978 silly audit report   ]
+978 silly audit report }
+979 silly packumentCache corgi:https://registry.npmjs.org/esbuild cache-miss
+980 silly packumentCache corgi:https://registry.npmjs.org/undici cache-miss
+981 silly packumentCache corgi:https://registry.npmjs.org/cookie cache-miss
+982 http fetch GET 200 https://registry.npmjs.org/builtins/-/builtins-5.1.0.tgz 244ms (cache miss)
+983 http fetch GET 200 https://registry.npmjs.org/cookie/-/cookie-0.4.2.tgz 245ms (cache miss)
+984 http fetch GET 200 https://registry.npmjs.org/isexe/-/isexe-2.0.0.tgz 263ms (cache miss)
+985 http fetch GET 200 https://registry.npmjs.org/stack-trace/-/stack-trace-0.0.10.tgz 265ms (cache miss)
+986 http fetch GET 200 https://registry.npmjs.org/shebang-command/-/shebang-command-2.0.0.tgz 265ms (cache miss)
+987 http fetch GET 200 https://registry.npmjs.org/rollup-plugin-inject/-/rollup-plugin-inject-3.0.2.tgz 265ms (cache miss)
+988 warn deprecated rollup-plugin-inject@3.0.2: This package has been deprecated and is no longer maintained. Please use @rollup/plugin-inject.
+989 http fetch GET 200 https://registry.npmjs.org/npm-run-path/-/npm-run-path-5.3.0.tgz 270ms (cache miss)
+990 http fetch GET 200 https://registry.npmjs.org/which/-/which-2.0.2.tgz 271ms (cache miss)
+991 http fetch GET 200 https://registry.npmjs.org/mimic-fn/-/mimic-fn-4.0.0.tgz 271ms (cache miss)
+992 http fetch GET 200 https://registry.npmjs.org/strip-final-newline/-/strip-final-newline-3.0.0.tgz 284ms (cache miss)
+993 http fetch GET 200 https://registry.npmjs.org/merge-stream/-/merge-stream-2.0.0.tgz 293ms (cache miss)
+994 http fetch GET 200 https://registry.npmjs.org/signal-exit/-/signal-exit-3.0.7.tgz 294ms (cache miss)
+995 http fetch GET 200 https://registry.npmjs.org/onetime/-/onetime-6.0.0.tgz 298ms (cache miss)
+996 http fetch GET 200 https://registry.npmjs.org/cross-spawn/-/cross-spawn-7.0.6.tgz 308ms (cache miss)
+997 http fetch GET 200 https://registry.npmjs.org/human-signals/-/human-signals-3.0.1.tgz 310ms (cache miss)
+998 http fetch GET 200 https://registry.npmjs.org/is-number/-/is-number-7.0.0.tgz 319ms (cache miss)
+999 http fetch GET 200 https://registry.npmjs.org/buffer-from/-/buffer-from-1.1.2.tgz 321ms (cache miss)
+1000 http fetch GET 200 https://registry.npmjs.org/shebang-regex/-/shebang-regex-3.0.0.tgz 322ms (cache miss)
+1001 http fetch GET 200 https://registry.npmjs.org/get-stream/-/get-stream-6.0.1.tgz 313ms (cache miss)
+1002 http fetch GET 200 https://registry.npmjs.org/parse-package-name/-/parse-package-name-1.0.0.tgz 328ms (cache miss)
+1003 http fetch GET 200 https://registry.npmjs.org/validate-npm-package-name/-/validate-npm-package-name-4.0.0.tgz 332ms (cache miss)
+1004 http fetch GET 200 https://registry.npmjs.org/path-key/-/path-key-3.1.1.tgz 333ms (cache miss)
+1005 http fetch GET 200 https://registry.npmjs.org/estree-walker/-/estree-walker-0.6.1.tgz 345ms (cache miss)
+1006 http fetch GET 200 https://registry.npmjs.org/semiver/-/semiver-1.1.0.tgz 346ms (cache miss)
+1007 http fetch GET 200 https://registry.npmjs.org/sourcemap-codec/-/sourcemap-codec-1.4.8.tgz 362ms (cache miss)
+1008 warn deprecated sourcemap-codec@1.4.8: Please use @jridgewell/sourcemap-codec instead
+1009 http fetch GET 200 https://registry.npmjs.org/source-map-support/-/source-map-support-0.5.21.tgz 359ms (cache miss)
+1010 http fetch GET 200 https://registry.npmjs.org/is-extglob/-/is-extglob-2.1.1.tgz 355ms (cache miss)
+1011 http fetch GET 200 https://registry.npmjs.org/@types/node-forge/-/node-forge-1.3.11.tgz 379ms (cache miss)
+1012 http fetch GET 200 https://registry.npmjs.org/fill-range/-/fill-range-7.1.1.tgz 360ms (cache miss)
+1013 http fetch GET 200 https://registry.npmjs.org/binary-extensions/-/binary-extensions-2.3.0.tgz 361ms (cache miss)
+1014 http fetch GET 200 https://registry.npmjs.org/mustache/-/mustache-4.2.0.tgz 389ms (cache miss)
+1015 http fetch GET 200 https://registry.npmjs.org/cron-schedule/-/cron-schedule-3.0.6.tgz 371ms (cache miss)
+1016 http fetch GET 200 https://registry.npmjs.org/readdirp/-/readdirp-3.6.0.tgz 368ms (cache miss)
+1017 http fetch GET 200 https://registry.npmjs.org/ws/-/ws-8.18.2.tgz 381ms (cache miss)
+1018 http fetch GET 200 https://registry.npmjs.org/http-cache-semantics/-/http-cache-semantics-4.2.0.tgz 382ms (cache miss)
+1019 http fetch GET 200 https://registry.npmjs.org/is-glob/-/is-glob-4.0.3.tgz 377ms (cache miss)
+1020 http fetch GET 200 https://registry.npmjs.org/to-regex-range/-/to-regex-range-5.0.1.tgz 384ms (cache miss)
+1021 http fetch GET 200 https://registry.npmjs.org/execa/-/execa-6.1.0.tgz 393ms (cache miss)
+1022 http fetch GET 200 https://registry.npmjs.org/normalize-path/-/normalize-path-3.0.0.tgz 394ms (cache miss)
+1023 http fetch GET 200 https://registry.npmjs.org/is-binary-path/-/is-binary-path-2.1.0.tgz 395ms (cache miss)
+1024 http fetch GET 200 https://registry.npmjs.org/youch/-/youch-2.2.2.tgz 412ms (cache miss)
+1025 http fetch GET 200 https://registry.npmjs.org/glob-parent/-/glob-parent-5.1.2.tgz 415ms (cache miss)
+1026 http fetch GET 200 https://registry.npmjs.org/anymatch/-/anymatch-3.1.3.tgz 420ms (cache miss)
+1027 http fetch GET 200 https://registry.npmjs.org/magic-string/-/magic-string-0.25.9.tgz 444ms (cache miss)
+1028 http fetch GET 200 https://registry.npmjs.org/rollup-pluginutils/-/rollup-pluginutils-2.8.2.tgz 443ms (cache miss)
+1029 http fetch GET 200 https://registry.npmjs.org/braces/-/braces-3.0.3.tgz 431ms (cache miss)
+1030 http fetch GET 200 https://registry.npmjs.org/html-rewriter-wasm/-/html-rewriter-wasm-0.4.1.tgz 450ms (cache miss)
+1031 http fetch GET 200 https://registry.npmjs.org/streamsearch/-/streamsearch-1.1.0.tgz 444ms (cache miss)
+1032 http fetch GET 200 https://registry.npmjs.org/npx-import/-/npx-import-1.1.4.tgz 447ms (cache miss)
+1033 http fetch GET 200 https://registry.npmjs.org/@miniflare/sites/-/sites-2.14.4.tgz 456ms (cache miss)
+1034 warn deprecated @miniflare/sites@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1035 http fetch GET 200 https://registry.npmjs.org/picomatch/-/picomatch-2.3.1.tgz 466ms (cache miss)
+1036 http fetch GET 200 https://registry.npmjs.org/urlpattern-polyfill/-/urlpattern-polyfill-4.0.3.tgz 481ms (cache miss)
+1037 http fetch GET 200 https://registry.npmjs.org/kleur/-/kleur-4.1.5.tgz 552ms (cache miss)
+1038 http fetch GET 200 https://registry.npmjs.org/undici/-/undici-5.28.4.tgz 621ms (cache miss)
+1039 http fetch GET 200 https://registry.npmjs.org/@miniflare/watcher/-/watcher-2.14.4.tgz 624ms (cache miss)
+1040 warn deprecated @miniflare/watcher@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1041 http fetch GET 200 https://registry.npmjs.org/set-cookie-parser/-/set-cookie-parser-2.7.1.tgz 703ms (cache miss)
+1042 http fetch GET 200 https://registry.npmjs.org/busboy/-/busboy-1.6.0.tgz 716ms (cache miss)
+1043 http fetch GET 200 https://registry.npmjs.org/@miniflare/shared/-/shared-2.14.4.tgz 748ms (cache miss)
+1044 warn deprecated @miniflare/shared@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1045 http fetch GET 200 https://registry.npmjs.org/@miniflare/scheduler/-/scheduler-2.14.4.tgz 968ms (cache miss)
+1046 warn deprecated @miniflare/scheduler@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1047 http fetch GET 200 https://registry.npmjs.org/@miniflare/cli-parser/-/cli-parser-2.14.4.tgz 967ms (cache miss)
+1048 warn deprecated @miniflare/cli-parser@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1049 http fetch GET 200 https://registry.npmjs.org/@miniflare/queues/-/queues-2.14.4.tgz 961ms (cache miss)
+1050 warn deprecated @miniflare/queues@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1051 http fetch GET 200 https://registry.npmjs.org/@miniflare/html-rewriter/-/html-rewriter-2.14.4.tgz 973ms (cache miss)
+1052 warn deprecated @miniflare/html-rewriter@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1053 http fetch GET 200 https://registry.npmjs.org/@miniflare/http-server/-/http-server-2.14.4.tgz 975ms (cache miss)
+1054 warn deprecated @miniflare/http-server@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1055 http fetch GET 200 https://registry.npmjs.org/@miniflare/kv/-/kv-2.14.4.tgz 985ms (cache miss)
+1056 warn deprecated @miniflare/kv@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1057 http fetch GET 200 https://registry.npmjs.org/escape-string-regexp/-/escape-string-regexp-4.0.0.tgz 978ms (cache miss)
+1058 http fetch GET 200 https://registry.npmjs.org/@miniflare/web-sockets/-/web-sockets-2.14.4.tgz 1024ms (cache miss)
+1059 warn deprecated @miniflare/web-sockets@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1060 http fetch GET 200 https://registry.npmjs.org/@miniflare/storage-file/-/storage-file-2.14.4.tgz 1035ms (cache miss)
+1061 warn deprecated @miniflare/storage-file@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1062 http fetch GET 200 https://registry.npmjs.org/nanoid/-/nanoid-3.3.11.tgz 1035ms (cache miss)
+1063 http fetch GET 200 https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz 1054ms (cache miss)
+1064 http fetch GET 200 https://registry.npmjs.org/miniflare/-/miniflare-2.14.4.tgz 1059ms (cache miss)
+1065 warn deprecated miniflare@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1066 http fetch GET 200 https://registry.npmjs.org/chokidar/-/chokidar-3.6.0.tgz 1065ms (cache miss)
+1067 http fetch GET 200 https://registry.npmjs.org/safer-buffer/-/safer-buffer-2.1.2.tgz 1081ms (cache miss)
+1068 http fetch GET 200 https://registry.npmjs.org/selfsigned/-/selfsigned-2.4.1.tgz 1132ms (cache miss)
+1069 http fetch GET 200 https://registry.npmjs.org/minimalistic-assert/-/minimalistic-assert-1.0.1.tgz 1146ms (cache miss)
+1070 http fetch GET 200 https://registry.npmjs.org/web-push/-/web-push-3.6.7.tgz 1146ms (cache miss)
+1071 http fetch GET 200 https://registry.npmjs.org/asn1.js/-/asn1.js-5.4.1.tgz 1146ms (cache miss)
+1072 http fetch GET 200 https://registry.npmjs.org/@miniflare/cache/-/cache-2.14.4.tgz 1162ms (cache miss)
+1073 warn deprecated @miniflare/cache@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1074 http fetch GET 200 https://registry.npmjs.org/@iarna/toml/-/toml-2.2.5.tgz 1160ms (cache miss)
+1075 http fetch GET 200 https://registry.npmjs.org/@miniflare/d1/-/d1-2.14.4.tgz 1157ms (cache miss)
+1076 warn deprecated @miniflare/d1@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1077 http fetch GET 200 https://registry.npmjs.org/@miniflare/r2/-/r2-2.14.4.tgz 1181ms (cache miss)
+1078 warn deprecated @miniflare/r2@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1079 http fetch GET 200 https://registry.npmjs.org/path-to-regexp/-/path-to-regexp-6.3.0.tgz 1171ms (cache miss)
+1080 http fetch GET 200 https://registry.npmjs.org/@miniflare/runner-vm/-/runner-vm-2.14.4.tgz 1185ms (cache miss)
+1081 warn deprecated @miniflare/runner-vm@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1082 http fetch GET 200 https://registry.npmjs.org/minimist/-/minimist-1.2.8.tgz 1179ms (cache miss)
+1083 http fetch GET 200 https://registry.npmjs.org/http_ece/-/http_ece-1.2.0.tgz 1179ms (cache miss)
+1084 http fetch GET 200 https://registry.npmjs.org/bn.js/-/bn.js-4.12.2.tgz 1181ms (cache miss)
+1085 http fetch GET 200 https://registry.npmjs.org/path-key/-/path-key-4.0.0.tgz 1188ms (cache miss)
+1086 http fetch GET 200 https://registry.npmjs.org/is-stream/-/is-stream-3.0.0.tgz 1193ms (cache miss)
+1087 http fetch GET 200 https://registry.npmjs.org/esbuild/-/esbuild-0.16.3.tgz 1199ms (cache miss)
+1088 http fetch GET 200 https://registry.npmjs.org/@miniflare/core/-/core-2.14.4.tgz 1208ms (cache miss)
+1089 warn deprecated @miniflare/core@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1090 http fetch GET 200 https://registry.npmjs.org/dotenv/-/dotenv-10.0.0.tgz 1213ms (cache miss)
+1091 http fetch GET 200 https://registry.npmjs.org/@types/better-sqlite3/-/better-sqlite3-7.6.13.tgz 1227ms (cache miss)
+1092 http fetch GET 200 https://registry.npmjs.org/xxhash-wasm/-/xxhash-wasm-1.1.0.tgz 1253ms (cache miss)
+1093 http fetch GET 200 https://registry.npmjs.org/cookie 1052ms (cache miss)
+1094 silly packumentCache corgi:https://registry.npmjs.org/cookie set size:undefined disposed:false
+1095 http fetch GET 200 https://registry.npmjs.org/@miniflare/storage-memory/-/storage-memory-2.14.4.tgz 1271ms (cache miss)
+1096 warn deprecated @miniflare/storage-memory@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1097 http fetch GET 200 https://registry.npmjs.org/@fastify/busboy/-/busboy-2.1.1.tgz 1295ms (cache miss)
+1098 http fetch GET 200 https://registry.npmjs.org/undici 1096ms (cache miss)
+1099 silly packumentCache corgi:https://registry.npmjs.org/undici set size:undefined disposed:false
+1100 http fetch GET 200 https://registry.npmjs.org/source-map/-/source-map-0.7.4.tgz 1327ms (cache miss)
+1101 http fetch GET 200 https://registry.npmjs.org/esbuild 1156ms (cache miss)
+1102 silly packumentCache corgi:https://registry.npmjs.org/esbuild set size:undefined disposed:false
+1103 http fetch GET 200 https://registry.npmjs.org/source-map/-/source-map-0.6.1.tgz 1388ms (cache miss)
+1104 silly packumentCache corgi:https://registry.npmjs.org/wrangler cache-miss
+1105 silly packumentCache corgi:https://registry.npmjs.org/@esbuild-plugins%2fnode-globals-polyfill cache-miss
+1106 silly packumentCache corgi:https://registry.npmjs.org/@esbuild-plugins%2fnode-modules-polyfill cache-miss
+1107 http fetch GET 200 https://registry.npmjs.org/rollup-plugin-node-polyfills/-/rollup-plugin-node-polyfills-0.2.1.tgz 1456ms (cache miss)
+1108 http fetch GET 200 https://registry.npmjs.org/@types/stack-trace/-/stack-trace-0.0.29.tgz 1579ms (cache miss)
+1109 http fetch GET 200 https://registry.npmjs.org/@miniflare/durable-objects/-/durable-objects-2.14.4.tgz 1565ms (cache miss)
+1110 warn deprecated @miniflare/durable-objects@2.14.4: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
+1111 http fetch GET 200 https://registry.npmjs.org/@esbuild-plugins/node-globals-polyfill/-/node-globals-polyfill-0.1.1.tgz 1568ms (cache miss)
+1112 http fetch GET 200 https://registry.npmjs.org/@esbuild-plugins/node-modules-polyfill/-/node-modules-polyfill-0.1.4.tgz 1588ms (cache miss)
+1113 http fetch GET 200 https://registry.npmjs.org/blake3-wasm/-/blake3-wasm-2.1.5.tgz 1590ms (cache miss)
+1114 http fetch GET 200 https://registry.npmjs.org/@esbuild-plugins%2fnode-modules-polyfill 330ms (cache miss)
+1115 silly packumentCache corgi:https://registry.npmjs.org/@esbuild-plugins%2fnode-modules-polyfill set size:undefined disposed:false
+1116 http fetch GET 200 https://registry.npmjs.org/@esbuild/darwin-x64/-/darwin-x64-0.16.3.tgz 1809ms (cache miss)
+1117 http fetch GET 200 https://registry.npmjs.org/wrangler 539ms (cache miss)
+1118 silly packumentCache corgi:https://registry.npmjs.org/wrangler set size:undefined disposed:false
+1119 http fetch GET 200 https://registry.npmjs.org/@esbuild-plugins%2fnode-globals-polyfill 1178ms (cache miss)
+1120 silly packumentCache corgi:https://registry.npmjs.org/@esbuild-plugins%2fnode-globals-polyfill set size:undefined disposed:false
+1121 silly packumentCache corgi:https://registry.npmjs.org/@miniflare%2fcore cache-miss
+1122 silly packumentCache corgi:https://registry.npmjs.org/@miniflare%2fdurable-objects cache-miss
+1123 silly packumentCache corgi:https://registry.npmjs.org/miniflare cache-miss
+1124 silly packumentCache corgi:https://registry.npmjs.org/@miniflare%2fcache cache-miss
+1125 silly packumentCache corgi:https://registry.npmjs.org/@miniflare%2fhtml-rewriter cache-miss
+1126 silly packumentCache corgi:https://registry.npmjs.org/@miniflare%2fhttp-server cache-miss
+1127 silly packumentCache corgi:https://registry.npmjs.org/@miniflare%2fr2 cache-miss
+1128 silly packumentCache corgi:https://registry.npmjs.org/@miniflare%2fweb-sockets cache-miss
+1129 http fetch GET 200 https://registry.npmjs.org/@cloudflare/kv-asset-handler/-/kv-asset-handler-0.2.0.tgz 2594ms (cache miss)
+1130 http fetch GET 200 https://registry.npmjs.org/wrangler/-/wrangler-2.21.3.tgz 2630ms (cache miss)
+1131 warn deprecated wrangler@2.21.3: Wrangler v2 is no longer supported. Please upgrade to Wrangler v4
+1132 info run fsevents@2.3.3 install node_modules/fsevents node-gyp rebuild
+1133 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fcore 173ms (cache miss)
+1134 silly packumentCache corgi:https://registry.npmjs.org/@miniflare%2fcore set size:undefined disposed:false
+1135 http fetch GET 200 https://registry.npmjs.org/miniflare 665ms (cache miss)
+1136 silly packumentCache corgi:https://registry.npmjs.org/miniflare set size:undefined disposed:false
+1137 info run fsevents@2.3.3 install { code: 1, signal: null }
+1138 verbose reify failed optional dependency /Users/xcape/网页/google/node_modules/fsevents
+1139 silly reify mark deleted [ '/Users/xcape/网页/google/node_modules/fsevents' ]
+1140 info run esbuild@0.16.3 postinstall node_modules/esbuild node install.js
+1141 info run esbuild@0.16.3 postinstall { code: 0, signal: null }
+1142 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fhtml-rewriter 1861ms (cache miss)
+1143 silly packumentCache corgi:https://registry.npmjs.org/@miniflare%2fhtml-rewriter set size:undefined disposed:false
+1144 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fhttp-server 1864ms (cache miss)
+1145 silly packumentCache corgi:https://registry.npmjs.org/@miniflare%2fhttp-server set size:undefined disposed:false
+1146 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fr2 1867ms (cache miss)
+1147 silly packumentCache corgi:https://registry.npmjs.org/@miniflare%2fr2 set size:undefined disposed:false
+1148 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fdurable-objects 1871ms (cache miss)
+1149 silly packumentCache corgi:https://registry.npmjs.org/@miniflare%2fdurable-objects set size:undefined disposed:false
+1150 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fcache 1874ms (cache miss)
+1151 silly packumentCache corgi:https://registry.npmjs.org/@miniflare%2fcache set size:undefined disposed:false
+1152 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fweb-sockets 1876ms (cache miss)
+1153 silly packumentCache corgi:https://registry.npmjs.org/@miniflare%2fweb-sockets set size:undefined disposed:false
+1154 silly packumentCache corgi:https://registry.npmjs.org/youch cache-miss
+1155 http fetch GET 200 https://registry.npmjs.org/youch 633ms (cache miss)
+1156 silly packumentCache corgi:https://registry.npmjs.org/youch set size:undefined disposed:false
+1157 silly packumentCache corgi:https://registry.npmjs.org/@miniflare%2fd1 cache-miss
+1158 silly packumentCache corgi:https://registry.npmjs.org/@miniflare%2fscheduler cache-miss
+1159 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fd1 488ms (cache miss)
+1160 silly packumentCache corgi:https://registry.npmjs.org/@miniflare%2fd1 set size:undefined disposed:false
+1161 http fetch GET 200 https://registry.npmjs.org/@miniflare%2fscheduler 1563ms (cache miss)
+1162 silly packumentCache corgi:https://registry.npmjs.org/@miniflare%2fscheduler set size:undefined disposed:false
+1163 silly ADD node_modules/stack-trace
+1164 silly ADD node_modules/mustache
+1165 silly ADD node_modules/cookie
+1166 silly ADD node_modules/@types/stack-trace
+1167 silly ADD node_modules/isexe
+1168 silly ADD node_modules/builtins
+1169 silly ADD node_modules/is-number
+1170 silly ADD node_modules/buffer-from
+1171 silly ADD node_modules/shebang-regex
+1172 silly ADD node_modules/@types/node-forge
+1173 silly ADD node_modules/sourcemap-codec
+1174 silly ADD node_modules/rollup-pluginutils
+1175 silly ADD node_modules/magic-string
+1176 silly ADD node_modules/estree-walker
+1177 silly ADD node_modules/rollup-plugin-inject
+1178 silly ADD node_modules/mimic-fn
+1179 silly ADD node_modules/which
+1180 silly ADD node_modules/shebang-command
+1181 silly ADD node_modules/path-key
+1182 silly ADD node_modules/strip-final-newline
+1183 silly ADD node_modules/signal-exit
+1184 silly ADD node_modules/onetime
+1185 silly ADD node_modules/npm-run-path
+1186 silly ADD node_modules/npm-run-path/node_modules/path-key
+1187 silly ADD node_modules/merge-stream
+1188 silly ADD node_modules/human-signals
+1189 silly ADD node_modules/get-stream
+1190 silly ADD node_modules/cross-spawn
+1191 silly ADD node_modules/validate-npm-package-name
+1192 silly ADD node_modules/parse-package-name
+1193 silly ADD node_modules/execa
+1194 silly ADD node_modules/execa/node_modules/is-stream
+1195 silly ADD node_modules/cron-schedule
+1196 silly ADD node_modules/youch
+1197 silly ADD node_modules/ws
+1198 silly ADD node_modules/html-rewriter-wasm
+1199 silly ADD node_modules/http-cache-semantics
+1200 silly ADD node_modules/source-map-support
+1201 silly ADD node_modules/source-map-support/node_modules/source-map
+1202 silly ADD node_modules/semiver
+1203 silly ADD node_modules/@miniflare/web-sockets
+1204 silly ADD node_modules/@miniflare/storage-file
+1205 silly ADD node_modules/@miniflare/sites
+1206 silly ADD node_modules/@miniflare/scheduler
+1207 silly ADD node_modules/@miniflare/runner-vm
+1208 silly ADD node_modules/@miniflare/r2
+1209 silly ADD node_modules/@miniflare/kv
+1210 silly ADD node_modules/@miniflare/http-server
+1211 silly ADD node_modules/@miniflare/html-rewriter
+1212 silly ADD node_modules/@miniflare/cli-parser
+1213 silly ADD node_modules/@miniflare/cache
+1214 silly ADD node_modules/is-extglob
+1215 silly ADD node_modules/binary-extensions
+1216 silly ADD node_modules/to-regex-range
+1217 silly ADD
+1218 silly ADD
+1219 silly ADD
+1220 silly ADD
+1221 silly ADD
+1222 silly ADD
+1223 silly ADD
+1224 silly ADD
+1225 silly ADD
+1226 silly ADD
+1227 silly ADD
+1228 silly ADD
+1229 silly ADD
+1230 silly ADD
+1231 silly ADD
+1232 silly ADD
+1233 silly ADD
+1234 silly ADD node_modules/@esbuild/darwin-x64
+1235 silly ADD
+1236 silly ADD
+1237 silly ADD
+1238 silly ADD
+1239 silly ADD node_modules/fill-range
+1240 silly ADD node_modules/readdirp
+1241 silly ADD node_modules/normalize-path
+1242 silly ADD node_modules/is-glob
+1243 silly ADD node_modules/is-binary-path
+1244 silly ADD node_modules/glob-parent
+1245 silly ADD node_modules/braces
+1246 silly ADD node_modules/anymatch
+1247 silly ADD node_modules/streamsearch
+1248 silly ADD node_modules/picomatch
+1249 silly ADD node_modules/npx-import
+1250 silly ADD node_modules/@types/better-sqlite3
+1251 silly ADD node_modules/@miniflare/storage-memory
+1252 silly ADD node_modules/urlpattern-polyfill
+1253 silly ADD node_modules/undici
+1254 silly ADD node_modules/undici/node_modules/@fastify/busboy
+1255 silly ADD node_modules/set-cookie-parser
+1256 silly ADD node_modules/kleur
+1257 silly ADD node_modules/busboy
+1258 silly ADD node_modules/@miniflare/watcher
+1259 silly ADD node_modules/@miniflare/shared
+1260 silly ADD node_modules/@miniflare/queues
+1261 silly ADD node_modules/@iarna/toml
+1262 silly ADD node_modules/rollup-plugin-node-polyfills
+1263 silly ADD node_modules/escape-string-regexp
+1264 silly ADD node_modules/xxhash-wasm
+1265 silly ADD node_modules/source-map
+1266 silly ADD node_modules/selfsigned
+1267 silly ADD node_modules/path-to-regexp
+1268 silly ADD node_modules/nanoid
+1269 silly ADD node_modules/miniflare
+1270 silly ADD
+1271 silly ADD node_modules/chokidar
+1272 silly ADD node_modules/blake3-wasm
+1273 silly ADD node_modules/@miniflare/durable-objects
+1274 silly ADD node_modules/@miniflare/d1
+1275 silly ADD node_modules/@miniflare/core
+1276 silly ADD node_modules/@miniflare/core/node_modules/dotenv
+1277 silly ADD node_modules/@esbuild-plugins/node-modules-polyfill
+1278 silly ADD node_modules/esbuild
+1279 silly ADD node_modules/@esbuild-plugins/node-globals-polyfill
+1280 silly ADD node_modules/@cloudflare/kv-asset-handler
+1281 silly ADD node_modules/safer-buffer
+1282 silly ADD node_modules/minimalistic-assert
+1283 silly ADD node_modules/bn.js
+1284 silly ADD node_modules/minimist
+1285 silly ADD node_modules/http_ece
+1286 silly ADD node_modules/asn1.js
+1287 silly ADD node_modules/wrangler
+1288 silly ADD node_modules/web-push
+1289 silly REMOVE node_modules/@types/tough-cookie
+1290 silly REMOVE node_modules/@types/serve-static
+1291 silly REMOVE node_modules/@types/send
+1292 silly REMOVE node_modules/@types/request
+1293 silly REMOVE node_modules/@types/range-parser
+1294 silly REMOVE node_modules/@types/qs
+1295 silly REMOVE node_modules/@types/ms
+1296 silly REMOVE node_modules/@types/mime
+1297 silly REMOVE node_modules/@types/long
+1298 silly REMOVE node_modules/@types/jsonwebtoken
+1299 silly REMOVE node_modules/@types/http-errors
+1300 silly REMOVE node_modules/@types/express-serve-static-core
+1301 silly REMOVE node_modules/@types/express
+1302 silly REMOVE node_modules/@types/connect
+1303 silly REMOVE node_modules/@types/body-parser
+1304 silly REMOVE node_modules/@types/caseless
+1305 silly REMOVE node_modules/@tootallnate/once
+1306 silly REMOVE node_modules/@opentelemetry/api
+1307 silly REMOVE node_modules/@protobufjs/utf8
+1308 silly REMOVE node_modules/@protobufjs/pool
+1309 silly REMOVE node_modules/@protobufjs/path
+1310 silly REMOVE node_modules/@protobufjs/inquire
+1311 silly REMOVE node_modules/@protobufjs/float
+1312 silly REMOVE node_modules/@protobufjs/fetch
+1313 silly REMOVE node_modules/@protobufjs/codegen
+1314 silly REMOVE node_modules/@protobufjs/eventemitter
+1315 silly REMOVE node_modules/@protobufjs/aspromise
+1316 silly REMOVE node_modules/@protobufjs/base64
+1317 silly REMOVE node_modules/@js-sdsl/ordered-map
+1318 silly REMOVE node_modules/@grpc/proto-loader
+1319 silly REMOVE node_modules/@grpc/grpc-js
+1320 silly REMOVE node_modules/@firebase/util
+1321 silly REMOVE node_modules/@firebase/logger
+1322 silly REMOVE node_modules/@firebase/database-types
+1323 silly REMOVE node_modules/@firebase/database-compat
+1324 silly REMOVE node_modules/@firebase/database
+1325 silly REMOVE node_modules/@firebase/component
+1326 silly REMOVE node_modules/@firebase/auth-interop-types
+1327 silly REMOVE node_modules/@firebase/app-types
+1328 silly REMOVE node_modules/@firebase/app-check-interop-types
+1329 silly REMOVE node_modules/@google-cloud/storage
+1330 silly REMOVE node_modules/@google-cloud/storage/node_modules/uuid
+1331 silly REMOVE node_modules/@google-cloud/promisify
+1332 silly REMOVE node_modules/@google-cloud/paginator
+1333 silly REMOVE node_modules/@google-cloud/projectify
+1334 silly REMOVE node_modules/@google-cloud/firestore
+1335 silly REMOVE node_modules/@fastify/busboy
+1336 silly REMOVE node_modules/yocto-queue
+1337 silly REMOVE node_modules/yargs-parser
+1338 silly REMOVE node_modules/yargs
+1339 silly REMOVE node_modules/yallist
+1340 silly REMOVE node_modules/y18n
+1341 silly REMOVE node_modules/wrappy
+1342 silly REMOVE node_modules/wrap-ansi
+1343 silly REMOVE node_modules/whatwg-url
+1344 silly REMOVE node_modules/websocket-driver
+1345 silly REMOVE node_modules/websocket-extensions
+1346 silly REMOVE node_modules/webidl-conversions
+1347 silly REMOVE node_modules/uuid
+1348 silly REMOVE node_modules/util-deprecate
+1349 silly REMOVE node_modules/tslib
+1350 silly REMOVE node_modules/tr46
+1351 silly REMOVE node_modules/teeny-request
+1352 silly REMOVE node_modules/teeny-request/node_modules/uuid
+1353 silly REMOVE node_modules/teeny-request/node_modules/node-fetch
+1354 silly REMOVE node_modules/teeny-request/node_modules/https-proxy-agent
+1355 silly REMOVE node_modules/teeny-request/node_modules/agent-base
+1356 silly REMOVE node_modules/stubs
+1357 silly REMOVE node_modules/strnum
+1358 silly REMOVE node_modules/strip-ansi
+1359 silly REMOVE node_modules/string_decoder
+1360 silly REMOVE node_modules/string-width
+1361 silly REMOVE node_modules/stream-shift
+1362 silly REMOVE node_modules/stream-events
+1363 silly REMOVE node_modules/retry-request
+1364 silly REMOVE node_modules/retry
+1365 silly REMOVE node_modules/require-directory
+1366 silly REMOVE node_modules/readable-stream
+1367 silly REMOVE node_modules/protobufjs
+1368 silly REMOVE node_modules/proto3-json-serializer
+1369 silly REMOVE node_modules/p-limit
+1370 silly REMOVE node_modules/once
+1371 silly REMOVE node_modules/object-hash
+1372 silly REMOVE node_modules/node-fetch
+1373 silly REMOVE node_modules/mime-types
+1374 silly REMOVE node_modules/mime-db
+1375 silly REMOVE node_modules/math-intrinsics
+1376 silly REMOVE node_modules/lru-memoizer
+1377 silly REMOVE node_modules/lru-cache
+1378 silly REMOVE node_modules/long
+1379 silly REMOVE node_modules/lodash.once
+1380 silly REMOVE node_modules/lodash.isstring
+1381 silly REMOVE node_modules/lodash.isplainobject
+1382 silly REMOVE node_modules/lodash.isnumber
+1383 silly REMOVE node_modules/lodash.isinteger
+1384 silly REMOVE node_modules/lodash.includes
+1385 silly REMOVE node_modules/lodash.isboolean
+1386 silly REMOVE node_modules/lodash.clonedeep
+1387 silly REMOVE node_modules/lodash.camelcase
+1388 silly REMOVE node_modules/limiter
+1389 silly REMOVE node_modules/json-bigint
+1390 silly REMOVE node_modules/jwks-rsa
+1391 silly REMOVE node_modules/jose
+1392 silly REMOVE node_modules/jsonwebtoken
+1393 silly REMOVE node_modules/jsonwebtoken/node_modules/jws
+1394 silly REMOVE node_modules/jsonwebtoken/node_modules/jwa
+1395 silly REMOVE node_modules/is-stream
+1396 silly REMOVE node_modules/is-fullwidth-code-point
+1397 silly REMOVE node_modules/http-proxy-agent
+1398 silly REMOVE node_modules/http-proxy-agent/node_modules/agent-base
+1399 silly REMOVE node_modules/http-parser-js
+1400 silly REMOVE node_modules/html-entities
+1401 silly REMOVE node_modules/hasown
+1402 silly REMOVE node_modules/has-symbols
+1403 silly REMOVE node_modules/has-tostringtag
+1404 silly REMOVE node_modules/gtoken
+1405 silly REMOVE node_modules/gopd
+1406 silly REMOVE node_modules/google-logging-utils
+1407 silly REMOVE node_modules/google-gax
+1408 silly REMOVE node_modules/google-gax/node_modules/uuid
+1409 silly REMOVE node_modules/google-gax/node_modules/node-fetch
+1410 silly REMOVE node_modules/google-auth-library
+1411 silly REMOVE node_modules/get-intrinsic
+1412 silly REMOVE node_modules/get-proto
+1413 silly REMOVE node_modules/get-caller-file
+1414 silly REMOVE node_modules/gcp-metadata
+1415 silly REMOVE node_modules/functional-red-black-tree
+1416 silly REMOVE node_modules/gaxios
+1417 silly REMOVE node_modules/gaxios/node_modules/uuid
+1418 silly REMOVE node_modules/gaxios/node_modules/node-fetch
+1419 silly REMOVE node_modules/function-bind
+1420 silly REMOVE node_modules/form-data
+1421 silly REMOVE node_modules/firebase-admin
+1422 silly REMOVE node_modules/faye-websocket
+1423 silly REMOVE node_modules/fast-xml-parser
+1424 silly REMOVE node_modules/fast-deep-equal
+1425 silly REMOVE node_modules/extend
+1426 silly REMOVE node_modules/farmhash-modern
+1427 silly REMOVE node_modules/event-target-shim
+1428 silly REMOVE node_modules/es-object-atoms
+1429 silly REMOVE node_modules/escalade
+1430 silly REMOVE node_modules/es-set-tostringtag
+1431 silly REMOVE node_modules/es-define-property
+1432 silly REMOVE node_modules/es-errors
+1433 silly REMOVE node_modules/end-of-stream
+1434 silly REMOVE node_modules/emoji-regex
+1435 silly REMOVE node_modules/duplexify
+1436 silly REMOVE node_modules/dunder-proto
+1437 silly REMOVE node_modules/dotenv
+1438 silly REMOVE node_modules/delayed-stream
+1439 silly REMOVE node_modules/combined-stream
+1440 silly REMOVE node_modules/color-name
+1441 silly REMOVE node_modules/color-convert
+1442 silly REMOVE node_modules/cliui
+1443 silly REMOVE node_modules/call-bind-apply-helpers
+1444 silly REMOVE node_modules/bignumber.js
+1445 silly REMOVE node_modules/asynckit
+1446 silly REMOVE node_modules/base64-js
+1447 silly REMOVE node_modules/async-retry
+1448 silly REMOVE node_modules/arrify
+1449 silly REMOVE node_modules/ansi-styles
+1450 silly REMOVE node_modules/ansi-regex
+1451 silly REMOVE node_modules/abort-controller
+1452 verbose cwd /Users/xcape/网页/google
+1453 verbose os Darwin 24.2.0
+1454 verbose node v22.11.0
+1455 verbose npm  v10.9.0
+1456 notice
+1456 notice New [31mmajor[39m version of npm available! [31m10.9.0[39m -> [34m11.3.0[39m
+1456 notice Changelog: [34mhttps://github.com/npm/cli/releases/tag/v11.3.0[39m
+1456 notice To update run: [4mnpm install -g npm@11.3.0[24m
+1456 notice  { force: true, [Symbol(proc-log.meta)]: true }
+1457 verbose exit 0
+1458 info ok

@@ -3,14 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Cloudflare配置 - 必须最先加载 -->
+    <script src="cloudflare-config.js"></script>
+    <!-- 全面API修复脚本 - 必须最先加载 -->
+    <script src="fix-api-mode.js"></script>
     <meta name="theme-color" content="#ffffff">
+    <script src="fix-api-mode.js"></script>
+    <meta name="theme-color" content="#ffffff">
+    <!-- 紧急修复缓存函数未定义错误 -->
+    <script src="emergency-fix.js"></script>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="description" content="墨尔本交通信息共享平台">
+    <!-- 引用错误修复脚本 - 必须最先加载 -->
+    <script src="js/reference-error-fix.js"></script>
     <meta name="apple-mobile-web-app-title" content="PtvAlert">
     
     <!-- 全局变量修复脚本 - 必须最先加载 -->
     <script src="./js/globals-fix.js"></script>
+    <script src="./js/cache-functions.js"></script>
+    <!-- 强制使用真实API -->
+    <script src="force-real-api.js"></script>
+    <script src="config.js"></script>
+    <script src="vapid-keys.js"></script>
     
     <!-- Firebase与Cloudflare同步脚本 -->
     <script src="./js/firebase-to-cloudflare-sync.js"></script>
@@ -879,6 +894,8 @@
             animation: popup-fade-in 0.3s ease-out;
         }
     </style>
+<script src="js/api-mode-display.js"></script>
+<script src="api-diagnostics.js"></script>
 </head>
 <body>
     <!-- 右上角语言切换按钮 -->
@@ -981,8 +998,9 @@
         const useCloudflare = true; // 设置为true使用Cloudflare, false使用Firebase
         
         // 定义Cloudflare API配置
-        const cloudflareConfig = {
-            apiUrl: 'https://ptvalert.pages.dev', // 你的实际Cloudflare Worker URL
+        /* 已从fix-api-mode.js替换，此处不再使用 */
+const _oldCloudflareConfig = {
+            apiUrl: 'https://ptvalert.qingyangzhou85.workers.dev', // 你的实际Cloudflare Worker URL
             dataEndpoint: '/api/reports',
             syncEndpoint: '/api/sync-from-firebase',
             notificationEndpoint: '/api/send-notification',
@@ -6559,5 +6577,5 @@
 
     <!-- 添加推送按钮事件处理 -->
 // ... existing code ...
-</body>
+<div id="debugOutput" style="position:fixed;bottom:10px;right:10px;max-width:300px;max-height:200px;overflow:auto;background:rgba(0,0,0,0.7);color:white;padding:10px;border-radius:5px;font-size:12px;z-index:9999;"><div>API模式: <span id="apiModeStatus">检测中...<
 </html>

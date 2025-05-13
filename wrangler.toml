@@ -1,40 +1,23 @@
 name = "ptvalert"
-main = "cloudflare-worker.js"
-compatibility_date = "2023-10-02"
-compatibility_flags = ["nodejs_compat"]
+main = "worker.js"
+compatibility_date = "2023-09-04"
 
-# Triggers
-[triggers]
-crons = ["0 * * * *"] # Run hourly
+# KV命名空间绑定
+kv_namespaces = [
+  { binding = "REPORTS", id = "813b223b2bd24ca4a50655c37d62e964", preview_id = "b5ddd27ffc2a4a479ebebdb97dd59dfd" },
+  { binding = "SUBSCRIPTIONS", id = "3e834580823b431f93239c9092cc062d" },
+  { binding = "MARKERS", id = "f0687e4580d64df484752257469e7742" },
+  { binding = "ADMIN_USERS", id = "90d07da1d69a4c0cbdfeec29e0db07a1" },
+  { binding = "BANNED_USERS", id = "e6ca3f9fb8264b078fc172106a4638b5" }
+]
 
-# KV Namespaces bindings - Create these using wrangler CLI:
-# wrangler kv:namespace create SUBSCRIPTIONS
-# wrangler kv:namespace create MARKERS
-# wrangler kv:namespace create ADMIN_USERS
-# wrangler kv:namespace create BANNED_USERS
-
-[[kv_namespaces]]
-binding = "SUBSCRIPTIONS"
-id = "3e834580823b431f93239c9092cc062d"
-preview_id = "28ee480143b04681872115416e9bb745"
-
-[[kv_namespaces]]
-binding = "MARKERS"
-id = "f0687e4580d64df484752257469e7742"
-preview_id = "8633673b6cdd488bb3a17629c66a3005"
-
-[[kv_namespaces]]
-binding = "ADMIN_USERS"
-id = "90d07da1d69a4c0cbdfeec29e0db07a1"
-preview_id = "6e7d37b686074fb1a2c748dc34b34a14"
-
-[[kv_namespaces]]
-binding = "BANNED_USERS"
-id = "e6ca3f9fb8264b078fc172106a4638b5"
-preview_id = "4dad5b24f23b479a9cce8f68567b24b7"
-
-# Environment variables
+# 环境变量
 [vars]
-VAPID_PUBLIC_KEY = "BIi0aWM8sQdsY8SIriYSG551h2HAezVghr6sudVRqEQeQu-6tILY6pbuytfDshoO7As3128FE791I0boTeNQD-8" # 用户提供的VAPID公钥
-VAPID_PRIVATE_KEY = "x2d0l1bc7Nzt432do68nVaBARMNBKz5rX0HnVFYquLE" # 用户提供的VAPID私钥
-VAPID_SUBJECT = "mailto:qingyangzhou85@gmail.com" # 用户提供的VAPID subject 
+ENVIRONMENT = "production"
+VAPID_PUBLIC_KEY = "BIi0aWM8sQdsY8SIriYSG551h2HAezVghr6sudVRqEQeQu-6tILY6pbuytfDshoO7As3128FE791I0boTeNQD-8"
+VAPID_PRIVATE_KEY = "4GCZgKr2_lhj_LnpSLsv2X-9Kue4bq8GHPEZrKznnKw"
+
+# 生产环境配置
+[env.production]
+route = { pattern = "ptvalert.qingyangzhou85.workers.dev", custom_domain = true }
+workers_dev = true 

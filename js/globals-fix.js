@@ -49,8 +49,8 @@
     // 检测GitHub Pages环境
     const isGitHubPages = window.location.hostname.includes('github.io');
     
-    // 在GitHub Pages环境下设置全局标志
-    if (isGitHubPages) {
+    // 在GitHub Pages环境下设置全局标志 - 但检查是否已被force-real-api.js设置
+    if (isGitHubPages && window.IS_GITHUB_PAGES !== false) {
         window.IS_GITHUB_PAGES = true;
         
         // 获取仓库名称，设置基本路径
@@ -64,8 +64,11 @@
         console.log('[全局修复] GitHub Pages环境: 基本路径 =', window.GITHUB_PAGES_BASE_PATH);
     }
 
-    // 在GitHub Pages环境下拦截所有API请求
-    if (isGitHubPages) {
+    // 在GitHub Pages环境下拦截所有API请求 - 除非明确设置强制使用真实API
+    const cloudflareConfig = window.cloudflareConfig || {};
+    const forceRealApi = cloudflareConfig.useRealApi === true;
+
+    if (isGitHubPages && !forceRealApi && !window.originalFetch) {
         console.log('[全局修复] 检测到GitHub Pages环境，应用API请求拦截');
 
         // 默认API响应
@@ -110,15 +113,16 @@
         };
 
         // 覆盖全局fetch函数
-        const originalFetch = window.fetch;
+        window.originalFetch = window.fetch;
         window.fetch = function(url, options = {}) {
             // 检查是否有cloudflareConfig
             const cloudflareConfig = window.cloudflareConfig || {};
             const useRealApi = cloudflareConfig.useRealApi === true;
             
             // 如果设置了useRealApi且不在GitHub Pages环境，或者不是API请求，则使用原始fetch
-            if (useRealApi || !isGitHubPages) {
-                return originalFetch.apply(this, arguments);
+            if (useRealApi) {
+                console.log('[全局修复] 检测到useRealApi=true，使用原始fetch');
+                return window.originalFetch.apply(this, arguments);
             }
             
             // 仅处理相对路径或指向当前域名的API请求
@@ -170,7 +174,7 @@
             }
             
             // 对于非API请求，使用原始fetch
-            return originalFetch.apply(this, arguments);
+            return window.originalFetch.apply(this, arguments);
         };
 
         // 提供其他可能需要的全局函数
@@ -188,6 +192,8 @@
             console.error('[模拟错误提示]', message);
             window.showToast('错误: ' + message);
         };
+    } else {
+        console.log('[全局修复] 不启用API请求拦截，将使用真实API');
     }
 
     console.log('[全局修复] 全局变量和函数初始化完成');
