@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0071e3">
-    <title>离线模式 - 无法连接到服务器</title>
+    <title>PtvAlert - 离线模式</title>
     <style>
         * {
             margin: 0;
@@ -17,37 +17,57 @@
         body {
             position: relative;
             width: 100%;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
             background-color: #1c1c1e;
             color: #fff;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
             padding: 20px;
             text-align: center;
         }
         
         .offline-container {
-            max-width: 500px;
+            max-width: 550px;
+            width: 100%;
             padding: 30px;
             background-color: rgba(50, 50, 54, 0.95);
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin: 30px 0;
         }
         
         .icon-container {
             margin-bottom: 20px;
+            animation: pulse 2s infinite ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
         }
         
         .icon {
             font-size: 64px;
+            background-color: rgba(255, 255, 255, 0.1);
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
         }
         
         h1 {
-            font-size: 24px;
+            font-size: 28px;
             margin-bottom: 20px;
+            background: linear-gradient(to right, #0071e3, #00c1d4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: #0071e3;
         }
         
         p {
@@ -69,11 +89,27 @@
             cursor: pointer;
             border: none;
             font-size: 16px;
+            transition: all 0.2s ease;
+        }
+        
+        .button:hover {
+            background-color: #0084ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 113, 227, 0.3);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+            box-shadow: none;
         }
         
         .secondary-button {
             background-color: rgba(255, 255, 255, 0.1);
             margin-right: 10px;
+        }
+        
+        .secondary-button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
         }
         
         .cached-content {
@@ -83,26 +119,46 @@
         }
         
         .cached-content h2 {
-            font-size: 18px;
+            font-size: 20px;
             margin-bottom: 15px;
+            color: #0071e3;
         }
         
         .cached-list {
-            text-align: left;
             margin: 0 auto;
-            max-width: 280px;
+            max-width: 400px;
         }
         
         .cached-item {
-            padding: 10px;
+            padding: 15px;
             background-color: rgba(255, 255, 255, 0.05);
             border-radius: 8px;
             margin-bottom: 10px;
             cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            display: flex;
+            align-items: center;
         }
         
         .cached-item:hover {
             background-color: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .cached-item-icon {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        .cached-item-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .cached-item-time {
+            font-size: 12px;
+            color: #999;
         }
         
         .language-switch {
@@ -119,40 +175,139 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            transition: background 0.2s ease;
         }
         
-        .offline-icon {
-            font-size: 80px;
-            margin: 20px auto;
-            color: #666;
+        .language-switch:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
         
-        .card {
-            background-color: #f9f9f9;
-            border-radius: 8px;
+        .status-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin: 20px 0;
+            margin: 15px 0;
+            border-left: 4px solid #0071e3;
+            text-align: left;
         }
         
-        button {
-            background-color: #3498db;
-            border: none;
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
+        .status-card h3 {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
             font-size: 16px;
-            margin: 10px 0;
-            cursor: pointer;
-            border-radius: 4px;
         }
         
-        button:hover {
-            background-color: #2980b9;
+        .status-card h3 span {
+            margin-right: 8px;
+        }
+        
+        .status-card p {
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .status-card p:last-child {
+            margin-bottom: 0;
+        }
+        
+        .status-card ul {
+            list-style: none;
+            margin: 10px 0;
+            padding-left: 10px;
+        }
+        
+        .status-card ul li {
+            padding: 4px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .status-card ul li:before {
+            content: "✓";
+            color: #34c759;
+            margin-right: 8px;
+        }
+        
+        .buttons-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        
+        .network-status {
+            font-size: 14px;
+            color: #999;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+            background-color: #ff3b30;
+        }
+        
+        .status-indicator.online {
+            background-color: #34c759;
+        }
+        
+        .pending-reports {
+            background-color: rgba(255, 149, 0, 0.1);
+            border-left-color: #ff9500;
+            margin-top: 20px;
+        }
+        
+        .warning-text {
+            color: #ff9500;
+        }
+        
+        .logo {
+            margin-top: 30px;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo span {
+            margin-right: 8px;
+        }
+        
+        @media (max-width: 480px) {
+            .offline-container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .icon {
+                width: 80px;
+                height: 80px;
+                font-size: 40px;
+            }
+            
+            .cached-list {
+                max-width: 100%;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="logo">
+        <span>🗺️</span> PtvAlert
+    </div>
+    
     <button id="langSwitchBtn" class="language-switch">
         <span style="font-size:16px;">🌐</span>
         <span id="langSwitchText">EN</span>
@@ -164,25 +319,38 @@
         </div>
         
         <h1 id="offline-title">您当前处于离线状态</h1>
-        <div class="card">
-            <p>无法连接到服务器。请检查您的网络连接后重试。</p>
-            <p>部分功能在离线模式下可能不可用。</p>
-            
-            <button onclick="window.location.reload()">重新连接</button>
+        
+        <p id="offline-message">当前无法连接到互联网。PtvAlert在离线模式下仍可使用部分功能，但无法获取最新信息或添加新报告。</p>
+        
+        <div class="network-status">
+            <div id="statusIndicator" class="status-indicator"></div>
+            <span id="statusText">当前离线</span>
         </div>
         
-        <div class="card">
-            <h3>您可以尝试：</h3>
-            <p>✓ 检查网络连接</p>
-            <p>✓ 确认WiFi或移动数据已开启</p>
-            <p>✓ 稍后再试</p>
+        <div class="status-card">
+            <h3><span>ℹ️</span> <span id="offlineFeatures">离线模式可用功能</span></h3>
+            <ul>
+                <li id="featureViewCached">查看已缓存的报告</li>
+                <li id="featureDraft">创建草稿报告 (稍后上传)</li>
+                <li id="featureOfflineMap">使用离线地图 (如果之前已缓存)</li>
+            </ul>
+        </div>
+        
+        <div id="pendingReportsCard" class="status-card pending-reports" style="display: none;">
+            <h3><span>⚠️</span> <span id="pendingTitle">待发送的报告</span></h3>
+            <p id="pendingDesc">您有 <span id="pendingCount" class="warning-text">0</span> 条报告等待上传。网络恢复后将自动发送。</p>
+        </div>
+        
+        <div class="buttons-container">
+            <button id="tryReconnect" class="button">重试连接</button>
+            <button id="viewCached" class="button secondary-button">查看已缓存内容</button>
+            <button id="goHome" class="button secondary-button">返回首页</button>
         </div>
         
         <div class="cached-content" id="cachedContent" style="display: none;">
             <h2 id="cached-title">已缓存内容</h2>
             <div class="cached-list" id="cachedList">
                 <!-- Cached items will be inserted here dynamically -->
-                <div class="cached-item">首页</div>
             </div>
         </div>
     </div>
@@ -192,22 +360,71 @@
         let currentLang = 'zh';
         const i18n = {
             zh: {
-                offlineTitle: '您已离线',
+                offlineTitle: '您当前处于离线状态',
                 offlineMessage: '当前无法连接到互联网。PtvAlert在离线模式下仍可使用部分功能，但无法获取最新信息或添加新报告。',
                 viewCached: '查看已缓存内容',
                 tryReconnect: '重试连接',
                 cachedTitle: '已缓存内容',
-                home: '首页'
+                home: '首页',
+                goHome: '返回首页',
+                statusOffline: '当前离线',
+                statusOnline: '已恢复连接',
+                offlineFeatures: '离线模式可用功能',
+                featureViewCached: '查看已缓存的报告',
+                featureDraft: '创建草稿报告 (稍后上传)',
+                featureOfflineMap: '使用离线地图 (如果之前已缓存)',
+                pendingTitle: '待发送的报告',
+                pendingDesc: '您有 {count} 条报告等待上传。网络恢复后将自动发送。',
+                noCachedContent: '暂无缓存内容',
+                cachedReport: '缓存的报告',
+                cachedImage: '缓存的图片',
+                cachedPage: '缓存的页面',
+                lastUpdated: '最后更新: '
             },
             en: {
-                offlineTitle: 'You\'re Offline',
-                offlineMessage: 'Currently unable to connect to the internet. PtvAlert can still work in offline mode with limited functionality, but you cannot get latest updates or add new reports.',
+                offlineTitle: 'You\'re Currently Offline',
+                offlineMessage: 'Unable to connect to the internet. PtvAlert can still work in offline mode with limited functionality, but you cannot get latest updates or add new reports.',
                 viewCached: 'View Cached Content',
-                tryReconnect: 'Try Again',
+                tryReconnect: 'Try Reconnect',
                 cachedTitle: 'Cached Content',
-                home: 'Home'
+                home: 'Home',
+                goHome: 'Return to Home',
+                statusOffline: 'Currently Offline',
+                statusOnline: 'Connection Restored',
+                offlineFeatures: 'Available Offline Features',
+                featureViewCached: 'View cached reports',
+                featureDraft: 'Create draft reports (upload later)',
+                featureOfflineMap: 'Use offline map (if previously cached)',
+                pendingTitle: 'Pending Reports',
+                pendingDesc: 'You have {count} reports waiting to be uploaded. They will be sent automatically when connection is restored.',
+                noCachedContent: 'No cached content available',
+                cachedReport: 'Cached Report',
+                cachedImage: 'Cached Image',
+                cachedPage: 'Cached Page',
+                lastUpdated: 'Last updated: '
             }
         };
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Load preferred language
+            const savedLang = localStorage.getItem('preferredLanguage');
+            if (savedLang && (savedLang === 'zh' || savedLang === 'en')) {
+                currentLang = savedLang;
+            }
+            
+            // Update UI language
+            updateLanguage();
+            
+            // Check for pending reports
+            checkPendingReports();
+            
+            // Load cached content
+            await loadCachedContent();
+            
+            // Set up network status monitoring
+            setupNetworkMonitoring();
+        });
         
         // Update UI language
         function updateLanguage() {
@@ -217,12 +434,17 @@
             document.getElementById('tryReconnect').textContent = i18n[currentLang].tryReconnect;
             document.getElementById('cached-title').textContent = i18n[currentLang].cachedTitle;
             document.getElementById('langSwitchText').textContent = currentLang === 'zh' ? 'EN' : '中';
+            document.getElementById('statusText').textContent = i18n[currentLang].statusOffline;
+            document.getElementById('offlineFeatures').textContent = i18n[currentLang].offlineFeatures;
+            document.getElementById('featureViewCached').textContent = i18n[currentLang].featureViewCached;
+            document.getElementById('featureDraft').textContent = i18n[currentLang].featureDraft;
+            document.getElementById('featureOfflineMap').textContent = i18n[currentLang].featureOfflineMap;
+            document.getElementById('pendingTitle').textContent = i18n[currentLang].pendingTitle;
+            document.getElementById('goHome').textContent = i18n[currentLang].goHome;
             
-            // Update cached items
-            const cachedItems = document.querySelectorAll('.cached-item');
-            if (cachedItems.length > 0) {
-                cachedItems[0].textContent = i18n[currentLang].home;
-            }
+            // Update pending reports description
+            const count = document.getElementById('pendingCount').textContent;
+            document.getElementById('pendingDesc').textContent = i18n[currentLang].pendingDesc.replace('{count}', count);
         }
         
         // Toggle language
@@ -248,99 +470,112 @@
         
         // Try reconnect
         document.getElementById('tryReconnect').addEventListener('click', function() {
-            // Check network status
-            if (navigator.onLine) {
-                // If online, redirect to home page
-                window.location.href = '/';
-            } else {
-                // If still offline, show message
-                alert(currentLang === 'zh' ? '仍然无法连接到网络，请检查您的网络设置。' : 'Still unable to connect. Please check your network settings.');
-            }
+            window.location.reload();
         });
         
-        // Check for cached pages and display them
-        async function loadCachedPages() {
-            if ('caches' in window) {
-                try {
-                    const cache = await caches.open('ptvalert-cache-v2');
-                    const keys = await cache.keys();
-                    const cachedList = document.getElementById('cachedList');
-                    
-                    // Clear existing items (except Home)
-                    while (cachedList.children.length > 1) {
-                        cachedList.removeChild(cachedList.lastChild);
-                    }
-                    
-                    // Add cached pages to the list
-                    const processedUrls = new Set();
-                    processedUrls.add('/'); // Skip home page as it's already added
-                    
-                    for (const request of keys) {
-                        const url = new URL(request.url);
-                        const path = url.pathname;
-                        
-                        // Skip duplicates, API calls, and assets
-                        if (processedUrls.has(path) || 
-                            path.includes('/api/') || 
-                            path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico)$/)) {
-                            continue;
-                        }
-                        
-                        // Create friendly name
-                        let name = path;
-                        if (path.endsWith('/')) {
-                            name = path.slice(0, -1);
-                        }
-                        if (path.endsWith('.html')) {
-                            name = path.replace('.html', '');
-                        }
-                        name = name.split('/').pop();
-                        if (!name) name = 'home';
-                        
-                        // Make name more readable
-                        name = name.charAt(0).toUpperCase() + name.slice(1);
-                        name = name.replace(/-/g, ' ');
-                        
-                        processedUrls.add(path);
-                        
-                        // Skip if there's nothing readable
-                        if (name === "" || name === "/" || name === "undefined") {
-                            continue;
-                        }
-                        
-                        // Create list item
-                        const item = document.createElement('div');
-                        item.className = 'cached-item';
-                        item.textContent = name;
-                        item.addEventListener('click', function() {
-                            window.location.href = path;
-                        });
-                        
-                        cachedList.appendChild(item);
-                    }
-                } catch (error) {
-                    console.error('Error loading cached pages:', error);
+        // Go to home
+        document.getElementById('goHome').addEventListener('click', function() {
+            window.location.href = './';
+        });
+        
+        // Setup network monitoring
+        function setupNetworkMonitoring() {
+            const updateNetworkStatus = () => {
+                const online = navigator.onLine;
+                const statusIndicator = document.getElementById('statusIndicator');
+                const statusText = document.getElementById('statusText');
+                
+                if (online) {
+                    statusIndicator.classList.add('online');
+                    statusText.textContent = i18n[currentLang].statusOnline;
+                    // If online, show a message that we're reconnecting
+                    setTimeout(() => {
+                        window.location.href = './';
+                    }, 3000);
+                } else {
+                    statusIndicator.classList.remove('online');
+                    statusText.textContent = i18n[currentLang].statusOffline;
                 }
+            };
+            
+            // Initial check
+            updateNetworkStatus();
+            
+            // Listen for network changes
+            window.addEventListener('online', updateNetworkStatus);
+            window.addEventListener('offline', updateNetworkStatus);
+        }
+        
+        // Check for pending reports
+        function checkPendingReports() {
+            try {
+                const pendingReports = localStorage.getItem('pending_reports');
+                if (pendingReports) {
+                    const reports = JSON.parse(pendingReports);
+                    if (reports && reports.length > 0) {
+                        document.getElementById('pendingCount').textContent = reports.length;
+                        document.getElementById('pendingReportsCard').style.display = 'block';
+                        
+                        // Update description with count
+                        document.getElementById('pendingDesc').textContent = 
+                            i18n[currentLang].pendingDesc.replace('{count}', reports.length);
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking pending reports:', error);
             }
         }
         
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            // Load language preference
-            const savedLanguage = localStorage.getItem('preferredLanguage');
-            if (savedLanguage) {
-                currentLang = savedLanguage;
+        // Load cached content
+        async function loadCachedContent() {
+            if (!('caches' in window)) {
+                return;
             }
             
-            updateLanguage();
-            loadCachedPages();
+            const cachedList = document.getElementById('cachedList');
+            cachedList.innerHTML = '';
             
-            // Listen for online status changes
-            window.addEventListener('online', function() {
-                // When back online, redirect to home
-                window.location.href = '/';
-            });
-        });
+            try {
+                // Try to get cached reports from localStorage
+                const cachedReports = localStorage.getItem('cached_reports');
+                if (cachedReports) {
+                    const reports = JSON.parse(cachedReports);
+                    if (reports && reports.length > 0) {
+                        reports.forEach(report => {
+                            const time = new Date(report.time).toLocaleString();
+                            const item = document.createElement('div');
+                            item.className = 'cached-item';
+                            item.innerHTML = `
+                                <div class="cached-item-icon">${report.emoji || '📍'}</div>
+                                <div>
+                                    <div class="cached-item-title">${report.description || i18n[currentLang].cachedReport}</div>
+                                    <div class="cached-item-time">${i18n[currentLang].lastUpdated}${time}</div>
+                                </div>
+                            `;
+                            cachedList.appendChild(item);
+                        });
+                    }
+                }
+                
+                // If there's still no content, show a message
+                if (cachedList.children.length === 0) {
+                    const emptyMessage = document.createElement('div');
+                    emptyMessage.style.textAlign = 'center';
+                    emptyMessage.style.padding = '20px';
+                    emptyMessage.style.color = '#999';
+                    emptyMessage.textContent = i18n[currentLang].noCachedContent;
+                    cachedList.appendChild(emptyMessage);
+                }
+            } catch (error) {
+                console.error('Error loading cached content:', error);
+                const errorMessage = document.createElement('div');
+                errorMessage.style.textAlign = 'center';
+                errorMessage.style.padding = '20px';
+                errorMessage.style.color = '#ff3b30';
+                errorMessage.textContent = 'Error loading cached content';
+                cachedList.appendChild(errorMessage);
+            }
+        }
     </script>
 </body>
 </html> 
