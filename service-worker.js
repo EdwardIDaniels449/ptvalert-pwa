@@ -19,22 +19,36 @@ function getBasePath() {
     console.log('[Service Worker] 检测到GitHub Pages环境');
     
     // 从URL中提取仓库名称
-    const pathMatch = self.location.pathname.match(/\/([^\/]+)\//);
-    if (pathMatch && pathMatch[1]) {
-      const repoName = pathMatch[1];
-      const basePath = '/' + repoName + '/';
-      console.log('[Service Worker] GitHub Pages仓库名:', repoName);
-      console.log('[Service Worker] 使用基础路径:', basePath);
-      return basePath;
-    } else {
-      console.log('[Service Worker] 无法检测到GitHub Pages仓库名，使用根路径');
+    try {
+      const pathMatch = self.location.pathname.match(/\/([^\/]+)\/service-worker\.js/);
+      if (pathMatch && pathMatch[1]) {
+        const repoName = pathMatch[1];
+        const basePath = '/' + repoName + '/';
+        console.log('[Service Worker] GitHub Pages仓库名:', repoName);
+        console.log('[Service Worker] 使用基础路径:', basePath);
+        return basePath;
+      } else {
+        console.warn('[Service Worker] 无法从URL提取仓库名，使用默认路径');
+        // 尝试从基本域名获取部分路径
+        const pathnameParts = self.location.pathname.split('/');
+        // 移除空元素和"service-worker.js"
+        const filteredParts = pathnameParts.filter(p => p && p !== 'service-worker.js');
+        
+        if (filteredParts.length > 0) {
+          const basePath = '/' + filteredParts.join('/') + '/';
+          console.log('[Service Worker] 从URL部分提取基础路径:', basePath);
+          return basePath;
+        }
+        return '/';
+      }
+    } catch (error) {
+      console.error('[Service Worker] 提取仓库名失败:', error);
       return '/';
     }
+  } else {
+    console.log('[Service Worker] 标准环境，使用相对路径');
+    return './';
   }
-  
-  // 默认使用根路径
-  console.log('[Service Worker] 非GitHub Pages环境，使用根路径');
-  return '/';
 }
 
 const BASE_PATH = getBasePath();

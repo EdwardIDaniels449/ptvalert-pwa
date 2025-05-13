@@ -204,43 +204,83 @@
                     }
                     console.log('所有服务工作线程已卸载，将重新注册最新版本');
                     
-                    // 添加防止域名错误的紧急修复
-                    window.setTimeout(function() {
-                        try {
-                            // 检查控制台错误中是否有your-subdomain.workers.dev字符串
-                            const oldConsoleError = console.error;
-                            console.error = function() {
-                                const args = Array.from(arguments);
-                                const errorText = args.join(' ');
+                    // 添加修复manifest在GitHub Pages下的路径问题
+                    // 如果在GitHub Pages环境下，修改manifest.json文件中的路径
+                    if (window.location.hostname.includes('github.io')) {
+                      try {
+                        // 获取仓库名称
+                        const getRepoName = function() {
+                          const pathSegments = window.location.pathname.split('/');
+                          if (pathSegments.length >= 2 && pathSegments[1]) {
+                            return pathSegments[1];
+                          }
+                          return 'ptvalert-pwa'; // 默认仓库名
+                        };
+                        
+                        const repoName = getRepoName();
+                        const basePath = '/' + repoName + '/';
+                        
+                        // 注册服务工作线程
+                        const registerSW = async function() {
+                          try {
+                            console.log('尝试注册Service Worker...');
+                            const swPath = basePath + 'service-worker.js';
+                            
+                            const registration = await navigator.serviceWorker.register(swPath, {
+                              scope: basePath
+                            });
+                            
+                            console.log('Service Worker注册成功:', registration.scope);
+                            return registration;
+                          } catch (error) {
+                            console.error('主Service Worker注册失败:', error);
+                            
+                            // 尝试使用备用Service Worker
+                            try {
+                              console.log('尝试注册备用Service Worker...');
+                              const fallbackPath = basePath + 'fallback-service-worker.js';
+                              
+                              const fallbackReg = await navigator.serviceWorker.register(fallbackPath, {
+                                scope: basePath
+                              });
+                              
+                              console.log('备用Service Worker注册成功:', fallbackReg.scope);
+                              return fallbackReg;
+                            } catch (fallbackError) {
+                              console.error('备用Service Worker注册也失败:', fallbackError);
+                              
+                              // 尝试直接使用相对路径
+                              try {
+                                const localReg = await navigator.serviceWorker.register('./service-worker.js', {
+                                  scope: './'
+                                });
                                 
-                                // 检查是否有错误URL
-                                if (errorText.includes('your-subdomain.workers.dev')) {
-                                    console.warn('检测到错误域名！尝试修复...');
-                                    
-                                    // 动态修补API_BASE_URL
-                                    try {
-                                        var script = document.createElement('script');
-                                        script.textContent = `
-                                            // 尝试修复错误的API_BASE_URL
-                                            if (typeof API_BASE_URL !== 'undefined' && API_BASE_URL.includes('your-subdomain.workers.dev')) {
-                                                console.warn('修复API_BASE_URL从:', API_BASE_URL);
-                                                API_BASE_URL = 'https://ptvalert.pages.dev';
-                                                console.warn('修复为:', API_BASE_URL);
-                                            }
-                                        `;
-                                        document.head.appendChild(script);
-                                    } catch (e) {
-                                        console.error('修复失败:', e);
-                                    }
-                                }
-                                
-                                // 调用原始的console.error
-                                oldConsoleError.apply(console, args);
-                            };
-                        } catch (e) {
-                            console.error('设置错误处理器失败:', e);
-                        }
-                    }, 1000);
+                                console.log('使用本地路径注册成功:', localReg.scope);
+                                return localReg;
+                              } catch (finalError) {
+                                console.error('所有Service Worker注册方法都失败:', finalError);
+                                return null;
+                              }
+                            }
+                          }
+                        };
+                        
+                        // 执行注册
+                        await registerSW();
+                      } catch (error) {
+                        console.error('处理Service Worker注册时出错:', error);
+                      }
+                    } else {
+                      // 非GitHub Pages环境，使用标准注册方式
+                      try {
+                        const registration = await navigator.serviceWorker.register('./service-worker.js', {
+                          scope: './'
+                        });
+                        console.log('Service Worker注册成功:', registration.scope);
+                      } catch (error) {
+                        console.error('Service Worker注册失败:', error);
+                      }
+                    }
                 } catch (error) {
                     console.error('卸载服务工作线程失败:', error);
                 }
