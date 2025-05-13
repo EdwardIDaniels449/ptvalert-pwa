@@ -972,6 +972,16 @@
             appId: "1:590126951854:web:4cbc14144b0a395dc42c3f"
         };
         
+        // Cloudflare Workers配置
+        const cloudflareConfig = {
+            apiUrl: "https://ptvalert-push.edwardidaniels449.workers.dev",
+            dataEndpoint: "/api/markers",
+            pushEndpoint: "/api/push"
+        };
+        
+        // 确定当前使用的存储系统
+        const useCloudflare = true; // 设置为true使用Cloudflare, false使用Firebase
+        
         // 初始化Firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
@@ -1789,6 +1799,12 @@
         
         // 从Firebase加载报告数据
         function loadReportsFromFirebase() {
+            // 如果使用Cloudflare Workers，从那里获取数据
+            if (useCloudflare) {
+                loadReportsFromCloudflare();
+                return;
+            }
+            
             reportsRef.on('value', (snapshot) => {
                 // 清除现有标记
                 markers.forEach(marker => {
@@ -1807,6 +1823,48 @@
             });
         }
         
+        // 从Cloudflare Workers加载报告数据
+        function loadReportsFromCloudflare() {
+            fetch(`${cloudflareConfig.apiUrl}${cloudflareConfig.dataEndpoint}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 清除现有标记
+                    markers.forEach(marker => {
+                        marker.setMap(null);
+                    });
+                    markers = [];
+                    
+                    if (data.markers && Array.isArray(data.markers)) {
+                        data.markers.forEach(report => {
+                            addReportMarker(report);
+                        });
+                        console.log("Reports loaded from Cloudflare:", markers.length);
+                    } else {
+                        // 如果Cloudflare没有数据，回退到Firebase
+                        console.log("No data from Cloudflare, falling back to Firebase");
+                        reportsRef.on('value', (snapshot) => {
+                            if (snapshot.exists()) {
+                                snapshot.forEach((childSnapshot) => {
+                                    const report = childSnapshot.val();
+                                    addReportMarker(report);
+                                });
+                            }
+                            console.log("Reports loaded from Firebase fallback:", markers.length);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error("Error loading reports from Cloudflare:", error);
+                    // 错误时回退到Firebase
+                    loadReportsFromFirebase();
+                });
+        }
+        
         // 添加报告标记到地图
         function addReportMarker(report) {
             if (!map) return;
@@ -1821,65 +1879,143 @@
                 return;
             }
             
+            return addReportMarkerToMap(report);
+        }
+        
+        // 快速报告函数修改
+        function addQuickReport(location, description, emoji) {
+            const now = new Date();
+            const reportId = Date.now().toString();
+            
+            // 创建报告数据对象
+            const reportData = {
+                id: reportId,
+                lat: location.lat,
+                lng: location.lng,
+                description: description,
+                originalDescription: description,
+                emoji: emoji,
+                time: now.toISOString(),
+                userId: currentUserId || 'anonymous'
+            };
+            
+            // 创建标记
+            const marker = addReportMarkerToMap(reportData);
+            
+            // 保存数据到服务务器
+            if (useCloudflare) {
+                saveReportToCloudflare(reportData);
+            } else {
+                saveReportToFirebase(reportData);
+            }
+            
+            return marker;
+        }
+        
+        // 保存报告到Firebase
+        function saveReportToFirebase(reportData) {
+            reportsRef.child(reportData.id.toString()).set(reportData)
+                .then(() => {
+                    console.log("Quick report saved to Firebase", reportData);
+                    
+                    // 增加用户报告计数
+                    incrementUserReportCount();
+                })
+                .catch((error) => {
+                    console.error("Error saving quick report to Firebase:", error);
+                    sendDanmaku(currentLang === 'zh' ? 
+                        '标记已添加到地图，但保存到服务器失败' : 
+                        'Marker added to map, but failed to save to server'
+                    );
+                });
+        }
+        
+        // 保存报告到Cloudflare Workers
+        function saveReportToCloudflare(reportData) {
+            fetch(`${cloudflareConfig.apiUrl}${cloudflareConfig.dataEndpoint}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(reportData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Quick report saved to Cloudflare Workers", data);
+                
+                // 为了兼容性，同时保存到Firebase
+                saveReportToFirebase(reportData);
+                
+                // 增加用户报告计数
+                incrementUserReportCount();
+            })
+            .catch((error) => {
+                console.error("Error saving quick report to Cloudflare:", error);
+                
+                // 错误时回退到Firebase
+                saveReportToFirebase(reportData);
+                
+                sendDanmaku(currentLang === 'zh' ? 
+                    '保存到Cloudflare失败，已回退到Firebase' : 
+                    'Failed to save to Cloudflare, fallback to Firebase'
+                );
+            });
+        }
+        
+        // 将报告标记添加到地图
+        function addReportMarkerToMap(reportData) {
             // 创建标记 - 使用白色背景
             const markerIcon = {
                 url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
                     `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
                         <circle cx="20" cy="20" r="18" fill="white" opacity="0.9"/>
-                        <text x="20" y="28" font-size="24" text-anchor="middle" fill="black">${report.emoji}</text>
+                        <text x="20" y="28" font-size="24" text-anchor="middle" fill="black">${reportData.emoji}</text>
                     </svg>`
                 ),
                 scaledSize: new google.maps.Size(40, 40),
                 anchor: new google.maps.Point(20, 20)
             };
             
+            // 创建标记
             const marker = new google.maps.Marker({
-                position: { lat: report.lat, lng: report.lng },
+                position: { lat: reportData.lat, lng: reportData.lng },
                 map: map,
                 icon: markerIcon,
-                clickable: true,
-                zIndex: 999
+                title: reportData.description,
+                animation: google.maps.Animation.DROP,
+                optimized: false // 确保emoji能够显示
             });
             
-            // 添加点击事件 - 显示报告详情
-            marker.reportData = report;
+            // 创建信息窗口
+            const infoContent = `
+                <div class="info-window">
+                    <div class="emoji-display">${reportData.emoji}</div>
+                    <div class="description">${reportData.description}</div>
+                    <div class="time-display">${formatTimeAgo(new Date(reportData.time))}</div>
+                </div>
+            `;
             
-            // 创建信息窗口，在鼠标悬停时显示简短描述
-            let infoWindow = null;
-            if (report.description) {
-                const shortDesc = report.description.length > 50 ? 
-                    report.description.substring(0, 50) + '...' : 
-                    report.description;
-                
-                infoWindow = new google.maps.InfoWindow({
-                    content: `<div style="max-width:200px;font-family:sans-serif;">
-                        <p style="margin:8px 0;font-weight:bold;">${report.emoji} ${shortDesc}</p>
-                        <p style="margin:5px 0;color:#666;font-size:12px;">👤 ${report.userName || '用户'}</p>
-                        <p style="margin:5px 0;color:#777;font-size:11px;">${new Date(report.time).toLocaleString()}</p>
-                    </div>`
-                });
-                
-                // 鼠标悬停时显示信息窗口
-                marker.addListener('mouseover', function() {
-                    infoWindow.open(map, marker);
-                });
-                
-                marker.addListener('mouseout', function() {
-                    infoWindow.close();
-                });
-                
-                // 保存infoWindow引用到marker对象
-                marker.infoWindow = infoWindow;
-            }
+            const infoWindow = new google.maps.InfoWindow({
+                content: infoContent,
+                maxWidth: 200
+            });
             
+            // 添加点击事件侦听器
             marker.addListener("click", function() {
-                console.log('Report marker clicked:', this.reportData.id);
+                console.log('Quick report marker clicked:', reportData.id);
                 // 关闭所有活动的信息窗口
                 if (this.infoWindow) this.infoWindow.close();
-                showReportDetails(this.reportData);
+                showReportDetails(reportData);
             });
             
+            // 保存infoWindow的引用到marker对象上
+            marker.infoWindow = infoWindow;
+            marker.reportData = reportData;
+            
+            // 添加到标记数组
             markers.push(marker);
+            
+            return marker;
         }
         
         // 报告详情弹窗

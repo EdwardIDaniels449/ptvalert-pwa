@@ -35,15 +35,17 @@ const urlsToCache = [
   BASE_PATH,
   BASE_PATH + 'index.html',
   BASE_PATH + 'manifest.json',
-  BASE_PATH + 'offline.html',
-  BASE_PATH + 'push-client.js',
-  BASE_PATH + 'styles.css',
+  // 移除可能不存在的文件，避免缓存失败
+  // BASE_PATH + 'offline.html',
+  // BASE_PATH + 'push-client.js',
+  // BASE_PATH + 'styles.css',
   BASE_PATH + 'js/notification-handler.js',
   BASE_PATH + 'js/url-fix.js',
   BASE_PATH + 'js/github-pages-fix.js',
   // 图标和图片
-  BASE_PATH + 'images/icon-192x192.png',
-  BASE_PATH + 'images/badge-72x72.png'
+  BASE_PATH + 'images/icon-192x192.png'
+  // 移除可能不存在的图片
+  // BASE_PATH + 'images/badge-72x72.png'
 ];
 
 // 安装Service Worker
@@ -58,7 +60,16 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('[Service Worker] 缓存静态资源');
-        return cache.addAll(urlsToCache);
+        // 单独缓存每个文件，而不是使用addAll，这样一个文件失败不会导致整个缓存操作失败
+        const cachePromises = urlsToCache.map(url => {
+          return cache.add(url).catch(error => {
+            console.error(`[Service Worker] 缓存文件失败: ${url}`, error);
+            // 即使单个文件缓存失败，也继续进行
+            return Promise.resolve();
+          });
+        });
+        
+        return Promise.all(cachePromises);
       })
       .catch(error => {
         console.error('[Service Worker] 缓存失败:', error);
