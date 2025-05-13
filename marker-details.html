@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0071e3">
+    <title>标记详情 - PtvAlert</title>
+    
+    <!-- PWA相关元标签 -->
+    <link rel="manifest" href="/ptvalert-pwa/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PtvAlert">
+    
+    <!-- iOS图标 -->
+    <link rel="apple-touch-icon" href="/ptvalert-pwa/images/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/ptvalert-pwa/images/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/ptvalert-pwa/images/icon-180x180.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="/ptvalert-pwa/images/icon-167x167.png">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background-color: #1c1c1e;
+            color: #fff;
+            min-height: 100vh;
+            padding: 16px;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .back-button {
+            background: none;
+            border: none;
+            color: #0071e3;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 8px 12px;
+        }
+        
+        .title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+            flex-grow: 1;
+        }
+        
+        .share-button {
+            background: none;
+            border: none;
+            color: #0071e3;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 8px 12px;
+        }
+        
+        .marker-details {
+            background-color: #2c2c2e;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .marker-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .marker-info {
+            margin-bottom: 16px;
+        }
+        
+        .info-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        
+        .info-label {
+            width: 100px;
+            color: #86868b;
+        }
+        
+        .info-value {
+            flex-grow: 1;
+        }
+        
+        .description {
+            background-color: #2c2c2e;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .description-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        
+        .description-content {
+            line-height: 1.5;
+            color: #e5e5ea;
+        }
+        
+        .map-preview {
+            width: 100%;
+            height: 200px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            background-color: #2c2c2e;
+            overflow: hidden;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .action-button {
+            flex: 1;
+            background-color: #2c2c2e;
+            border: none;
+            color: #0071e3;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .action-button:hover {
+            background-color: #3c3c3e;
+        }
+        
+        .action-button.primary {
+            background-color: #0071e3;
+            color: white;
+        }
+        
+        .action-button.primary:hover {
+            background-color: #0077ed;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #86868b;
+        }
+        
+        .error {
+            background-color: #3b2025;
+            color: #ff6961;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .tag {
+            display: inline-block;
+            padding: 4px 8px;
+            background-color: #374955;
+            color: #67b8ff;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .tag.alert {
+            background-color: #4e3939;
+            color: #ff8f8f;
+        }
+        
+        .tag.info {
+            background-color: #39404e;
+            color: #8f9fff;
+        }
+        
+        .tag.warning {
+            background-color: #4e4639;
+            color: #ffd28f;
+        }
+        
+        .tag.update {
+            background-color: #394e3e;
+            color: #8fffaa;
+        }
+        
+        @media (prefers-color-scheme: light) {
+            body {
+                background-color: #f2f2f7;
+                color: #000;
+            }
+            
+            .marker-details, .description, .action-button {
+                background-color: #fff;
+            }
+            
+            .description-content {
+                color: #3a3a3c;
+            }
+            
+            .tag {
+                background-color: #e1f0ff;
+                color: #0071e3;
+            }
+            
+            .tag.alert {
+                background-color: #ffeaea;
+                color: #e53935;
+            }
+            
+            .tag.info {
+                background-color: #eaedff;
+                color: #3f51b5;
+            }
+            
+            .tag.warning {
+                background-color: #fff6e5;
+                color: #f9a825;
+            }
+            
+            .tag.update {
+                background-color: #e5ffea;
+                color: #43a047;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="back-button" onclick="goBack()">返回</button>
+        <h1 class="title">标记详情</h1>
+        <button class="share-button" onclick="shareMarker()">分享</button>
+    </div>
+    
+    <div id="content">
+        <div class="loading">加载中...</div>
+    </div>
+    
+    <script>
+        // Firebase 配置
+        const firebaseConfig = {
+            // 填写您的Firebase配置
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        // 初始化 Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        // 获取URL参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const markerId = urlParams.get('id');
+        
+        // 主体内容元素
+        const contentElement = document.getElementById('content');
+        
+        // 当页面加载完成时
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!markerId) {
+                showError('未指定标记ID');
+                return;
+            }
+            
+            loadMarkerDetails(markerId);
+        });
+        
+        // 加载标记详情
+        function loadMarkerDetails(id) {
+            // 优先尝试从IndexedDB加载
+            getMarkerFromIndexedDB(id)
+                .then(marker => {
+                    if (marker) {
+                        displayMarkerDetails(marker, id);
+                    } else {
+                        // 如果本地没有数据，则从Firebase加载
+                        return getMarkerFromFirebase(id);
+                    }
+                })
+                .catch(error => {
+                    console.error('从IndexedDB加载标记失败:', error);
+                    return getMarkerFromFirebase(id);
+                });
+        }
+        
+        // 从IndexedDB获取标记数据
+        function getMarkerFromIndexedDB(id) {
+            return new Promise((resolve, reject) => {
+                if (!('indexedDB' in window)) {
+                    return resolve(null);
+                }
+                
+                const request = indexedDB.open('PtvAlertDB', 1);
+                
+                request.onerror = function(event) {
+                    reject(event.target.error);
+                };
+                
+                request.onsuccess = function(event) {
+                    const db = event.target.result;
+                    
+                    if (!db.objectStoreNames.contains('markers')) {
+                        return resolve(null);
+                    }
+                    
+                    const transaction = db.transaction(['markers'], 'readonly');
+                    const store = transaction.objectStore('markers');
+                    const getRequest = store.get(id);
+                    
+                    getRequest.onsuccess = function() {
+                        resolve(getRequest.result);
+                    };
+                    
+                    getRequest.onerror = function(event) {
+                        reject(event.target.error);
+                    };
+                    
+                    transaction.oncomplete = function() {
+                        db.close();
+                    };
+                };
+                
+                request.onupgradeneeded = function(event) {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('markers')) {
+                        db.createObjectStore('markers', { keyPath: 'id' });
+                    }
+                };
+            });
+        }
+        
+        // 从Firebase获取标记数据
+        function getMarkerFromFirebase(id) {
+            return new Promise((resolve, reject) => {
+                const markerRef = firebase.database().ref(`markers/${id}`);
+                
+                markerRef.once('value')
+                    .then(snapshot => {
+                        const marker = snapshot.val();
+                        
+                        if (!marker) {
+                            showError('找不到该标记数据');
+                            reject(new Error('找不到标记数据'));
+                            return;
+                        }
+                        
+                        // 添加ID字段
+                        marker.id = id;
+                        
+                        // 保存到IndexedDB以供离线使用
+                        saveMarkerToIndexedDB(marker)
+                            .catch(error => console.error('保存到IndexedDB失败:', error));
+                        
+                        // 显示标记数据
+                        displayMarkerDetails(marker, id);
+                        resolve(marker);
+                    })
+                    .catch(error => {
+                        console.error('从Firebase加载标记失败:', error);
+                        showError('加载标记数据失败');
+                        reject(error);
+                    });
+            });
+        }
+        
+        // 将标记数据保存到IndexedDB
+        function saveMarkerToIndexedDB(marker) {
+            return new Promise((resolve, reject) => {
+                if (!('indexedDB' in window)) {
+                    return resolve();
+                }
+                
+                const request = indexedDB.open('PtvAlertDB', 1);
+                
+                request.onerror = function(event) {
+                    reject(event.target.error);
+                };
+                
+                request.onsuccess = function(event) {
+                    const db = event.target.result;
+                    const transaction = db.transaction(['markers'], 'readwrite');
+                    const store = transaction.objectStore('markers');
+                    
+                    // 确保有时间戳字段
+                    if (!marker.timestamp) {
+                        marker.timestamp = Date.now();
+                    }
+                    
+                    const addRequest = store.put(marker);
+                    
+                    addRequest.onsuccess = function() {
+                        resolve();
+                    };
+                    
+                    addRequest.onerror = function(event) {
+                        reject(event.target.error);
+                    };
+                    
+                    transaction.oncomplete = function() {
+                        db.close();
+                    };
+                };
+                
+                request.onupgradeneeded = function(event) {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('markers')) {
+                        const store = db.createObjectStore('markers', { keyPath: 'id' });
+                        store.createIndex('location', ['lat', 'lng'], { unique: false });
+                        store.createIndex('timestamp', 'timestamp', { unique: false });
+                    }
+                };
+            });
+        }
+        
+        // 显示标记详情
+        function displayMarkerDetails(marker, id) {
+            const formattedDate = formatDate(marker.timestamp);
+            const latitude = marker.lat || (marker.location && marker.location.lat);
+            const longitude = marker.lng || (marker.location && marker.location.lng);
+            
+            let tagsHTML = '';
+            
+            // 添加标签
+            if (marker.type) {
+                tagsHTML += `<span class="tag ${marker.type}">${getTypeText(marker.type)}</span>`;
+            }
+            
+            if (marker.priority === 'high') {
+                tagsHTML += `<span class="tag alert">紧急</span>`;
+            }
+            
+            if (marker.updated) {
+                tagsHTML += `<span class="tag update">已更新</span>`;
+            }
+            
+            contentElement.innerHTML = `
+                <div class="marker-details">
+                    <h2 class="marker-title">${marker.title || '未命名位置'}</h2>
+                    
+                    <div class="marker-tags">
+                        ${tagsHTML}
+                    </div>
+                    
+                    <div class="marker-info">
+                        <div class="info-row">
+                            <div class="info-label">位置</div>
+                            <div class="info-value">${latitude ? latitude.toFixed(6) : 'N/A'}, ${longitude ? longitude.toFixed(6) : 'N/A'}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">时间</div>
+                            <div class="info-value">${formattedDate}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">状态</div>
+                            <div class="info-value">${marker.status || '活跃'}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="description">
+                    <h3 class="description-title">描述</h3>
+                    <div class="description-content">${marker.description || '无描述信息'}</div>
+                </div>
+                
+                <div class="map-preview" id="mini-map"></div>
+                
+                <div class="action-buttons">
+                    <button class="action-button" onclick="viewOnMap()">在地图上查看</button>
+                    <button class="action-button primary" onclick="getDirections()">获取方向</button>
+                </div>
+            `;
+            
+            // 在小地图上显示位置
+            if (latitude && longitude) {
+                loadMiniMap(latitude, longitude);
+            }
+        }
+        
+        // 加载小地图
+        function loadMiniMap(lat, lng) {
+            // 在真实环境中加载地图
+            // 这里仅显示一个预览图像作为示例
+            const mapPreview = document.getElementById('mini-map');
+            mapPreview.style.backgroundImage = `url('https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=14&size=400x200&markers=color:red%7C${lat},${lng}&key=YOUR_GOOGLE_MAPS_API_KEY')`;
+            mapPreview.style.backgroundSize = 'cover';
+            mapPreview.style.backgroundPosition = 'center';
+        }
+        
+        // 显示错误信息
+        function showError(message) {
+            contentElement.innerHTML = `
+                <div class="error">
+                    <p>${message}</p>
+                </div>
+                <button class="action-button" onclick="goBack()">返回</button>
+            `;
+        }
+        
+        // 格式化日期
+        function formatDate(timestamp) {
+            if (!timestamp) return '未知时间';
+            
+            const date = new Date(timestamp);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        // 获取类型文本
+        function getTypeText(type) {
+            const typeMap = {
+                'alert': '警报',
+                'info': '信息',
+                'warning': '警告',
+                'update': '更新'
+            };
+            
+            return typeMap[type] || type;
+        }
+        
+        // 返回上一页
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = '/ptvalert-pwa/';
+            }
+        }
+        
+        // 分享标记
+        function shareMarker() {
+            if (!navigator.share) {
+                alert('您的浏览器不支持分享功能');
+                return;
+            }
+            
+            // 构建分享数据
+            const shareData = {
+                title: document.querySelector('.marker-title').textContent,
+                text: document.querySelector('.description-content').textContent,
+                url: window.location.href
+            };
+            
+            navigator.share(shareData)
+                .then(() => console.log('分享成功'))
+                .catch(error => console.error('分享失败:', error));
+        }
+        
+        // 在地图上查看
+        function viewOnMap() {
+            const marker = document.querySelector('.marker-info .info-value').textContent.split(', ');
+            const lat = marker[0];
+            const lng = marker[1];
+            
+            window.location.href = `/ptvalert-pwa/?lat=${lat}&lng=${lng}&zoom=15`;
+        }
+        
+        // 获取导航方向
+        function getDirections() {
+            const marker = document.querySelector('.marker-info .info-value').textContent.split(', ');
+            const lat = marker[0];
+            const lng = marker[1];
+            
+            // 打开Google地图导航
+            const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+            window.open(mapsUrl, '_blank');
+        }
+    </script>
+</body>
+</html> 
