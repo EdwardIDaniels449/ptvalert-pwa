@@ -16,6 +16,25 @@
       window.currentLang = 'zh'; // 默认语言
     </script>
     
+    <script>
+        // 在页面加载时检查并卸载所有服务工作线程
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async function() {
+                try {
+                    // 卸载所有服务工作线程以确保使用最新版本
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        console.log('卸载旧的服务工作线程', registration.scope);
+                        await registration.unregister();
+                    }
+                    console.log('所有服务工作线程已卸载，将重新注册最新版本');
+                } catch (error) {
+                    console.error('卸载服务工作线程失败:', error);
+                }
+            });
+        }
+    </script>
+    
     <title>PtvAlert网页版</title>
     
     <!-- Manifest和图标 -->
@@ -32,7 +51,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
     <!-- 推送通知处理脚本 -->
-    <script src="./js/notification-handler.js"></script>
+    <script src="./js/notification-handler.js?v=1.0.1"></script>
     
     <style>
         * {
@@ -4840,6 +4859,25 @@
     <script>
     // 全局变量声明
     window.currentLang = 'zh'; // 默认语言
+    </script>
+
+    <script>
+        // 在页面加载时检查并卸载所有服务工作线程
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async function() {
+                try {
+                    // 卸载所有服务工作线程以确保使用最新版本
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        console.log('卸载旧的服务工作线程', registration.scope);
+                        await registration.unregister();
+                    }
+                    console.log('所有服务工作线程已卸载，将重新注册最新版本');
+                } catch (error) {
+                    console.error('卸载服务工作线程失败:', error);
+                }
+            });
+        }
     </script>
 </body>
 </html>
