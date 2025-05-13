@@ -1843,28 +1843,183 @@
         
         // 从Firebase加载报告数据
         function loadReportsFromFirebase() {
+            console.log("开始从Firebase直接加载数据...");
+            
             // 如果使用Cloudflare Workers，从那里获取数据
             if (useCloudflare) {
+                console.log("配置为使用Cloudflare，转向loadReportsFromCloudflare()");
                 loadReportsFromCloudflare();
                 return;
             }
             
-            reportsRef.on('value', (snapshot) => {
-                // 清除现有标记
-                markers.forEach(marker => {
-                    marker.setMap(null);
-                });
-                markers = [];
-                
-                if (snapshot.exists()) {
-                    snapshot.forEach((childSnapshot) => {
-                        const report = childSnapshot.val();
-                        addReportMarker(report);
-                    });
-                }
-                
-                console.log("Reports loaded from Firebase:", markers.length);
+            // 清除现有标记
+            markers.forEach(marker => {
+                marker.setMap(null);
             });
+            markers = [];
+            
+            console.log("尝试连接Firebase数据库...");
+            
+            // 添加重试和错误恢复逻辑
+            let retryCount = 0;
+            const maxRetries = 3;
+            const retryDelay = 2000; // 2秒延迟
+            
+            function attemptLoadReports() {
+                // 添加超时处理
+                let timeoutId = setTimeout(() => {
+                    console.error(`Firebase数据加载超时(15秒)，当前尝试次数: ${retryCount+1}/${maxRetries}`);
+                    if (retryCount < maxRetries - 1) {
+                        retryCount++;
+                        sendDanmaku(`Firebase加载超时，第${retryCount}次重试中...`);
+                        setTimeout(attemptLoadReports, retryDelay);
+                    } else {
+                        sendDanmaku('Firebase连接超时，请检查网络或刷新页面');
+                        // 尝试从localStorage恢复缓存的数据
+                        tryLoadCachedReports();
+                    }
+                }, 15000);
+                
+                try {
+                    // 使用once而不是on，避免持续监听
+                    // 添加查询限制，只获取最近3小时的数据
+                    const now = new Date();
+                    const threeHoursAgo = new Date(now.getTime() - (3 * 60 * 60 * 1000));
+                    const cutoffTime = threeHoursAgo.toISOString();
+                    
+                    // 优化查询以减少数据传输量
+                    reportsRef.orderByChild('time').startAt(cutoffTime)
+                        .once('value')
+                        .then(snapshot => {
+                            clearTimeout(timeoutId); // 清除超时
+                            
+                            console.log("Firebase数据库响应:", snapshot.exists() ? "有数据" : "无数据");
+                            
+                            if (snapshot.exists()) {
+                                const reports = [];
+                                let markersAdded = 0;
+                                
+                                snapshot.forEach(childSnapshot => {
+                                    const report = childSnapshot.val();
+                                    if (report && report.id) {
+                                        reports.push(report);
+                                        const markerAdded = addReportMarker(report);
+                                        if (markerAdded) markersAdded++;
+                                        
+                                        // 缓存报告以便离线使用
+                                        cacheReportLocally(report);
+                                    }
+                                });
+                                
+                                console.log(`成功从Firebase加载了${reports.length}个报告，显示了${markersAdded}个标记`);
+                                sendDanmaku(`已从Firebase加载${markersAdded}个报告`);
+                                
+                                // 如果没有加载到报告，显示提示
+                                if (markersAdded === 0) {
+                                    console.log("没有显示符合条件的报告");
+                                    sendDanmaku('没有最近的报告数据');
+                                }
+                            } else {
+                                console.log("Firebase数据库中没有报告数据");
+                                sendDanmaku('Firebase中没有数据');
+                            }
+                        })
+                        .catch(error => {
+                            clearTimeout(timeoutId); // 清除超时
+                            console.error("从Firebase加载数据出错:", error);
+                            
+                            if (retryCount < maxRetries - 1) {
+                                retryCount++;
+                                console.log(`尝试第${retryCount}次重新加载...`);
+                                sendDanmaku(`加载失败，第${retryCount}次重试中...`);
+                                setTimeout(attemptLoadReports, retryDelay);
+                            } else {
+                                sendDanmaku('多次加载尝试失败，请检查网络或刷新页面');
+                                // 尝试从缓存恢复
+                                tryLoadCachedReports();
+                            }
+                        });
+                } catch (error) {
+                    clearTimeout(timeoutId); // 清除超时
+                    console.error("Firebase加载过程中出现异常:", error);
+                    
+                    if (retryCount < maxRetries - 1) {
+                        retryCount++;
+                        console.log(`尝试第${retryCount}次重新加载...`);
+                        sendDanmaku(`加载异常，第${retryCount}次重试中...`);
+                        setTimeout(attemptLoadReports, retryDelay);
+                    } else {
+                        sendDanmaku('Firebase连接异常，尝试使用本地缓存');
+                        // 尝试从缓存恢复
+                        tryLoadCachedReports();
+                    }
+                }
+            }
+            
+            // 从本地缓存加载报告
+            function tryLoadCachedReports() {
+                console.log("尝试从本地缓存加载报告数据...");
+                
+                try {
+                    const cachedReports = localStorage.getItem('cached_reports');
+                    if (cachedReports) {
+                        const reports = JSON.parse(cachedReports);
+                        if (Array.isArray(reports) && reports.length > 0) {
+                            let markersAdded = 0;
+                            reports.forEach(report => {
+                                if (report && report.id) {
+                                    const markerAdded = addReportMarker(report);
+                                    if (markerAdded) markersAdded++;
+                                }
+                            });
+                            
+                            console.log(`从缓存加载了${markersAdded}个报告`);
+                            sendDanmaku(`从本地缓存加载了${markersAdded}个报告`);
+                            return;
+                        }
+                    }
+                    
+                    console.log("本地缓存中没有可用的报告数据");
+                    sendDanmaku('无法加载数据，请检查网络后重试');
+                } catch (error) {
+                    console.error("从缓存加载报告失败:", error);
+                    sendDanmaku('本地缓存读取失败，请刷新页面');
+                }
+            }
+            
+            // 缓存报告到本地存储
+            function cacheReportLocally(report) {
+                try {
+                    // 获取现有缓存
+                    let cachedReports = [];
+                    const cachedData = localStorage.getItem('cached_reports');
+                    if (cachedData) {
+                        cachedReports = JSON.parse(cachedData);
+                    }
+                    
+                    // 检查报告是否已存在，如果存在则更新
+                    const existingIndex = cachedReports.findIndex(r => r.id === report.id);
+                    if (existingIndex !== -1) {
+                        cachedReports[existingIndex] = report;
+                    } else {
+                        cachedReports.push(report);
+                    }
+                    
+                    // 只保留最近的50个报告，避免存储空间过大
+                    if (cachedReports.length > 50) {
+                        cachedReports.sort((a, b) => new Date(b.time) - new Date(a.time));
+                        cachedReports = cachedReports.slice(0, 50);
+                    }
+                    
+                    // 保存回本地存储
+                    localStorage.setItem('cached_reports', JSON.stringify(cachedReports));
+                } catch (error) {
+                    console.error("缓存报告到本地存储失败:", error);
+                }
+            }
+            
+            // 开始尝试加载
+            attemptLoadReports();
         }
         
         // 从Cloudflare Workers加载报告数据
@@ -2012,21 +2167,244 @@
         
         // 保存报告到Firebase
         function saveReportToFirebase(reportData) {
-            reportsRef.child(reportData.id.toString()).set(reportData)
-                .then(() => {
-                    console.log("Quick report saved to Firebase", reportData);
+            if (!reportData || !reportData.id) {
+                console.error("无效的报告数据，无法保存到Firebase");
+                sendDanmaku("报告数据无效，无法保存");
+                return Promise.reject(new Error("无效的报告数据"));
+            }
+            
+            console.log("尝试保存报告到Firebase:", reportData.id);
+            
+            // 实现Promise以允许错误处理和重试
+            return new Promise((resolve, reject) => {
+                // 添加重试逻辑
+                let retryCount = 0;
+                const maxRetries = 3;
+                const retryDelay = 1500; // 1.5秒延迟
+                
+                // 超时处理
+                const timeoutMs = 10000; // 10秒超时
+                
+                function attemptSave() {
+                    const timeoutId = setTimeout(() => {
+                        console.error(`保存到Firebase超时(${timeoutMs}ms)`);
+                        if (retryCount < maxRetries) {
+                            retryCount++;
+                            console.log(`重试保存(${retryCount}/${maxRetries})...`);
+                            sendDanmaku(`保存超时，正在重试(${retryCount}/${maxRetries})...`);
+                            setTimeout(attemptSave, retryDelay);
+                        } else {
+                            // 超出重试次数，保存失败
+                            reject(new Error("保存超时，已达到最大重试次数"));
+                            // 尝试保存到本地暂存
+                            saveToLocalStorage(reportData);
+                        }
+                    }, timeoutMs);
                     
-                    // 增加用户报告计数
-                    incrementUserReportCount();
-                    
-                    // 如果设置了同步选项，将数据同步到Cloudflare
-                    if (syncToCloudflare && !useCloudflare) {
-                        syncReportToCloudflare(reportData);
+                    try {
+                        // 检查Firebase连接
+                        const connectedRef = firebase.database().ref(".info/connected");
+                        connectedRef.once("value", (snap) => {
+                            if (snap.val() === true) {
+                                console.log("Firebase连接正常，开始保存数据");
+                                
+                                // 添加时间戳和元数据
+                                const enhancedReport = {
+                                    ...reportData,
+                                    savedAt: firebase.database.ServerValue.TIMESTAMP,
+                                    clientInfo: {
+                                        platform: navigator.platform,
+                                        userAgent: navigator.userAgent,
+                                        saveTimeLocal: new Date().toISOString()
+                                    },
+                                    // 记录重试次数，用于分析
+                                    retryAttempt: retryCount
+                                };
+                                
+                                // 保存数据
+                                reportsRef.child(reportData.id.toString()).set(enhancedReport)
+                                    .then(() => {
+                                        clearTimeout(timeoutId);
+                                        console.log("报告成功保存到Firebase:", reportData.id);
+                                        sendDanmaku("报告已保存");
+                                        
+                                        // 增加用户报告计数
+                                        incrementUserReportCount();
+                                        
+                                        // 如果设置了同步选项，将数据同步到Cloudflare
+                                        if (syncToCloudflare && !useCloudflare) {
+                                            syncReportToCloudflare(enhancedReport)
+                                                .then(syncResult => {
+                                                    console.log("同步到Cloudflare成功:", syncResult);
+                                                })
+                                                .catch(syncError => {
+                                                    console.error("同步到Cloudflare失败:", syncError);
+                                                });
+                                        }
+                                        
+                                        // 缓存到localStorage
+                                        cacheReportLocally(enhancedReport);
+                                        
+                                        resolve(enhancedReport);
+                                    })
+                                    .catch((error) => {
+                                        clearTimeout(timeoutId);
+                                        console.error("保存报告到Firebase失败:", error);
+                                        
+                                        if (retryCount < maxRetries) {
+                                            retryCount++;
+                                            console.log(`重试保存(${retryCount}/${maxRetries})...`);
+                                            sendDanmaku(`保存失败，正在重试(${retryCount}/${maxRetries})...`);
+                                            setTimeout(attemptSave, retryDelay);
+                                        } else {
+                                            sendDanmaku("保存报告失败，正在尝试备用方法");
+                                            // 最后尝试保存到localStorage
+                                            saveToLocalStorage(reportData);
+                                            reject(error);
+                                        }
+                                    });
+                            } else {
+                                // Firebase连接失败
+                                clearTimeout(timeoutId);
+                                console.error("Firebase连接断开，无法保存数据");
+                                
+                                if (retryCount < maxRetries) {
+                                    retryCount++;
+                                    console.log(`等待连接恢复后重试(${retryCount}/${maxRetries})...`);
+                                    sendDanmaku(`连接断开，等待恢复后重试(${retryCount}/${maxRetries})...`);
+                                    setTimeout(attemptSave, retryDelay * 2); // 连接问题需要更长时间等待
+                                } else {
+                                    sendDanmaku("无法连接Firebase，保存到本地");
+                                    // 保存到localStorage
+                                    saveToLocalStorage(reportData);
+                                    reject(new Error("Firebase连接断开，无法保存数据"));
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        clearTimeout(timeoutId);
+                        console.error("保存报告到Firebase时出现异常:", error);
+                        
+                        if (retryCount < maxRetries) {
+                            retryCount++;
+                            console.log(`出现异常，重试(${retryCount}/${maxRetries})...`);
+                            sendDanmaku(`保存时出错，正在重试(${retryCount}/${maxRetries})...`);
+                            setTimeout(attemptSave, retryDelay);
+                        } else {
+                            sendDanmaku("保存时出错，已保存到本地");
+                            // 尝试保存到localStorage
+                            saveToLocalStorage(reportData);
+                            reject(error);
+                        }
                     }
-                })
-                .catch((error) => {
-                    console.error("Error saving report to Firebase", error);
+                }
+                
+                // 首次尝试保存
+                attemptSave();
+            });
+            
+            // 保存到localStorage作为备份
+            function saveToLocalStorage(report) {
+                try {
+                    // 获取现有的待发送报告
+                    let pendingReports = [];
+                    const pendingData = localStorage.getItem('pending_reports');
+                    if (pendingData) {
+                        pendingReports = JSON.parse(pendingData);
+                    }
+                    
+                    // 添加当前报告到待发送列表
+                    pendingReports.push({
+                        ...report,
+                        pendingSince: new Date().toISOString()
+                    });
+                    
+                    // 限制最大待发送数量
+                    if (pendingReports.length > 20) {
+                        pendingReports = pendingReports.slice(-20); // 只保留最新的20条
+                    }
+                    
+                    // 保存回localStorage
+                    localStorage.setItem('pending_reports', JSON.stringify(pendingReports));
+                    console.log(`报告已保存到本地，等待稍后同步，当前待发送: ${pendingReports.length}条`);
+                    sendDanmaku("报告已保存到本地，将在网络恢复后同步");
+                    
+                    // 定期尝试发送待发送的报告
+                    if (!window._pendingSyncInterval) {
+                        window._pendingSyncInterval = setInterval(syncPendingReports, 60000); // 每分钟尝试同步一次
+                    }
+                } catch (error) {
+                    console.error("保存报告到本地存储失败:", error);
+                    sendDanmaku("保存到本地也失败，请检查浏览器存储空间");
+                }
+            }
+        }
+        
+        // 同步待发送的报告
+        function syncPendingReports() {
+            try {
+                const pendingData = localStorage.getItem('pending_reports');
+                if (!pendingData) return;
+                
+                const pendingReports = JSON.parse(pendingData);
+                if (!pendingReports || pendingReports.length === 0) return;
+                
+                console.log(`尝试同步${pendingReports.length}条待发送报告...`);
+                
+                // 检查Firebase连接
+                firebase.database().ref(".info/connected").once("value", (snap) => {
+                    if (snap.val() === true) {
+                        console.log("Firebase连接已恢复，开始同步待发送报告");
+                        
+                        // 创建同步任务
+                        const syncPromises = pendingReports.map(report => {
+                            return reportsRef.child(report.id.toString()).set(report)
+                                .then(() => {
+                                    console.log(`待发送报告 ${report.id} 同步成功`);
+                                    return { id: report.id, success: true };
+                                })
+                                .catch(error => {
+                                    console.error(`待发送报告 ${report.id} 同步失败:`, error);
+                                    return { id: report.id, success: false, error: error.message };
+                                });
+                        });
+                        
+                        // 执行所有同步任务
+                        Promise.allSettled(syncPromises)
+                            .then(results => {
+                                // 计算成功和失败的数量
+                                const succeeded = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+                                const failed = results.length - succeeded;
+                                
+                                console.log(`待发送报告同步结果: ${succeeded}成功, ${failed}失败`);
+                                
+                                if (succeeded > 0) {
+                                    sendDanmaku(`${succeeded}条待发送报告已同步成功`);
+                                    
+                                    // 只保留失败的报告继续尝试
+                                    let remainingReports = [];
+                                    if (failed > 0) {
+                                        remainingReports = pendingReports.filter(report => {
+                                            const result = results.find(r => r.value && r.value.id === report.id);
+                                            return !result || !result.value || !result.value.success;
+                                        });
+                                    }
+                                    
+                                    // 更新localStorage
+                                    localStorage.setItem('pending_reports', JSON.stringify(remainingReports));
+                                    
+                                    // 如果没有待发送报告了，清除定时器
+                                    if (remainingReports.length === 0 && window._pendingSyncInterval) {
+                                        clearInterval(window._pendingSyncInterval);
+                                        window._pendingSyncInterval = null;
+                                    }
+                                }
+                            });
+                    }
                 });
+            } catch (error) {
+                console.error("同步待发送报告时出错:", error);
+            }
         }
         
         // 同步报告到Cloudflare
@@ -2040,33 +2418,41 @@
                     'Cloudflare配置错误，同步失败' : 
                     'Cloudflare config error, sync failed'
                 );
-                return;
+                return Promise.reject(new Error("Cloudflare配置错误"));
             }
             
-            // 1. 首先尝试使用firebase-to-cloudflare-sync.js中的同步函数
-            if (window.firebaseCloudflareSync && typeof window.firebaseCloudflareSync.syncSingleReport === 'function') {
-                console.log("使用同步工具syncSingleReport函数...");
-                window.firebaseCloudflareSync.syncSingleReport(reportData)
-                    .then(result => {
-                        console.log("报告已同步到Cloudflare(使用同步工具):", result);
-                        // 在成功时不添加任何额外的操作，因为syncSingleReport内部已有通知处理
-                    })
-                    .catch(error => {
-                        console.error("同步工具同步失败，尝试直接同步:", error);
-                        // 失败时尝试直接同步
-                        directSyncToCloudflare(reportData);
-                    });
-            } else {
-                // 2. 如果同步工具不可用，使用直接同步
-                console.log("同步工具不可用，使用直接同步方式");
-                directSyncToCloudflare(reportData);
-            }
+            return new Promise((resolve, reject) => {
+                // 1. 首先尝试使用firebase-to-cloudflare-sync.js中的同步函数
+                if (window.firebaseCloudflareSync && typeof window.firebaseCloudflareSync.syncSingleReport === 'function') {
+                    console.log("使用同步工具syncSingleReport函数...");
+                    window.firebaseCloudflareSync.syncSingleReport(reportData)
+                        .then(result => {
+                            console.log("报告已同步到Cloudflare(使用同步工具):", result);
+                            // 在成功时不添加任何额外的操作，因为syncSingleReport内部已有通知处理
+                            resolve(result);
+                        })
+                        .catch(error => {
+                            console.error("同步工具同步失败，尝试直接同步:", error);
+                            // 失败时尝试直接同步
+                            directSyncToCloudflare(reportData)
+                                .then(resolve)
+                                .catch(reject);
+                        });
+                } else {
+                    // 2. 如果同步工具不可用，使用直接同步
+                    console.log("同步工具不可用，使用直接同步方式");
+                    directSyncToCloudflare(reportData)
+                        .then(resolve)
+                        .catch(reject);
+                }
+            });
         }
         
         // 直接同步到Cloudflare(不经过同步工具)
         function directSyncToCloudflare(reportData) {
             console.log("正在直接同步到Cloudflare API...", reportData.id);
-            fetch(`${cloudflareConfig.apiUrl}${cloudflareConfig.dataEndpoint}/${reportData.id}`, {
+            
+            return fetch(`${cloudflareConfig.apiUrl}${cloudflareConfig.dataEndpoint}/${reportData.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2075,6 +2461,9 @@
             })
             .then(response => {
                 console.log("Cloudflare API响应状态:", response.status);
+                if (!response.ok) {
+                    throw new Error(`同步失败，HTTP错误: ${response.status}`);
+                }
                 return response.json();
             })
             .then(data => {
@@ -2088,6 +2477,8 @@
                     '报告已同步到Cloudflare' : 
                     'Report synced to Cloudflare'
                 );
+                
+                return data;
             })
             .catch((error) => {
                 console.error("直接同步报告到Cloudflare失败:", error);
@@ -2095,6 +2486,8 @@
                     '同步到Cloudflare失败' : 
                     'Failed to sync to Cloudflare'
                 );
+                
+                throw error; // 重新抛出错误以便上层处理
             });
         }
         
