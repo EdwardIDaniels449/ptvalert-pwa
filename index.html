@@ -1706,73 +1706,50 @@
             }
         }
         
-        // 添加选点动画标记
+        // 添加formatTimeAgo函数的定义，放在脚本的早期位置
+        // (在任何地图相关函数之前)
+        function formatTimeAgo(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffSec = Math.floor(diffMs / 1000);
+            const diffMin = Math.floor(diffSec / 60);
+            const diffHour = Math.floor(diffMin / 60);
+            
+            if (diffMin < 1) {
+                return '刚刚';
+            } else if (diffMin < 60) {
+                return `${diffMin}分钟前`;
+            } else if (diffHour < 24) {
+                return `${diffHour}小时前`;
+            } else {
+                return date.toLocaleString('zh-CN', {
+                    month: 'numeric',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+        }
+        
+        // 更新标记创建代码，使用AdvancedMarkerElement替代Marker
         function addSelectionMarker(location, isFromGeocoding = false) {
             // 移除旧标记（如果有）
             if (selectionMarker) {
                 selectionMarker.setMap(null);
             }
             
-            // 创建标记样式 - 根据来源不同显示不同样式
-            let markerIcon;
+            // 使用AdvancedMarkerElement替代Marker
+            // 创建自定义标记图标
+            const iconElement = document.createElement('div');
+            iconElement.innerHTML = isFromGeocoding ? '🔍' : '📍';
+            iconElement.style.fontSize = '24px';
+            iconElement.style.color = isFromGeocoding ? '#0077cc' : '#ff3b30';
             
-            if (isFromGeocoding) {
-                // 从地理编码得到的位置使用狗emoji标记
-                markerIcon = {
-                    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
-                        `<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
-                            <circle cx="25" cy="25" r="23" fill="white" opacity="0.95"/>
-                            <text x="25" y="35" font-size="30" text-anchor="middle" fill="black">🐶</text>
-                        </svg>`
-                    ),
-                    scaledSize: new google.maps.Size(50, 50),
-                    anchor: new google.maps.Point(25, 25)
-                };
-                
-                // 添加脉冲动画效果
-                const pulseCircle = new google.maps.Marker({
-                    position: location,
-                    map: map,
-                    icon: {
-                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
-                            `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
-                                <circle cx="40" cy="40" r="30" fill="#0077cc" opacity="0.3">
-                                    <animate attributeName="r" values="15;40;15" dur="2s" repeatCount="indefinite"/>
-                                    <animate attributeName="opacity" values="0.7;0;0.7" dur="2s" repeatCount="indefinite"/>
-                                </circle>
-                            </svg>`
-                        ),
-                        scaledSize: new google.maps.Size(80, 80),
-                        anchor: new google.maps.Point(40, 40)
-                    },
-                    clickable: false,
-                    zIndex: 1
-                });
-                
-                // 3秒后移除脉冲效果
-                setTimeout(() => {
-                    pulseCircle.setMap(null);
-                }, 3000);
-            } else {
-                // 手动选点的标记 - 红色
-                markerIcon = {
-                    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
-                        `<svg xmlns="http://www.w3.org/2000/svg" width="50" height="60" viewBox="0 0 50 60">
-                            <path d="M25 0C11.2 0 0 11.2 0 25C0 38.8 25 60 25 60S50 38.8 50 25C50 11.2 38.8 0 25 0Z" fill="#ff3b30"/>
-                            <circle cx="25" cy="25" r="10" fill="white"/>
-                        </svg>`
-                    ),
-                    scaledSize: new google.maps.Size(40, 48),
-                    anchor: new google.maps.Point(20, 48)
-                };
-            }
-            
-            // 创建新标记
-            selectionMarker = new google.maps.Marker({
+            // 创建AdvancedMarkerElement
+            selectionMarker = new google.maps.marker.AdvancedMarkerElement({
                 position: location,
                 map: map,
-                icon: markerIcon,
-                animation: isFromGeocoding ? google.maps.Animation.DROP : null,
+                content: iconElement,
                 zIndex: 1000
             });
             
@@ -1887,30 +1864,6 @@
             return addReportMarkerToMap(report);
         }
         
-        // 格式化时间为"几分钟前"格式
-        function formatTimeAgo(date) {
-            const now = new Date();
-            const diffMs = now - date;
-            const diffSec = Math.floor(diffMs / 1000);
-            const diffMin = Math.floor(diffSec / 60);
-            const diffHour = Math.floor(diffMin / 60);
-            
-            if (diffMin < 1) {
-                return '刚刚';
-            } else if (diffMin < 60) {
-                return `${diffMin}分钟前`;
-            } else if (diffHour < 24) {
-                return `${diffHour}小时前`;
-            } else {
-                return date.toLocaleString('zh-CN', {
-                    month: 'numeric',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            }
-        }
-        
         // 快速报告函数修改
         function addQuickReport(location, description, emoji) {
             const now = new Date();
@@ -1991,31 +1944,31 @@
             });
         }
         
-        // 将报告标记添加到地图
+        // 更新将报告标记添加到地图
         function addReportMarkerToMap(reportData) {
-            // 创建标记 - 使用白色背景
-            const markerIcon = {
-                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
-                    `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
-                        <circle cx="20" cy="20" r="18" fill="white" opacity="0.9"/>
-                        <text x="20" y="28" font-size="24" text-anchor="middle" fill="black">${reportData.emoji}</text>
-                    </svg>`
-                ),
-                scaledSize: new google.maps.Size(40, 40),
-                anchor: new google.maps.Point(20, 20)
-            };
+            // 创建标记内容元素
+            const markerContent = document.createElement('div');
+            markerContent.style.backgroundColor = 'white';
+            markerContent.style.borderRadius = '50%';
+            markerContent.style.padding = '8px';
+            markerContent.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+            markerContent.style.fontSize = '24px';
+            markerContent.style.width = '40px';
+            markerContent.style.height = '40px';
+            markerContent.style.display = 'flex';
+            markerContent.style.alignItems = 'center';
+            markerContent.style.justifyContent = 'center';
+            markerContent.innerHTML = reportData.emoji;
             
             // 创建标记
-            const marker = new google.maps.Marker({
+            const marker = new google.maps.marker.AdvancedMarkerElement({
                 position: { lat: reportData.lat, lng: reportData.lng },
                 map: map,
-                icon: markerIcon,
-                title: reportData.description,
-                animation: google.maps.Animation.DROP,
-                optimized: false // 确保emoji能够显示
+                content: markerContent,
+                title: reportData.description
             });
             
-            // 创建信息窗口
+            // 创建信息窗口内容
             const infoContent = `
                 <div class="info-window">
                     <div class="emoji-display">${reportData.emoji}</div>
@@ -2030,7 +1983,7 @@
             });
             
             // 添加点击事件侦听器
-            marker.addListener("click", function() {
+            marker.addEventListener("click", function() {
                 console.log('Quick report marker clicked:', reportData.id);
                 // 关闭所有活动的信息窗口
                 if (this.infoWindow) this.infoWindow.close();
@@ -4942,10 +4895,10 @@
             };
             
             // 创建标记
-            const marker = new google.maps.Marker({
+            const marker = new google.maps.marker.AdvancedMarkerElement({
                 position: location,
                 map: map,
-                icon: markerIcon,
+                content: markerIcon,
                 animation: google.maps.Animation.DROP,
                 clickable: true,
                 zIndex: 999
@@ -4973,7 +4926,7 @@
             });
             
             // 点击标记时显示详细信息
-            marker.addListener("click", function() {
+            marker.addEventListener("click", function() {
                 console.log('Quick report marker clicked:', this.reportData.id);
                 // 关闭所有活动的信息窗口
                 if (this.infoWindow) this.infoWindow.close();
