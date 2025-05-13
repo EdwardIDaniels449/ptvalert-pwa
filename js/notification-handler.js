@@ -28,25 +28,18 @@ if (window.location.hostname.includes('github.io')) {
   // 如果已经由github-pages-fix.js设置了基础路径，使用它
   if (window.GITHUB_PAGES_BASE_PATH) {
     const basePath = window.GITHUB_PAGES_BASE_PATH;
-    SERVICE_WORKER_PATH = basePath + 'service-worker.js';
+    // 确保service-worker.js直接位于仓库根目录，不包含在任何子目录
+    SERVICE_WORKER_PATH = '/service-worker.js';
     SERVICE_WORKER_SCOPE = basePath;
     console.log(LOG_PREFIX + '使用GitHub Pages基础路径:', basePath);
+    console.log(LOG_PREFIX + '设置Service Worker路径:', SERVICE_WORKER_PATH);
   } else {
     // 从URL中确定路径，用于edwardidaniels449.github.io
-    const pathSegments = window.location.pathname.split('/');
-    console.log(LOG_PREFIX + 'URL路径段:', pathSegments);
+    console.log(LOG_PREFIX + '从URL确定GitHub Pages路径');
     
-    // GitHub Pages路径
-    let repoPath = '';
-    
-    // 检查是否有特定路径段
-    if (pathSegments.length >= 2 && pathSegments[1]) {
-      // 从URL中确定正确的仓库名
-      repoPath = '/' + pathSegments[1] + '/';
-    }
-    
-    SERVICE_WORKER_PATH = repoPath + 'service-worker.js';
-    SERVICE_WORKER_SCOPE = repoPath || '/';
+    // GitHub Pages上使用根路径的service-worker.js
+    SERVICE_WORKER_PATH = '/service-worker.js';
+    SERVICE_WORKER_SCOPE = '/';
     console.log(LOG_PREFIX + '基于URL确定GitHub Pages路径:', SERVICE_WORKER_PATH);
   }
 }
@@ -78,42 +71,42 @@ async function initNotifications() {
   try {
     console.log(LOG_PREFIX + '开始初始化通知系统');
     
-    // Check if notifications are supported
+    // 检查浏览器支持
     if (!('Notification' in window)) {
       console.log(LOG_PREFIX + '此浏览器不支持通知功能');
       return false;
     }
     
-    // Check if service workers are supported
     if (!('serviceWorker' in navigator)) {
       console.log(LOG_PREFIX + '此浏览器不支持Service Worker');
       return false;
     }
     
-    // Check if push is supported
     if (!('PushManager' in window)) {
       console.log(LOG_PREFIX + '此浏览器不支持推送通知');
       return false;
     }
     
-    console.log(LOG_PREFIX + '注册Service Worker:', SERVICE_WORKER_PATH, '作用域:', SERVICE_WORKER_SCOPE);
-    
+    // 使用自定义的注册函数
     try {
-      // 使用自定义的注册函数
       const registration = await registerServiceWorker();
       
-      // Check for existing subscription
-      const subscription = await registration.pushManager.getSubscription();
-      
-      if (subscription) {
-        console.log(LOG_PREFIX + '用户已订阅推送通知');
-      } else {
-        console.log(LOG_PREFIX + '用户尚未订阅推送通知');
+      if (registration) {
+        const subscription = await registration.pushManager.getSubscription();
+        
+        if (subscription) {
+          console.log(LOG_PREFIX + '用户已订阅推送通知');
+        } else {
+          console.log(LOG_PREFIX + '用户尚未订阅推送通知');
+        }
       }
       
       return true;
     } catch (registrationError) {
       console.error(LOG_PREFIX + 'Service Worker注册失败:', registrationError);
+      
+      // 显示更友好的错误信息
+      alert('通知系统初始化失败。请检查控制台获取详细信息。');
       throw registrationError;
     }
   } catch (error) {
@@ -122,7 +115,7 @@ async function initNotifications() {
   }
 }
 
-// 在registerServiceWorker函数中添加更多调试信息并明确指定GitHub Pages环境的处理
+// 在registerServiceWorker函数中直接使用完整URL
 async function registerServiceWorker() {
   try {
     if (!('serviceWorker' in navigator)) {
@@ -133,42 +126,36 @@ async function registerServiceWorker() {
     console.log(LOG_PREFIX + '开始注册Service Worker...');
     console.log(LOG_PREFIX + '当前环境:', window.location.origin);
     
-    // 默认参数
-    let swPath = './service-worker.js';
-    let swOptions = { scope: './' };
-    
-    // GitHub Pages特殊处理
+    // 在GitHub Pages环境使用完整URL路径
     if (window.location.hostname.includes('github.io')) {
-      console.log(LOG_PREFIX + '检测到GitHub Pages环境');
+      const fullUrl = 'https://edwardidaniels449.github.io/service-worker.js';
+      const options = { scope: '/' };
       
-      // 获取仓库名
-      let repoName = '';
-      const pathSegments = window.location.pathname.split('/');
-      if (pathSegments.length >= 2 && pathSegments[1]) {
-        repoName = pathSegments[1];
-      } else {
-        // 硬编码的回退值
-        repoName = 'ptvalert-pwa';
+      console.log(LOG_PREFIX + '使用完整URL注册Service Worker:', fullUrl);
+      console.log(LOG_PREFIX + '使用作用域:', options.scope);
+      
+      try {
+        const registration = await navigator.serviceWorker.register(fullUrl, options);
+        console.log(LOG_PREFIX + 'Service Worker注册成功，作用域:', registration.scope);
+        return registration;
+      } catch (error) {
+        console.error(LOG_PREFIX + '完整URL注册失败，尝试备用方法:', error);
+        
+        // 尝试备用方法 - 相对路径
+        const backupUrl = './service-worker.js';
+        const backupOptions = { scope: './' };
+        console.log(LOG_PREFIX + '尝试备用路径:', backupUrl);
+        
+        const registration = await navigator.serviceWorker.register(backupUrl, backupOptions);
+        console.log(LOG_PREFIX + '使用备用路径注册成功:', registration.scope);
+        return registration;
       }
-      
-      // 构建正确的Service Worker URL和作用域
-      const basePath = '/' + repoName + '/';
-      swPath = basePath + 'service-worker.js';
-      swOptions = { scope: basePath };
-      
-      console.log(LOG_PREFIX + 'GitHub Pages配置:');
-      console.log('- 仓库名:', repoName);
-      console.log('- 基础路径:', basePath);
-      console.log('- Service Worker路径:', swPath);
-      console.log('- 作用域:', swOptions.scope);
+    } else {
+      // 非GitHub Pages环境
+      const registration = await navigator.serviceWorker.register('./service-worker.js', { scope: './' });
+      console.log(LOG_PREFIX + 'Service Worker注册成功，作用域:', registration.scope);
+      return registration;
     }
-    
-    // 注册Service Worker
-    console.log(LOG_PREFIX + '注册Service Worker，路径:', swPath, '作用域:', swOptions);
-    const registration = await navigator.serviceWorker.register(swPath, swOptions);
-    
-    console.log(LOG_PREFIX + 'Service Worker注册成功，作用域:', registration.scope);
-    return registration;
   } catch (error) {
     console.error(LOG_PREFIX + 'Service Worker注册失败:', error);
     throw error;

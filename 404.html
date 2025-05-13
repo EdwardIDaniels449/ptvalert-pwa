@@ -33,15 +33,49 @@
             const path = window.location.pathname;
             console.log('请求路径:', path);
             
-            // 添加特殊URL处理
+            // 处理Service Worker请求特殊处理
             if (path.includes('service-worker.js')) {
-                console.log('检测到对Service Worker的请求，立即重定向到首页');
-                window.location.replace(redirectPath);
-            } else if (path.includes('.js') || path.includes('.css') || path.includes('.ico')) {
+                console.log('检测到对Service Worker的请求，生成Service Worker内容');
+                
+                // 生成简易的Service Worker内容并返回
+                const swContent = `
+                // PtvAlert临时Service Worker - 由404页面生成
+                self.addEventListener('install', event => {
+                    console.log('[临时SW] 安装');
+                    self.skipWaiting();
+                });
+                
+                self.addEventListener('activate', event => {
+                    console.log('[临时SW] 激活');
+                    event.waitUntil(clients.claim());
+                });
+                
+                self.addEventListener('fetch', event => {
+                    // 简单的fetch处理
+                    event.respondWith(fetch(event.request));
+                });
+                
+                console.log('[临时SW] 已加载 - 来自404页面');
+                `;
+                
+                // 设置JavaScript MIME类型
+                document.contentType = 'application/javascript';
+                
+                // 使页面显示Service Worker内容
+                document.open();
+                document.write(swContent);
+                document.close();
+                
+                // 不再执行后续代码
+                return;
+            } 
+            // 处理其他静态资源
+            else if (path.includes('.js') || path.includes('.css') || path.includes('.ico')) {
                 console.log('检测到静态资源请求失败，重定向到首页');
                 window.location.replace(redirectPath);
-            } else {
-                // 对于其他404错误，也重定向到首页
+            } 
+            // 对于其他404错误
+            else {
                 console.log('检测到404错误，立即重定向到首页');
                 window.location.replace(redirectPath);
             }

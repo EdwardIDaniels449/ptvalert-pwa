@@ -1,7 +1,7 @@
 // 推送通知Service Worker
-const CACHE_NAME = 'ptvalert-cache-v5';
+const CACHE_NAME = 'ptvalert-cache-v6';
 const APP_NAME = '网站地图标记';
-const APP_VERSION = '1.0.6';
+const APP_VERSION = '1.0.7';
 
 // 调试输出
 console.log('[Service Worker] 启动，版本:', APP_VERSION);
@@ -14,36 +14,17 @@ function getBasePath() {
   const currentLocation = self.location.href;
   console.log('[Service Worker] 当前脚本URL:', currentLocation);
   
-  let basePath = './';
+  // 默认使用根路径
+  let basePath = '/';
   
   // 检测GitHub Pages环境
   if (self.location.hostname.includes('github.io')) {
     console.log('[Service Worker] 检测到GitHub Pages环境');
     
-    // 从URL中提取路径部分
-    const pathSegments = self.location.pathname.split('/');
-    console.log('[Service Worker] URL路径段:', pathSegments);
-    
-    // 查找service-worker.js之前的路径部分
-    let repoPath = '';
-    
-    for (let i = 1; i < pathSegments.length; i++) {
-      if (pathSegments[i] === 'service-worker.js') {
-        break;
-      }
-      if (pathSegments[i]) {
-        repoPath += '/' + pathSegments[i];
-      }
-    }
-    
-    if (repoPath) {
-      basePath = repoPath + '/';
-      console.log('[Service Worker] 从URL提取路径:', basePath);
-    } else {
-      // 如果未能从URL中提取，则使用当前位置的目录
-      basePath = new URL('./', currentLocation).pathname;
-      console.log('[Service Worker] 使用当前位置目录:', basePath);
-    }
+    // 简化GitHub Pages环境下的路径处理 - 始终使用根路径
+    // 这是为了避免路径嵌套问题
+    console.log('[Service Worker] 在GitHub Pages上使用根路径');
+    return '/';
   }
   
   console.log('[Service Worker] 使用基础路径:', basePath);
@@ -59,6 +40,7 @@ console.log('- 应用名称:', APP_NAME);
 console.log('- 版本:', APP_VERSION);
 console.log('- 基础路径:', BASE_PATH);
 console.log('- 主机名:', self.location.hostname);
+console.log('- 完整URL:', self.location.href);
 
 // 要缓存的资源 - 使用相对路径以兼容GitHub Pages
 const urlsToCache = [
@@ -71,19 +53,9 @@ const urlsToCache = [
   BASE_PATH + 'js/notification-handler.js',
   BASE_PATH + 'js/url-fix.js',
   BASE_PATH + 'js/github-pages-fix.js',
-  // 图标和图片 - 不存在的资源先注释掉
-  /*
-  BASE_PATH + 'images/icon-72x72.png',
-  BASE_PATH + 'images/icon-96x96.png',
-  BASE_PATH + 'images/icon-128x128.png',
-  BASE_PATH + 'images/icon-144x144.png',
-  BASE_PATH + 'images/icon-152x152.png',
+  // 图标和图片
   BASE_PATH + 'images/icon-192x192.png',
-  BASE_PATH + 'images/icon-384x384.png',
-  BASE_PATH + 'images/icon-512x512.png',
-  BASE_PATH + 'images/badge-72x72.png',
-  BASE_PATH + 'images/offline-image.png'
-  */
+  BASE_PATH + 'images/badge-72x72.png'
 ];
 
 // 安装Service Worker

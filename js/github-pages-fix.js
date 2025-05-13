@@ -59,6 +59,40 @@
     if (typeof window.PUSH_CONFIG !== 'undefined') {
         console.log('修复PUSH_CONFIG.SERVER_URL');
         window.PUSH_CONFIG.SERVER_URL = window.API_BASE_URL;
+        
+        // 修正Service Worker路径
+        if (window.PUSH_CONFIG.SERVICE_WORKER_PATH) {
+            // 确保路径正确
+            window.PUSH_CONFIG.SERVICE_WORKER_PATH = '/service-worker.js';
+        }
+    }
+    
+    // 确保service-worker.js文件可用
+    function createServiceWorkerBlob() {
+        const swContent = `
+        // 临时Service Worker内容 - 由GitHub Pages修复脚本生成
+        // 这是一个兜底方案，用于在找不到原始Service Worker时提供基本功能
+        
+        self.addEventListener('install', event => {
+            console.log('[临时Service Worker] 安装');
+            self.skipWaiting();
+        });
+        
+        self.addEventListener('activate', event => {
+            console.log('[临时Service Worker] 激活');
+            self.clients.claim();
+        });
+        
+        self.addEventListener('fetch', event => {
+            // 简单的fetch处理
+            event.respondWith(fetch(event.request));
+        });
+        
+        console.log('[临时Service Worker] 已加载 - 由GitHub Pages修复脚本提供');
+        `;
+        
+        const blob = new Blob([swContent], { type: 'application/javascript' });
+        return URL.createObjectURL(blob);
     }
     
     // 修复Service Worker注册
@@ -70,42 +104,37 @@
         navigator.serviceWorker.register = function(scriptURL, options) {
             console.log('拦截Service Worker注册，原始URL:', scriptURL);
             
-            // 修复Service Worker脚本URL
-            let fixedScriptURL = scriptURL;
-            
-            // 如果是相对路径，加上基础路径
-            if (scriptURL.startsWith('./')) {
-                fixedScriptURL = basePath + scriptURL.substring(2);
-            } 
-            // 如果是绝对路径但不是完整URL
-            else if (scriptURL.startsWith('/') && !scriptURL.startsWith('//')) {
-                fixedScriptURL = basePath + scriptURL.substring(1);
-            }
-            
-            console.log('修复后的Service Worker URL:', fixedScriptURL);
+            // 使用绝对URL路径
+            const fullURL = 'https://' + window.location.hostname + '/service-worker.js';
+            console.log('修改为绝对URL:', fullURL);
             
             // 修复作用域
             let fixedOptions = { ...options };
             if (!fixedOptions.scope || fixedOptions.scope === '/' || fixedOptions.scope === './') {
-                fixedOptions.scope = basePath;
-                console.log('修复作用域为:', fixedOptions.scope);
+                fixedOptions.scope = '/';
+                console.log('修复作用域为根路径:', fixedOptions.scope);
             }
             
             // 调用原始注册方法
-            return originalRegister.call(this, fixedScriptURL, fixedOptions)
+            return originalRegister.call(this, fullURL, fixedOptions)
                 .catch(error => {
                     console.error('Service Worker注册失败:', error);
                     
-                    // 如果失败，尝试使用完整的绝对URL
-                    const fullURL = new URL(scriptURL, window.location.origin).href;
-                    console.log('尝试使用完整URL:', fullURL);
-                    return originalRegister.call(this, fullURL, fixedOptions)
+                    // 如果失败，尝试使用相对路径
+                    console.log('尝试使用相对路径');
+                    return originalRegister.call(this, './service-worker.js', { scope: './' })
                         .catch(secondError => {
                             console.error('第二次尝试注册Service Worker失败:', secondError);
                             
-                            // 增加除错信息
-                            alert('Service Worker注册失败。请检查控制台以获取详细信息。');
-                            return Promise.reject(secondError);
+                            // 尝试使用Blob URL作为最后的修复方案
+                            console.log('尝试使用动态生成的Service Worker');
+                            const blobURL = createServiceWorkerBlob();
+                            return originalRegister.call(this, blobURL, { scope: './' })
+                                .catch(finalError => {
+                                    console.error('所有尝试都失败:', finalError);
+                                    alert('Service Worker注册失败。请尝试清除浏览器缓存后重试。');
+                                    return Promise.reject(finalError);
+                                });
                         });
                 });
         };
