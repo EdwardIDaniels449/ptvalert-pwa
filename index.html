@@ -965,7 +965,7 @@
     <script>
         // Firebase配置
         const firebaseConfig = {
-            apiKey: "AIzaSyA41pAi6PZ7qQ8xrLbTg65Y6pcZBYMpLmY",
+            apiKey: "AIzaSyD5qFJl2MNiYKCjrQo8iBST5U4LkhkXYi8",
             authDomain: "ptvalert-19ea4.firebaseapp.com",
             databaseURL: "https://ptvalert-19ea4-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "ptvalert-19ea4",
@@ -974,18 +974,16 @@
             appId: "1:590126951854:web:4cbc14144b0a395dc42c3f"
         };
         
-        // Cloudflare Workers配置
-        const cloudflareConfig = {
-            apiUrl: "https://ptvalert-push.edwardidaniels449.workers.dev",
-            dataEndpoint: "/api/markers",
-            pushEndpoint: "/api/push"
-        };
-        
-        // 确定当前使用的存储系统
-        const useCloudflare = true; // 设置为true使用Cloudflare, false使用Firebase
-        
-        // 增加同步选项
+        // 增加同步选项，设置为true以确保数据同步
         const syncToCloudflare = true; // 即使使用Firebase也同步到Cloudflare
+        
+        // 定义Cloudflare API配置
+        const cloudflareConfig = {
+            apiUrl: 'https://ptvalert.pages.dev',
+            dataEndpoint: '/api/reports',
+            syncEndpoint: '/api/sync-from-firebase',
+            notificationEndpoint: '/api/send-notification'
+        };
         
         // 初始化Firebase
         if (!firebase.apps.length) {
@@ -1935,27 +1933,41 @@
         
         // 同步报告到Cloudflare
         function syncReportToCloudflare(reportData) {
-            console.log("正在同步报告到Cloudflare...", reportData);
+            console.log("正在同步报告到Cloudflare...", reportData.id);
             
-            // 使用firebase-to-cloudflare-sync.js中的函数进行同步(如果可用)
+            // 确保cloudflareConfig已正确定义
+            if (!cloudflareConfig || !cloudflareConfig.apiUrl) {
+                console.error("同步失败: cloudflareConfig未定义或不完整");
+                sendDanmaku(currentLang === 'zh' ? 
+                    'Cloudflare配置错误，同步失败' : 
+                    'Cloudflare config error, sync failed'
+                );
+                return;
+            }
+            
+            // 1. 首先尝试使用firebase-to-cloudflare-sync.js中的同步函数
             if (window.firebaseCloudflareSync && typeof window.firebaseCloudflareSync.syncSingleReport === 'function') {
+                console.log("使用同步工具syncSingleReport函数...");
                 window.firebaseCloudflareSync.syncSingleReport(reportData)
                     .then(result => {
-                        console.log("报告已同步到Cloudflare(使用同步工具)", result);
+                        console.log("报告已同步到Cloudflare(使用同步工具):", result);
+                        // 在成功时不添加任何额外的操作，因为syncSingleReport内部已有通知处理
                     })
                     .catch(error => {
-                        console.error("使用同步工具同步报告失败，尝试直接同步:", error);
+                        console.error("同步工具同步失败，尝试直接同步:", error);
                         // 失败时尝试直接同步
                         directSyncToCloudflare(reportData);
                     });
             } else {
-                // 回退到直接同步
+                // 2. 如果同步工具不可用，使用直接同步
+                console.log("同步工具不可用，使用直接同步方式");
                 directSyncToCloudflare(reportData);
             }
         }
         
         // 直接同步到Cloudflare(不经过同步工具)
         function directSyncToCloudflare(reportData) {
+            console.log("正在直接同步到Cloudflare API...", reportData.id);
             fetch(`${cloudflareConfig.apiUrl}${cloudflareConfig.dataEndpoint}/${reportData.id}`, {
                 method: 'PUT',
                 headers: {
@@ -1963,15 +1975,28 @@
                 },
                 body: JSON.stringify(reportData)
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log("Cloudflare API响应状态:", response.status);
+                return response.json();
+            })
             .then(data => {
-                console.log("报告已直接同步到Cloudflare", data);
+                console.log("报告已直接同步到Cloudflare:", data);
                 
                 // 发送通知
                 sendNotificationForReport(reportData);
+                
+                // 显示成功消息
+                sendDanmaku(currentLang === 'zh' ? 
+                    '报告已同步到Cloudflare' : 
+                    'Report synced to Cloudflare'
+                );
             })
             .catch((error) => {
                 console.error("直接同步报告到Cloudflare失败:", error);
+                sendDanmaku(currentLang === 'zh' ? 
+                    '同步到Cloudflare失败' : 
+                    'Failed to sync to Cloudflare'
+                );
             });
         }
         
