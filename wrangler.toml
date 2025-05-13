@@ -36,5 +36,6 @@ preview_id = "YOUR_PREVIEW_KV_NAMESPACE_ID" # Replace with actual preview ID
 
 # Environment variables
 [vars]
-VAPID_PUBLIC_KEY = "YOUR_VAPID_PUBLIC_KEY" # Replace with your actual VAPID public key
-VAPID_PRIVATE_KEY = "YOUR_VAPID_PRIVATE_KEY" # Replace with your actual VAPID private key 
+VAPID_PUBLIC_KEY = "BIi0aWM8sQdsY8SIriYSG551h2HAezVghr6sudVRqEQeQu-6tILY6pbuytfDshoO7As3128FE791I0boTeNQD-8" # 用户提供的VAPID公钥
+VAPID_PRIVATE_KEY = "x2d0l1bc7Nzt432do68nVaBARMNBKz5rX0HnVFYquLE" # 用户提供的VAPID私钥
+VAPID_SUBJECT = "mailto:qingyangzhou85@gmail.com" # 用户提供的VAPID subject 

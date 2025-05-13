@@ -8,7 +8,7 @@ window.PUSH_CONFIG = {
     window.location.origin,
   
   // VAPID公钥 - 需要与服务端使用的公钥匹配
-  VAPID_PUBLIC_KEY: 'BMJeWRPvptRxO8Qcr5Qy_nGbH4RTMB92IXZySCqVE5mwB8KYw6DFwzMDQJm_HCQWXnLQzR4P0pQQIi45VF8E1xQ', // 填入您的VAPID公钥
+  VAPID_PUBLIC_KEY: 'BIi0aWM8sQdsY8SIriYSG551h2HAezVghr6sudVRqEQeQu-6tILY6pbuytfDshoO7As3128FE791I0boTeNQD-8', // 更新为用户提供的VAPID公钥
   
   // 服务工作线程文件的路径
   SERVICE_WORKER_PATH: '/service-worker.js'
