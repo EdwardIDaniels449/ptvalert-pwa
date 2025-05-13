@@ -2,115 +2,178 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>正在重定向... - PtvAlert</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>页面未找到 - PtvAlert</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f2f7;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #1c1c1e;
+        }
+        p {
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        a {
+            color: #0071e3;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .error-code {
+            color: #999;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #0071e3;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: background-color 0.2s;
+        }
+        .btn:hover {
+            background-color: #0077ed;
+            text-decoration: none;
+        }
+        .image-container {
+            margin: 30px 0;
+        }
+        .image-container img {
+            max-width: 100%;
+            max-height: 300px;
+        }
+    </style>
+    
+    <!-- Service Worker 处理 -->
     <script>
-        // GitHub Pages重定向脚本
-        (function() {
-            console.log('GitHub Pages 404重定向脚本启动');
+        // 如果请求的是service-worker.js，返回最小化的Service Worker
+        if (window.location.pathname.endsWith('service-worker.js') || 
+            window.location.pathname.endsWith('fallback-service-worker.js')) {
             
-            // 从URL中动态获取仓库路径
-            function getRepoPath() {
-                const pathSegments = window.location.pathname.split('/');
-                console.log('URL路径段:', pathSegments);
-                
-                // 检查是否有仓库名
-                if (pathSegments.length >= 2 && pathSegments[1]) {
-                    console.log('检测到仓库名:', pathSegments[1]);
-                    return '/' + pathSegments[1] + '/';
-                }
-                
-                // 没有仓库名，返回根路径
-                console.log('未检测到仓库名，使用根路径');
-                return '/';
-            }
+            console.log('404页面检测到Service Worker请求，提供最小化实现');
             
-            // 获取仓库路径
-            const redirectPath = getRepoPath();
-            console.log('重定向路径:', redirectPath);
+            // 更改内容类型
+            document.contentType = 'application/javascript';
             
-            // 检测特殊资源并修复
-            const path = window.location.pathname;
-            console.log('请求路径:', path);
+            // 清除当前页面内容
+            document.body.innerHTML = '';
+            document.head.innerHTML = '';
             
-            // 处理Service Worker请求特殊处理
-            if (path.includes('service-worker.js')) {
-                console.log('检测到对Service Worker的请求，生成Service Worker内容');
-                
-                // 生成简易的Service Worker内容并返回
-                const swContent = `
-                // PtvAlert临时Service Worker - 由404页面生成
+            // 输出最小化Service Worker脚本
+            document.write(`
+                // 最小Service Worker - 由404页面生成
                 self.addEventListener('install', event => {
-                    console.log('[临时SW] 安装');
+                    console.log('[最小SW] 安装');
                     self.skipWaiting();
                 });
                 
                 self.addEventListener('activate', event => {
-                    console.log('[临时SW] 激活');
+                    console.log('[最小SW] 激活');
                     event.waitUntil(clients.claim());
                 });
                 
                 self.addEventListener('fetch', event => {
-                    // 简单的fetch处理
+                    console.log('[最小SW] 截获请求:', event.request.url);
                     event.respondWith(fetch(event.request));
                 });
                 
-                console.log('[临时SW] 已加载 - 来自404页面');
-                `;
+                self.addEventListener('push', event => {
+                    console.log('[最小SW] 收到推送');
+                    const title = '通知';
+                    const options = { body: '页面通知' };
+                    event.waitUntil(self.registration.showNotification(title, options));
+                });
                 
-                // 设置JavaScript MIME类型
-                document.contentType = 'application/javascript';
+                self.addEventListener('notificationclick', event => {
+                    console.log('[最小SW] 通知点击');
+                    event.notification.close();
+                    
+                    const rootUrl = new URL('/', self.location.href).href;
+                    event.waitUntil(clients.openWindow(rootUrl));
+                });
                 
-                // 使页面显示Service Worker内容
-                document.open();
-                document.write(swContent);
-                document.close();
+                console.log('[最小SW] 404页面提供的最小Service Worker已加载');
+            `);
+            
+            // 终止执行，不加载404页面的其余部分
+            document.close();
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="image-container">
+            <img src="./images/error-illustration.svg" alt="页面未找到插图" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNGMkYyRjciLz48dGV4dCB4PSI3MCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM5OTkiPjQwNDwvdGV4dD48L3N2Zz4=';">
+        </div>
+        
+        <h1>页面未找到</h1>
+        <p>抱歉，您请求的页面不存在或已被移动到其他位置。</p>
+        
+        <div id="redirect-message" style="background-color: #e5f3ff; padding: 15px; border-radius: 8px; margin: 20px 0; display: none;">
+            <p style="margin: 0;">系统正在尝试重定向到正确的页面，请稍候...</p>
+        </div>
+        
+        <a href="./" class="btn">返回首页</a>
+        
+        <p class="error-code">错误代码: 404</p>
+    </div>
+    
+    <script>
+        // GitHub Pages重定向处理
+        (function() {
+            // 如果在GitHub Pages环境中
+            if (window.location.hostname.includes('github.io')) {
+                const pathname = window.location.pathname;
+                const repoName = pathname.split('/')[1]; // 仓库名称在第一个路径段
                 
-                // 不再执行后续代码
-                return;
-            } 
-            // 处理其他静态资源
-            else if (path.includes('.js') || path.includes('.css') || path.includes('.ico')) {
-                console.log('检测到静态资源请求失败，重定向到首页');
-                window.location.replace(redirectPath);
-            } 
-            // 对于其他404错误
-            else {
-                console.log('检测到404错误，立即重定向到首页');
-                window.location.replace(redirectPath);
+                // 如果路径中包含资源文件扩展名，可能是资源请求
+                const resourceExtensions = ['.js', '.css', '.json', '.png', '.jpg', '.svg', '.ico'];
+                const isResourceRequest = resourceExtensions.some(ext => pathname.endsWith(ext));
+                
+                if (isResourceRequest) {
+                    console.log('检测到资源请求，不进行重定向');
+                    return;
+                }
+                
+                // 显示重定向消息
+                document.getElementById('redirect-message').style.display = 'block';
+                
+                // 尝试重定向到首页
+                setTimeout(function() {
+                    // 构建首页URL
+                    let homeUrl = '/' + repoName + '/';
+                    
+                    console.log('尝试重定向到:', homeUrl);
+                    window.location.replace(homeUrl);
+                }, 2000);
             }
         })();
     </script>
-    <style>
-        body {
-            background-color: #1c1c1e; 
-            color: white; 
-            font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
-            text-align: center; 
-            padding-top: 100px;
-        }
-        h1 {
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        .spinner {
-            width: 50px; 
-            height: 50px; 
-            border: 5px solid #f3f3f3; 
-            border-top: 5px solid #0071e3; 
-            border-radius: 50%; 
-            margin: 30px auto; 
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
-</head>
-<body>
-    <h1>正在重定向...</h1>
-    <p>返回PtvAlert主页</p>
-    <div class="spinner"></div>
 </body>
 </html> 

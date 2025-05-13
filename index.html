@@ -196,6 +196,8 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', async function() {
                 try {
+                    console.log('开始处理Service Worker注册...');
+                    
                     // 卸载所有服务工作线程以确保使用最新版本
                     const registrations = await navigator.serviceWorker.getRegistrations();
                     for (let registration of registrations) {
@@ -204,85 +206,53 @@
                     }
                     console.log('所有服务工作线程已卸载，将重新注册最新版本');
                     
-                    // 添加修复manifest在GitHub Pages下的路径问题
-                    // 如果在GitHub Pages环境下，修改manifest.json文件中的路径
-                    if (window.location.hostname.includes('github.io')) {
-                      try {
-                        // 获取仓库名称
-                        const getRepoName = function() {
-                          const pathSegments = window.location.pathname.split('/');
-                          if (pathSegments.length >= 2 && pathSegments[1]) {
-                            return pathSegments[1];
-                          }
-                          return 'ptvalert-pwa'; // 默认仓库名
-                        };
-                        
-                        const repoName = getRepoName();
-                        const basePath = '/' + repoName + '/';
-                        
-                        // 注册服务工作线程
-                        const registerSW = async function() {
-                          try {
-                            console.log('尝试注册Service Worker...');
-                            const swPath = basePath + 'service-worker.js';
-                            
-                            const registration = await navigator.serviceWorker.register(swPath, {
-                              scope: basePath
-                            });
-                            
-                            console.log('Service Worker注册成功:', registration.scope);
-                            return registration;
-                          } catch (error) {
-                            console.error('主Service Worker注册失败:', error);
-                            
-                            // 尝试使用备用Service Worker
-                            try {
-                              console.log('尝试注册备用Service Worker...');
-                              const fallbackPath = basePath + 'fallback-service-worker.js';
-                              
-                              const fallbackReg = await navigator.serviceWorker.register(fallbackPath, {
-                                scope: basePath
-                              });
-                              
-                              console.log('备用Service Worker注册成功:', fallbackReg.scope);
-                              return fallbackReg;
-                            } catch (fallbackError) {
-                              console.error('备用Service Worker注册也失败:', fallbackError);
-                              
-                              // 尝试直接使用相对路径
-                              try {
-                                const localReg = await navigator.serviceWorker.register('./service-worker.js', {
-                                  scope: './'
-                                });
-                                
-                                console.log('使用本地路径注册成功:', localReg.scope);
-                                return localReg;
-                              } catch (finalError) {
-                                console.error('所有Service Worker注册方法都失败:', finalError);
-                                return null;
-                              }
-                            }
-                          }
-                        };
-                        
-                        // 执行注册
-                        await registerSW();
-                      } catch (error) {
-                        console.error('处理Service Worker注册时出错:', error);
-                      }
-                    } else {
-                      // 非GitHub Pages环境，使用标准注册方式
-                      try {
+                    // 使用简单的相对路径注册Service Worker
+                    try {
+                        console.log('尝试使用相对路径注册Service Worker...');
                         const registration = await navigator.serviceWorker.register('./service-worker.js', {
-                          scope: './'
+                            scope: './'
                         });
                         console.log('Service Worker注册成功:', registration.scope);
-                      } catch (error) {
-                        console.error('Service Worker注册失败:', error);
-                      }
+                    } catch (mainError) {
+                        console.error('使用主Service Worker注册失败:', mainError);
+                        
+                        // 尝试使用备用Service Worker
+                        try {
+                            console.log('尝试注册备用Service Worker...');
+                            const fallbackReg = await navigator.serviceWorker.register('./fallback-service-worker.js', {
+                                scope: './'
+                            });
+                            console.log('备用Service Worker注册成功:', fallbackReg.scope);
+                        } catch (fallbackError) {
+                            console.error('备用Service Worker注册也失败:', fallbackError);
+                            
+                            // 最后的回退 - 内联最小Service Worker
+                            if (window.location.hostname.includes('github.io')) {
+                                console.log('尝试使用内联Service Worker作为最后的回退...');
+                                
+                                const minimalSWBlob = new Blob([`
+                                    // 最小化内联Service Worker
+                                    self.addEventListener('install', () => self.skipWaiting());
+                                    self.addEventListener('activate', event => event.waitUntil(clients.claim()));
+                                    self.addEventListener('fetch', event => event.respondWith(fetch(event.request)));
+                                    console.log('内联最小Service Worker已激活');
+                                `], {type: 'application/javascript'});
+                                
+                                const minimalSWUrl = URL.createObjectURL(minimalSWBlob);
+                                
+                                try {
+                                    const inlineReg = await navigator.serviceWorker.register(minimalSWUrl, {
+                                        scope: './'
+                                    });
+                                    console.log('内联Service Worker注册成功:', inlineReg.scope);
+                                } catch (inlineError) {
+                                    console.error('所有Service Worker注册方法都失败:', inlineError);
+                                }
+                            }
+                        }
                     }
                 } catch (error) {
-                    console.error('卸载服务工作线程失败:', error);
+                    console.error('处理服务工作线程时出错:', error);
                 }
             });
         }
@@ -5187,6 +5157,8 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', async function() {
                 try {
+                    console.log('开始处理Service Worker注册...');
+                    
                     // 卸载所有服务工作线程以确保使用最新版本
                     const registrations = await navigator.serviceWorker.getRegistrations();
                     for (let registration of registrations) {
@@ -5195,91 +5167,53 @@
                     }
                     console.log('所有服务工作线程已卸载，将重新注册最新版本');
                     
-                    // 添加修复manifest在GitHub Pages下的路径问题
-                    // 如果在GitHub Pages环境下，修改manifest.json文件中的路径
-                    if (window.location.hostname.includes('github.io')) {
-                      try {
-                        // 获取仓库名称(从路径的第一部分)
-                        const pathSegments = window.location.pathname.split('/');
-                        if (pathSegments.length >= 2 && pathSegments[1]) {
-                          const repoName = pathSegments[1];
-                          const basePath = '/' + repoName + '/';
-                          
-                          console.log('检测到GitHub Pages环境，尝试修复manifest路径...');
-                          
-                          // 获取manifest内容
-                          fetch('./manifest.json')
-                            .then(response => response.json())
-                            .then(manifest => {
-                              // 修正start_url和scope
-                              manifest.start_url = basePath;
-                              manifest.scope = basePath;
-                              
-                              // 修正service worker路径
-                              if (manifest.serviceworker) {
-                                manifest.serviceworker.src = basePath + 'service-worker.js';
-                                manifest.serviceworker.scope = basePath;
-                              }
-                              
-                              // 更新图标路径
-                              if (manifest.icons) {
-                                manifest.icons.forEach(icon => {
-                                  if (icon.src && icon.src.startsWith('./')) {
-                                    icon.src = basePath + icon.src.substring(2);
-                                  }
-                                });
-                              }
-                              
-                              // 更新快捷方式URL
-                              if (manifest.shortcuts) {
-                                manifest.shortcuts.forEach(shortcut => {
-                                  if (shortcut.url && shortcut.url.startsWith('./')) {
-                                    shortcut.url = basePath + shortcut.url.substring(2);
-                                  }
-                                  
-                                  // 更新快捷方式图标
-                                  if (shortcut.icons) {
-                                    shortcut.icons.forEach(icon => {
-                                      if (icon.src && icon.src.startsWith('./')) {
-                                        icon.src = basePath + icon.src.substring(2);
-                                      }
-                                    });
-                                  }
-                                });
-                              }
-                              
-                              // 更新截图路径
-                              if (manifest.screenshots) {
-                                manifest.screenshots.forEach(screenshot => {
-                                  if (screenshot.src && screenshot.src.startsWith('./')) {
-                                    screenshot.src = basePath + screenshot.src.substring(2);
-                                  }
-                                });
-                              }
-                              
-                              console.log('Manifest路径已修复:', manifest);
-                              
-                              // 创建Blob并提供更新后的manifest URL
-                              const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
-                              const manifestURL = URL.createObjectURL(blob);
-                              
-                              // 更新manifest链接
-                              const manifestLink = document.querySelector('link[rel="manifest"]');
-                              if (manifestLink) {
-                                manifestLink.href = manifestURL;
-                                console.log('Manifest链接已更新为:', manifestURL);
-                              }
-                            })
-                            .catch(error => {
-                              console.error('获取或修复manifest失败:', error);
+                    // 使用简单的相对路径注册Service Worker
+                    try {
+                        console.log('尝试使用相对路径注册Service Worker...');
+                        const registration = await navigator.serviceWorker.register('./service-worker.js', {
+                            scope: './'
+                        });
+                        console.log('Service Worker注册成功:', registration.scope);
+                    } catch (mainError) {
+                        console.error('使用主Service Worker注册失败:', mainError);
+                        
+                        // 尝试使用备用Service Worker
+                        try {
+                            console.log('尝试注册备用Service Worker...');
+                            const fallbackReg = await navigator.serviceWorker.register('./fallback-service-worker.js', {
+                                scope: './'
                             });
+                            console.log('备用Service Worker注册成功:', fallbackReg.scope);
+                        } catch (fallbackError) {
+                            console.error('备用Service Worker注册也失败:', fallbackError);
+                            
+                            // 最后的回退 - 内联最小Service Worker
+                            if (window.location.hostname.includes('github.io')) {
+                                console.log('尝试使用内联Service Worker作为最后的回退...');
+                                
+                                const minimalSWBlob = new Blob([`
+                                    // 最小化内联Service Worker
+                                    self.addEventListener('install', () => self.skipWaiting());
+                                    self.addEventListener('activate', event => event.waitUntil(clients.claim()));
+                                    self.addEventListener('fetch', event => event.respondWith(fetch(event.request)));
+                                    console.log('内联最小Service Worker已激活');
+                                `], {type: 'application/javascript'});
+                                
+                                const minimalSWUrl = URL.createObjectURL(minimalSWBlob);
+                                
+                                try {
+                                    const inlineReg = await navigator.serviceWorker.register(minimalSWUrl, {
+                                        scope: './'
+                                    });
+                                    console.log('内联Service Worker注册成功:', inlineReg.scope);
+                                } catch (inlineError) {
+                                    console.error('所有Service Worker注册方法都失败:', inlineError);
+                                }
+                            }
                         }
-                      } catch (error) {
-                        console.error('处理Manifest路径时出错:', error);
-                      }
                     }
                 } catch (error) {
-                    console.error('卸载服务工作线程失败:', error);
+                    console.error('处理服务工作线程时出错:', error);
                 }
             });
         }

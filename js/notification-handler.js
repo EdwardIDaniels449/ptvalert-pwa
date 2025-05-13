@@ -118,88 +118,91 @@ async function initNotifications() {
   }
 }
 
-// 在registerServiceWorker函数中直接使用完整URL
+// 在registerServiceWorker函数中使用简单的相对路径
 async function registerServiceWorker() {
   try {
     if (!('serviceWorker' in navigator)) {
       console.error(LOG_PREFIX + '此浏览器不支持Service Worker');
-      return;
+      return null;
     }
     
     console.log(LOG_PREFIX + '开始注册Service Worker...');
     console.log(LOG_PREFIX + '当前环境:', window.location.origin);
     
-    // 在GitHub Pages环境使用正确的路径
-    if (isGitHubPages) {
-      // 获取仓库名称
-      const getRepoName = function() {
-        const pathSegments = window.location.pathname.split('/');
-        if (pathSegments.length >= 2 && pathSegments[1]) {
-          return pathSegments[1];
-        }
-        return 'ptvalert-pwa'; // 默认仓库名
-      };
-      
-      const repoName = window.GITHUB_PAGES_BASE_PATH 
-        ? window.GITHUB_PAGES_BASE_PATH.replace(/\//g, '') 
-        : getRepoName();
-      
-      // 构建正确的Service Worker URL和作用域
-      const swURL = `/${repoName}/service-worker.js`;
-      const scope = `/${repoName}/`;
-      
-      console.log(LOG_PREFIX + '使用GitHub Pages路径注册Service Worker:', swURL);
-      console.log(LOG_PREFIX + '使用作用域:', scope);
-      
-      try {
-        const registration = await navigator.serviceWorker.register(swURL, { scope: scope });
-        console.log(LOG_PREFIX + 'Service Worker注册成功，作用域:', registration.scope);
-        return registration;
-      } catch (error) {
-        console.error(LOG_PREFIX + 'GitHub Pages路径注册失败，尝试备用方法:', error);
-        
-        // 尝试备用方法 - 简单的相对路径
-        try {
-          const backupOptions = { scope: './' };
-          const registration = await navigator.serviceWorker.register('./service-worker.js', backupOptions);
-          console.log(LOG_PREFIX + '使用备用路径注册成功:', registration.scope);
-          return registration;
-        } catch (backupError) {
-          console.error(LOG_PREFIX + '备用注册方法也失败:', backupError);
-          
-          // 最后的备用方法 - 返回伪造的注册对象以避免应用崩溃
-          console.log(LOG_PREFIX + '创建伪Service Worker注册对象');
-          return {
-            scope: scope,
-            active: {
-              state: 'activated',
-              scriptURL: swURL
-            },
-            installing: null,
-            waiting: null,
-            pushManager: {
-              getSubscription: () => Promise.resolve(null),
-              subscribe: () => Promise.resolve({
-                endpoint: 'https://fake-push-endpoint.github.io',
-                toJSON: () => ({ endpoint: 'https://fake-push-endpoint.github.io' })
-              })
-            },
-            unregister: () => Promise.resolve(true),
-            update: () => Promise.resolve(this),
-            __fake: true
-          };
-        }
-      }
-    } else {
-      // 非GitHub Pages环境
-      const registration = await navigator.serviceWorker.register('./service-worker.js', { scope: './' });
+    // 使用简单的相对路径注册，避免复杂的路径解析问题
+    try {
+      console.log(LOG_PREFIX + '尝试使用相对路径注册Service Worker: ./service-worker.js');
+      const registration = await navigator.serviceWorker.register('./service-worker.js', { 
+        scope: './' 
+      });
       console.log(LOG_PREFIX + 'Service Worker注册成功，作用域:', registration.scope);
       return registration;
+    } catch (mainError) {
+      console.error(LOG_PREFIX + 'Service Worker注册失败，尝试使用备用方案:', mainError);
+      
+      // 尝试使用备用Service Worker
+      try {
+        console.log(LOG_PREFIX + '尝试注册备用Service Worker: ./fallback-service-worker.js');
+        const fallbackReg = await navigator.serviceWorker.register('./fallback-service-worker.js', {
+          scope: './'
+        });
+        console.log(LOG_PREFIX + '备用Service Worker注册成功:', fallbackReg.scope);
+        return fallbackReg;
+      } catch (fallbackError) {
+        console.error(LOG_PREFIX + '备用Service Worker注册也失败:', fallbackError);
+        
+        // 创建内联Service Worker作为最后的回退
+        if (window.location.hostname.includes('github.io')) {
+          try {
+            console.log(LOG_PREFIX + '尝试使用内联Service Worker作为最后的回退...');
+            
+            const minimalSWBlob = new Blob([`
+              // 最小化内联Service Worker
+              self.addEventListener('install', () => self.skipWaiting());
+              self.addEventListener('activate', event => event.waitUntil(clients.claim()));
+              self.addEventListener('fetch', event => event.respondWith(fetch(event.request)));
+              console.log('内联最小Service Worker已激活');
+            `], {type: 'application/javascript'});
+            
+            const minimalSWUrl = URL.createObjectURL(minimalSWBlob);
+            
+            const inlineReg = await navigator.serviceWorker.register(minimalSWUrl, {
+              scope: './'
+            });
+            console.log(LOG_PREFIX + '内联Service Worker注册成功:', inlineReg.scope);
+            return inlineReg;
+          } catch (inlineError) {
+            console.error(LOG_PREFIX + '所有Service Worker注册方法都失败:', inlineError);
+          }
+        }
+        
+        // 返回伪造的Service Worker注册对象
+        console.log(LOG_PREFIX + '创建伪Service Worker对象以避免应用崩溃');
+        return {
+          scope: './',
+          active: {
+            state: 'activated',
+            scriptURL: './service-worker.js'
+          },
+          installing: null,
+          waiting: null,
+          pushManager: {
+            getSubscription: () => Promise.resolve(null),
+            subscribe: () => Promise.resolve({
+              endpoint: 'https://fake-push-endpoint.example',
+              toJSON: () => ({ endpoint: 'https://fake-push-endpoint.example' })
+            })
+          },
+          unregister: () => Promise.resolve(true),
+          update: () => Promise.resolve(this),
+          __fake: true
+        };
+      }
     }
   } catch (error) {
-    console.error(LOG_PREFIX + 'Service Worker注册失败:', error);
+    console.error(LOG_PREFIX + 'Service Worker注册过程中出错:', error);
     
-    // 创建伪造的注册对象以确保应用不会崩溃
+    // 返回伪造的Service Worker注册对象
     return {
       scope: './',
       active: {
@@ -211,8 +214,8 @@ async function registerServiceWorker() {
       pushManager: {
         getSubscription: () => Promise.resolve(null),
         subscribe: () => Promise.resolve({
-          endpoint: 'https://fake-push-endpoint.local',
-          toJSON: () => ({ endpoint: 'https://fake-push-endpoint.local' })
+          endpoint: 'https://fake-push-endpoint.example',
+          toJSON: () => ({ endpoint: 'https://fake-push-endpoint.example' })
         })
       },
       unregister: () => Promise.resolve(true),
