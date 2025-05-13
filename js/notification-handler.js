@@ -7,7 +7,7 @@
 // Uses Web Push API with Cloudflare Workers
 
 // Base URL for the API - change to your Cloudflare Worker URL
-const API_BASE_URL = 'https://push-notification-service.qingyangzhou85.workers.dev/';
+const API_BASE_URL = 'https://ptvalert.pages.dev';
 
 // Current user ID - should be set by the main application
 let notificationUserId = '';
@@ -44,8 +44,8 @@ async function initNotifications() {
     }
     
     // Register service worker - use relative path for GitHub Pages compatibility
-    const registration = await navigator.serviceWorker.register('./service-worker.js', {
-      scope: './'
+    const registration = await navigator.serviceWorker.register('/service-worker.js', {
+      scope: '/'
     });
     
     console.log('Service Worker registered with scope:', registration.scope);
@@ -123,16 +123,11 @@ async function subscribeUserToPush() {
       return subscription;
     }
     
-    // Get VAPID public key from server
-    const response = await fetch(`${API_BASE_URL}/api/vapid-public-key`);
-    const data = await response.json();
-    
-    if (!data.publicKey) {
-      throw new Error('Failed to get VAPID public key');
-    }
+    // 使用硬编码的VAPID公钥，避免额外的API调用
+    const vapidPublicKey = 'BMJeWRPvptRxO8Qcr5Qy_nGbH4RTMB92IXZySCqVE5mwB8KYw6DFwzMDQJm_HCQWXnLQzR4P0pQQIi45VF8E1xQ';
     
     // Convert VAPID public key to Uint8Array
-    const applicationServerKey = urlBase64ToUint8Array(data.publicKey);
+    const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
     
     // Subscribe to push notifications
     subscription = await registration.pushManager.subscribe({
