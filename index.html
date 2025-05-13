@@ -3355,7 +3355,7 @@
             }
         }
     </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places"></script>
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places"></script>
     
     <!-- DOM就绪后初始化 -->
     <script>
@@ -3371,9 +3371,6 @@
             }
             
             console.log("用户已登录，等待Google Maps API回调...");
-            
-            // 添加刷新电车信息按钮
-            addRefreshTramButton();
             
             // 关闭报告计数器弹窗按钮事件
             document.getElementById('closeCounterPopup').addEventListener('click', function() {
