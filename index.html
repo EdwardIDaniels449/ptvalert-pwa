@@ -41,6 +41,9 @@
     <!-- 推送通知处理 -->
     <script src="/ptvalert-pwa/js/notification-handler.js"></script>
     
+    <!-- Leaflet地图库 -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    
     <!-- PWA Service Worker注册 -->
     <script>
         // 注册Service Worker
@@ -200,9 +203,170 @@
             });
         }
         
+        // 地图相关功能
+        let map, userMarker, markers = {};
+        
+        // 地图初始化函数
+        function initMap() {
+            // 初始位置 (默认为世界中心)
+            let initialLat = 39.9042;
+            let initialLng = 116.4074;
+            let initialZoom = 13;
+            
+            // 尝试从URL获取位置参数
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('lat') && urlParams.has('lng')) {
+                initialLat = parseFloat(urlParams.get('lat'));
+                initialLng = parseFloat(urlParams.get('lng'));
+                
+                if (urlParams.has('zoom')) {
+                    initialZoom = parseInt(urlParams.get('zoom'));
+                }
+            } else {
+                // 尝试获取用户位置
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            initialLat = position.coords.latitude;
+                            initialLng = position.coords.longitude;
+                            
+                            // 如果地图已初始化，则移动视图
+                            if (map) {
+                                map.setView([initialLat, initialLng], initialZoom);
+                                // 添加用户位置标记
+                                addUserLocationMarker(initialLat, initialLng);
+                            }
+                        },
+                        (error) => {
+                            console.log('获取位置失败:', error);
+                        }
+                    );
+                }
+            }
+            
+            // 初始化地图
+            map = L.map('map').setView([initialLat, initialLng], initialZoom);
+            
+            // 添加底图图层
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }).addTo(map);
+            
+            // 添加用户位置标记
+            addUserLocationMarker(initialLat, initialLng);
+            
+            // 加载标记数据
+            loadMarkers();
+            
+            // 添加点击地图事件处理
+            map.on('click', handleMapClick);
+        }
+        
+        // 添加用户位置标记
+        function addUserLocationMarker(lat, lng) {
+            // 如果已存在用户标记，则更新位置
+            if (userMarker) {
+                userMarker.setLatLng([lat, lng]);
+            } else {
+                // 创建自定义图标
+                const userIcon = L.divIcon({
+                    className: 'user-location-marker',
+                    html: '<div class="user-marker-inner"></div>',
+                    iconSize: [20, 20]
+                });
+                
+                // 创建标记
+                userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(map);
+            }
+        }
+        
+        // 从服务器获取标记数据
+        function loadMarkers() {
+            // 使用Cloudflare Worker端点
+            fetch('https://push-notification-service.qingyangzhou85.workers.dev/api/markers')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.markers) {
+                        data.markers.forEach(markerData => {
+                            addMarkerToMap(markerData);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('获取标记数据失败:', error);
+                    // 尝试从IndexedDB加载缓存的标记
+                    loadMarkersFromIndexedDB();
+                });
+        }
+        
+        // 从IndexedDB加载标记
+        function loadMarkersFromIndexedDB() {
+            // 获取IndexedDB中的缓存标记
+            const request = indexedDB.open('PtvAlertDB', 1);
+            
+            request.onerror = function(event) {
+                console.error('打开数据库失败:', event.target.error);
+            };
+            
+            request.onsuccess = function(event) {
+                const db = event.target.result;
+                const transaction = db.transaction(['markers'], 'readonly');
+                const store = transaction.objectStore('markers');
+                const getAll = store.getAll();
+                
+                getAll.onsuccess = function() {
+                    if (getAll.result && getAll.result.length > 0) {
+                        getAll.result.forEach(markerData => {
+                            addMarkerToMap(markerData);
+                        });
+                    }
+                };
+                
+                transaction.oncomplete = function() {
+                    db.close();
+                };
+            };
+        }
+        
+        // 添加标记到地图
+        function addMarkerToMap(markerData) {
+            if (!markerData || !markerData.id || !markerData.location) return;
+            
+            // 避免重复添加
+            if (markers[markerData.id]) {
+                markers[markerData.id].setLatLng([markerData.location.lat, markerData.location.lng]);
+                return;
+            }
+            
+            // 创建标记
+            const marker = L.marker([markerData.location.lat, markerData.location.lng]).addTo(map);
+            
+            // 添加点击事件
+            marker.on('click', () => {
+                showMarkerDetails(markerData);
+            });
+            
+            // 保存标记引用
+            markers[markerData.id] = marker;
+        }
+        
+        // 显示标记详情
+        function showMarkerDetails(markerData) {
+            alert(`标记: ${markerData.title || '未命名'}\n${markerData.description || '无描述'}`);
+            // 在实际应用中可以替换为模态框或侧栏显示
+        }
+        
+        // 地图点击处理
+        function handleMapClick(e) {
+            console.log('地图点击位置:', e.latlng);
+            // 在实际应用中可以在这里添加创建新标记的逻辑
+        }
+        
         // 页面加载完成后初始化
         window.addEventListener('DOMContentLoaded', function() {
             initOfflineSupport();
+            initMap();
         });
     </script>
     
@@ -228,6 +392,20 @@
             width: 100%;
             height: 100vh;
             z-index: 1;
+        }
+        
+        /* 用户位置标记样式 */
+        .user-location-marker {
+            background: transparent;
+        }
+        
+        .user-marker-inner {
+            width: 20px;
+            height: 20px;
+            background-color: #0071e3;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.5);
         }
         
         /* 报告计数器弹窗样式 */
@@ -454,6 +632,20 @@
     </style>
 </head>
 <body>
-    <!-- 这里是应用主体内容 -->
+    <!-- 地图容器 -->
+    <div id="map"></div>
+    
+    <!-- 地图控件 -->
+    <div class="custom-map-controls">
+        <button class="map-control-button" id="locate-button" title="定位">
+            <img src="/ptvalert-pwa/images/locate-icon.svg" alt="定位" onerror="this.src='/ptvalert-pwa/images/locate-icon.png'">
+        </button>
+        <button class="map-control-button" id="add-marker-button" title="添加标记">
+            <img src="/ptvalert-pwa/images/add-marker-icon.svg" alt="添加标记" onerror="this.src='/ptvalert-pwa/images/add-marker-icon.png'">
+        </button>
+        <button class="map-control-button" id="refresh-button" title="刷新">
+            <img src="/ptvalert-pwa/images/refresh-icon.svg" alt="刷新" onerror="this.src='/ptvalert-pwa/images/refresh-icon.png'">
+        </button>
+    </div>
 </body>
 </html>
