@@ -261,6 +261,51 @@
             
             // 添加点击地图事件处理
             map.on('click', handleMapClick);
+            
+            // 添加地图控件按钮事件处理
+            document.getElementById('locate-button').addEventListener('click', getUserLocation);
+            document.getElementById('add-marker-button').addEventListener('click', startAddingMarker);
+            document.getElementById('refresh-button').addEventListener('click', refreshMap);
+        }
+        
+        // 获取用户位置
+        function getUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        map.setView([lat, lng], 15);
+                        addUserLocationMarker(lat, lng);
+                    },
+                    (error) => {
+                        console.error('获取位置失败:', error);
+                        alert('无法获取您的位置，请检查位置权限设置。');
+                    }
+                );
+            } else {
+                alert('您的浏览器不支持地理定位功能。');
+            }
+        }
+        
+        // 开始添加新标记
+        function startAddingMarker() {
+            alert('点击地图上的位置添加新标记');
+            // 这里应该有更复杂的逻辑，例如改变鼠标样式、添加特殊事件监听器等
+            // 但为了简单起见，我们只显示一个提示
+        }
+        
+        // 刷新地图和标记
+        function refreshMap() {
+            // 清除现有标记
+            for (let id in markers) {
+                map.removeLayer(markers[id]);
+            }
+            markers = {};
+            
+            // 重新加载标记
+            loadMarkers();
         }
         
         // 添加用户位置标记
@@ -591,9 +636,12 @@
             background-color: rgba(255, 255, 255, 0.2);
         }
         
-        .map-control-button img {
-            width: 24px;
-            height: 24px;
+        .map-button-text {
+            font-size: 20px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         /* 浅色模式调整 */
@@ -638,13 +686,13 @@
     <!-- 地图控件 -->
     <div class="custom-map-controls">
         <button class="map-control-button" id="locate-button" title="定位">
-            <img src="/ptvalert-pwa/images/locate-icon.svg" alt="定位" onerror="this.src='/ptvalert-pwa/images/locate-icon.png'">
+            <span class="map-button-text">📍</span>
         </button>
         <button class="map-control-button" id="add-marker-button" title="添加标记">
-            <img src="/ptvalert-pwa/images/add-marker-icon.svg" alt="添加标记" onerror="this.src='/ptvalert-pwa/images/add-marker-icon.png'">
+            <span class="map-button-text">➕</span>
         </button>
         <button class="map-control-button" id="refresh-button" title="刷新">
-            <img src="/ptvalert-pwa/images/refresh-icon.svg" alt="刷新" onerror="this.src='/ptvalert-pwa/images/refresh-icon.png'">
+            <span class="map-button-text">🔄</span>
         </button>
     </div>
 </body>
