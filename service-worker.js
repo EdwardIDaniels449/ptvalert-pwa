@@ -1,30 +1,43 @@
 // 推送通知Service Worker
-const CACHE_NAME = 'ptvalert-cache-v3';
+const CACHE_NAME = 'ptvalert-cache-v4';
 const APP_NAME = '网站地图标记';
-const APP_VERSION = '1.0.4';
+const APP_VERSION = '1.0.5';
+
+// 确定基础路径 - 处理GitHub Pages的仓库路径问题
+let BASE_PATH = './';
+if (self.location.hostname.includes('github.io')) {
+  // 从URL中提取仓库名称
+  const pathSegments = self.location.pathname.split('/');
+  if (pathSegments.length >= 2 && pathSegments[1] !== 'service-worker.js') {
+    // GitHub Pages项目页面 (username.github.io/repo-name)
+    BASE_PATH = '/' + pathSegments[1] + '/';
+  }
+}
+console.log('[Service Worker] 使用基础路径:', BASE_PATH);
 
 // 要缓存的资源 - 使用相对路径以兼容GitHub Pages
 const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json',
-  './offline.html',
-  './push-client.js',
-  './styles.css',
-  './js/notification-handler.js',
-  './js/url-fix.js',
+  BASE_PATH,
+  BASE_PATH + 'index.html',
+  BASE_PATH + 'manifest.json',
+  BASE_PATH + 'offline.html',
+  BASE_PATH + 'push-client.js',
+  BASE_PATH + 'styles.css',
+  BASE_PATH + 'js/notification-handler.js',
+  BASE_PATH + 'js/url-fix.js',
+  BASE_PATH + 'js/github-pages-fix.js',
   // 图标和图片 - 不存在的资源先注释掉
   /*
-  './images/icon-72x72.png',
-  './images/icon-96x96.png',
-  './images/icon-128x128.png',
-  './images/icon-144x144.png',
-  './images/icon-152x152.png',
-  './images/icon-192x192.png',
-  './images/icon-384x384.png',
-  './images/icon-512x512.png',
-  './images/badge-72x72.png',
-  './images/offline-image.png'
+  BASE_PATH + 'images/icon-72x72.png',
+  BASE_PATH + 'images/icon-96x96.png',
+  BASE_PATH + 'images/icon-128x128.png',
+  BASE_PATH + 'images/icon-144x144.png',
+  BASE_PATH + 'images/icon-152x152.png',
+  BASE_PATH + 'images/icon-192x192.png',
+  BASE_PATH + 'images/icon-384x384.png',
+  BASE_PATH + 'images/icon-512x512.png',
+  BASE_PATH + 'images/badge-72x72.png',
+  BASE_PATH + 'images/offline-image.png'
   */
 ];
 
@@ -88,7 +101,7 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(event.request)
         .catch(() => {
-          return caches.match('./offline.html');
+          return caches.match(BASE_PATH + 'offline.html');
         })
     );
     return;
@@ -127,7 +140,7 @@ self.addEventListener('fetch', event => {
             
             // 图片返回占位符
             if (event.request.url.match(/\.(jpg|jpeg|png|gif|svg)$/)) {
-              return caches.match('./images/offline-image.png');
+              return caches.match(BASE_PATH + 'images/offline-image.png');
             }
             
             // 其他请求返回空响应
@@ -147,8 +160,8 @@ self.addEventListener('push', event => {
   let notificationData = {
     title: APP_NAME,
     body: '有新的更新',
-    icon: './images/icon-192x192.png',
-    badge: './images/badge-72x72.png',
+    icon: BASE_PATH + 'images/icon-192x192.png',
+    badge: BASE_PATH + 'images/badge-72x72.png',
     data: {
       url: '/'
     }
@@ -301,8 +314,8 @@ async function saveMarkerToIndexedDB(marker) {
 function notifyMarkerUpdate(marker) {
   self.registration.showNotification(`${APP_NAME}: 标记更新`, {
     body: marker.title || '地图标记已更新',
-    icon: './images/icon-192x192.png',
-    badge: './images/badge-72x72.png',
+    icon: BASE_PATH + 'images/icon-192x192.png',
+    badge: BASE_PATH + 'images/badge-72x72.png',
     data: {
       markerId: marker.id,
       markerInfo: marker
