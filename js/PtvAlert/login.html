@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PtvAlert登录</title>
+    <!-- 添加Firebase SDK 脚本 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #1c1c1e;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        /* 添加动态背景元素 */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .falling-emoji {
+            position: absolute;
+            font-size: 24px;
+            animation: fall linear infinite;
+            top: -30px;
+            opacity: 0.7;
+        }
+        
+        .chase-animation {
+            position: absolute;
+            bottom: 20px;
+            left: -100px;
+            animation: chase 15s linear infinite;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-direction: row-reverse;
+        }
+        
+        .person {
+            font-size: 30px;
+            animation: running 0.3s infinite alternate;
+            transform: scaleX(-1);
+        }
+        
+        .pig {
+            font-size: 32px;
+            animation: pigMovement 0.5s infinite alternate;
+            transform: scaleX(1);
+        }
+        
+        @keyframes fall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+            100% {
+                transform: translateY(calc(100vh + 30px)) rotate(360deg);
+            }
+        }
+        
+        @keyframes chase {
+            0% {
+                left: -100px;
+                transform: translateX(0);
+            }
+            100% {
+                left: 100%;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes running {
+            0% {
+                transform: translateY(0px) rotate(-5deg) scaleX(-1);
+            }
+            100% {
+                transform: translateY(-8px) rotate(5deg) scaleX(-1);
+            }
+        }
+        
+        @keyframes pigMovement {
+            0% {
+                transform: translateY(2px) rotate(-3deg) scaleX(1);
+            }
+            100% {
+                transform: translateY(-5px) rotate(3deg) scaleX(1);
+            }
+        }
+        
+        .login-container {
+            background-color: rgba(50, 50, 54, 0.95);
+            border-radius: 16px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        
+        .login-header p {
+            color: #aaa;
+            font-size: 16px;
+        }
+        
+        .login-form {
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background-color: #2c2c2e;
+            color: #fff;
+            font-size: 16px;
+        }
+        
+        .form-input:focus {
+            border-color: #0071e3;
+            outline: none;
+        }
+        
+        .btn {
+            width: 100%;
+            background-color: #0071e3;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            background-color: #0077ed;
+        }
+        
+        .btn-secondary {
+            background-color: #3a3a3c;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #48484a;
+        }
+        
+        .form-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            color: #aaa;
+            font-size: 14px;
+        }
+        
+        .form-footer a {
+            color: #0071e3;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .guest-login {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .error-message {
+            color: #ff3b30;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .success-message {
+            color: #30d158;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .form-toggle {
+            margin-top: 20px;
+            text-align: center;
+            color: #aaa;
+        }
+        
+        .form-toggle a {
+            color: #0071e3;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .language-switch {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #fff;
+            color: #333;
+            border-radius: 20px;
+            padding: 10px 18px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+            border: 2px solid #0071e3;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s, border 0.2s;
+        }
+        
+        .register-form {
+            display: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .loading-spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 20px;
+            }
+            
+            .login-header h1 {
+                font-size: 24px;
+            }
+            
+            .form-input, .btn {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 动态背景 -->
+    <div class="animated-bg" id="animatedBg">
+        <!-- 落下的emoji会在这里动态生成 -->
+        <!-- 追逐动画 -->
+        <div class="chase-animation">
+            <div class="person">🏃</div>
+            <div class="pig">🐷</div>
+        </div>
+    </div>
+    
+    <!-- 语言切换按钮 -->
+    <button id="langSwitchBtn" class="language-switch">
+        <span style="font-size:22px;">🌐</span>
+        <span id="langSwitchText">EN</span>
+    </button>
+    
+    <div class="login-container">
+        <div class="login-header">
+            <h1 id="login-title">PtvAlert登录</h1>
+            <p id="login-subtitle">墨尔本交通信息共享平台</p>
+        </div>
+        
+        <!-- 登录表单 -->
+        <div class="login-form" id="loginForm">
+            <div class="form-group">
+                <label class="form-label" id="email-label">邮箱</label>
+                <input type="email" class="form-input" id="emailInput" placeholder="请输入邮箱地址">
+                <div class="error-message" id="emailError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" id="password-label">密码</label>
+                <input type="password" class="form-input" id="passwordInput" placeholder="请输入密码">
+                <div class="error-message" id="passwordError"></div>
+            </div>
+            
+            <button class="btn" id="loginButton">登录</button>
+            
+            <div class="form-footer">
+                <a href="#" id="forgotPassword">忘记密码?</a>
+                <a href="#" id="switchToRegister">注册新账号</a>
+            </div>
+        </div>
+        
+        <!-- 注册表单 -->
+        <div class="login-form register-form" id="registerForm">
+            <div class="form-group">
+                <label class="form-label" id="reg-email-label">邮箱</label>
+                <input type="email" class="form-input" id="regEmailInput" placeholder="请输入邮箱地址">
+                <div class="error-message" id="regEmailError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" id="reg-password-label">密码</label>
+                <input type="password" class="form-input" id="regPasswordInput" placeholder="请设置密码（至少6位）">
+                <div class="error-message" id="regPasswordError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" id="confirm-password-label">确认密码</label>
+                <input type="password" class="form-input" id="confirmPasswordInput" placeholder="请再次输入密码">
+                <div class="error-message" id="confirmPasswordError"></div>
+            </div>
+            
+            <button class="btn" id="registerButton">注册</button>
+            
+            <div class="form-toggle">
+                <span id="already-account">已有账号?</span> <a href="#" id="switchToLogin">返回登录</a>
+            </div>
+        </div>
+        
+        <!-- 游客登录按钮 -->
+        <div class="guest-login">
+            <button class="btn btn-secondary" id="guestLoginButton">游客访问</button>
+        </div>
+        
+        <!-- 加载中提示 -->
+        <div class="loading" id="loadingIndicator">
+            <div class="loading-spinner"></div>
+            <p id="loading-text">正在处理，请稍候...</p>
+        </div>
+        
+        <div class="success-message" id="successMessage"></div>
+        <div class="error-message" id="generalError"></div>
+    </div>
+    
+    <!-- 快速访问区域 -->
+    <div class="quick-access">
+        <h3 id="quick-access-title">快速访问</h3>
+        <div class="quick-access-content">
+            <div class="qr-code" id="qrCode">
+                <!-- QR码将通过JS动态生成 -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Firebase初始化配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA41pAi6PZ7qQ8xrLbTg65Y6pcZBYMpLmY",
+            authDomain: "ptvalert-19ea4.firebaseapp.com",
+            databaseURL: "https://ptvalert-19ea4-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "ptvalert-19ea4",
+            storageBucket: "ptvalert-19ea4.appspot.com",
+            messagingSenderId: "590126951854",
+            appId: "1:590126951854:web:4cbc14144b0a395dc42c3f"
+        };
+        
+        // 初始化Firebase
+        let auth;
+        let firebaseAvailable = true; // 设为true，启用Firebase认证
+        
+        // 确保清除所有登录状态，从登出或新会话开始
+        function clearAllLoginState() {
+            // 清除localStorage中的所有登录状态
+            localStorage.removeItem('userLoggedIn');
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('isGuestUser');
+            localStorage.removeItem('guestId');
+            
+            // 清除可能存在的cookie
+            document.cookie = "isGuestUser=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            document.cookie = "userLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            document.cookie = "guestId=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            
+            console.log("已清除所有登录状态");
+        }
+        
+        // 检查URL参数，如果是从登出页面跳转来的，清除登录状态
+        function checkLogoutRedirect() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromLogout = urlParams.get('logout');
+            
+            if (fromLogout === '1') {
+                console.log("检测到从登出页面跳转");
+                clearAllLoginState();
+                // 清除URL参数
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+        
+        // 强调游客模式 - 仅在Firebase不可用时显示
+        function highlightGuestMode(message) {
+            const generalError = document.getElementById('generalError');
+            if (generalError) {
+                generalError.textContent = message || '游客模式可作为快速访问选项';
+                generalError.style.display = 'block';
+            }
+            
+            // 突出显示游客登录按钮，但不添加脉动动画
+            const guestLoginButton = document.getElementById('guestLoginButton');
+            if (guestLoginButton) {
+                guestLoginButton.style.background = '#0071e3';
+                guestLoginButton.style.color = 'white';
+                guestLoginButton.classList.remove('btn-secondary');
+                // 移除脉动动画
+                guestLoginButton.style.animation = '';
+            }
+        }
+        
+        // 移除自动游客登录功能
+        function autoGuestLogin(delay = 0) {
+            // 该功能已被禁用
+            console.log("自动游客登录已禁用");
+        }
+        
+        try {
+            if (firebase && firebase.apps) {
+                // 检查是否已初始化，避免重复初始化
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                auth = firebase.auth();
+                console.log("Firebase Auth已成功初始化");
+                firebaseAvailable = true;
+            } else {
+                console.error("Firebase SDK未加载");
+                firebaseAvailable = false;
+                highlightGuestMode('Firebase SDK未加载，游客模式可作为备选');
+            }
+        } catch (error) {
+            console.error("Firebase初始化错误:", error);
+            firebaseAvailable = false;
+            highlightGuestMode('无法连接到Firebase服务，游客模式可作为备选');
+        }
+        
+        // 改变登录表单的外观
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查是否是从登出页面跳转
+            checkLogoutRedirect();
+            
+            // 在登录页面加载时主动清除登录状态，确保干净的登录环境
+            clearAllLoginState();
+            
+            // 恢复普通登录表单样式
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.style.opacity = '1';
+            }
+            
+            const registerLink = document.getElementById('switchToRegister');
+            if (registerLink) {
+                registerLink.style.opacity = '1';
+            }
+            
+            // 恢复游客登录按钮的样式为次要按钮
+            const guestLoginButton = document.getElementById('guestLoginButton');
+            if (guestLoginButton) {
+                guestLoginButton.style.background = '';
+                guestLoginButton.style.color = '';
+                guestLoginButton.classList.add('btn-secondary');
+                guestLoginButton.style.animation = '';
+            }
+            
+            // 恢复游客登录区域的样式
+            const guestLoginDiv = document.querySelector('.guest-login');
+            if (guestLoginDiv) {
+                guestLoginDiv.style.backgroundColor = '';
+                guestLoginDiv.style.padding = '';
+                guestLoginDiv.style.borderRadius = '';
+                guestLoginDiv.style.marginTop = '20px';
+                guestLoginDiv.style.border = '';
+            }
+            
+            // 仅在Firebase不可用时才显示警告
+            if (!firebaseAvailable) {
+                // 添加警告标签说明Firebase认证不可用
+                const loginContainer = document.querySelector('.login-container');
+                const warningBanner = document.createElement('div');
+                warningBanner.style.backgroundColor = 'rgba(255, 200, 0, 0.2)';
+                warningBanner.style.color = '#ffcc00';
+                warningBanner.style.padding = '10px';
+                warningBanner.style.borderRadius = '8px';
+                warningBanner.style.marginBottom = '20px';
+                warningBanner.style.textAlign = 'center';
+                warningBanner.style.fontSize = '14px';
+                warningBanner.innerHTML = '系统检测到Firebase认证配置问题<br>建议使用游客模式登录';
+                
+                if (loginContainer && loginContainer.firstChild) {
+                    loginContainer.insertBefore(warningBanner, loginContainer.firstChild);
+                }
+                
+                // 只有在Firebase不可用时才高亮游客模式
+                highlightGuestMode();
+            }
+        });
+        
+        // 语言设置
+        let currentLang = 'zh';
+        const i18n = {
+            zh: {
+                title: 'PtvAlert登录',
+                subtitle: '墨尔本交通信息共享平台',
+                email: '邮箱',
+                emailPlaceholder: '请输入邮箱地址',
+                password: '密码',
+                passwordPlaceholder: '请输入密码',
+                regPasswordPlaceholder: '请设置密码（至少6位）',
+                confirmPassword: '确认密码',
+                confirmPasswordPlaceholder: '请再次输入密码',
+                login: '登录',
+                register: '注册',
+                forgotPassword: '忘记密码?',
+                newAccount: '注册新账号',
+                haveAccount: '已有账号?',
+                backToLogin: '返回登录',
+                guestLogin: '游客访问',
+                loading: '正在处理，请稍候...',
+                emailRequired: '请输入邮箱地址',
+                emailInvalid: '请输入有效的邮箱地址',
+                passwordRequired: '请输入密码',
+                passwordTooShort: '密码至少需要6个字符',
+                passwordsMismatch: '两次输入的密码不一致',
+                loginSuccess: '登录成功',
+                registerSuccess: '注册成功',
+                resetEmailSent: '重置密码邮件已发送',
+                genericError: '出现错误，请稍后再试',
+                guestLoginSuccess: '游客登录成功',
+                guestLoginFailed: '游客登录失败',
+                quickAccess: '快速访问',
+                openSite: '打开网站',
+                addToHome: '添加到主屏幕',
+                copied: '已复制',
+                shareUrl: '分享链接'
+            },
+            en: {
+                title: 'PtvAlert Login',
+                subtitle: 'Melbourne Transit Information Sharing Platform',
+                email: 'Email',
+                emailPlaceholder: 'Enter your email address',
+                password: 'Password',
+                passwordPlaceholder: 'Enter your password',
+                regPasswordPlaceholder: 'Set your password (min 6 characters)',
+                confirmPassword: 'Confirm Password',
+                confirmPasswordPlaceholder: 'Enter your password again',
+                login: 'Login',
+                register: 'Register',
+                forgotPassword: 'Forgot Password?',
+                newAccount: 'Create New Account',
+                haveAccount: 'Already have an account?',
+                backToLogin: 'Back to Login',
+                guestLogin: 'Continue as Guest',
+                loading: 'Processing, please wait...',
+                emailRequired: 'Email is required',
+                emailInvalid: 'Please enter a valid email address',
+                passwordRequired: 'Password is required',
+                passwordTooShort: 'Password must be at least 6 characters',
+                passwordsMismatch: 'Passwords do not match',
+                loginSuccess: 'Login successful',
+                registerSuccess: 'Registration successful',
+                resetEmailSent: 'Password reset email sent',
+                genericError: 'An error occurred. Please try again.',
+                guestLoginSuccess: 'Guest login successful',
+                guestLoginFailed: 'Guest login failed',
+                quickAccess: 'Quick Access',
+                openSite: 'Open Website',
+                addToHome: 'Add to Home Screen',
+                copied: 'Copied',
+                shareUrl: 'Share URL'
+            }
+        };
+        
+        // DOM元素引用
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const switchToRegister = document.getElementById('switchToRegister');
+        const switchToLogin = document.getElementById('switchToLogin');
+        const loginButton = document.getElementById('loginButton');
+        const registerButton = document.getElementById('registerButton');
+        const guestLoginButton = document.getElementById('guestLoginButton');
+        const forgotPassword = document.getElementById('forgotPassword');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const successMessage = document.getElementById('successMessage');
+        const generalError = document.getElementById('generalError');
+        const langSwitchBtn = document.getElementById('langSwitchBtn');
+        
+        // 表单切换
+        switchToRegister.addEventListener('click', function(e) {
+            e.preventDefault();
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'block';
+        });
+        
+        switchToLogin.addEventListener('click', function(e) {
+            e.preventDefault();
+            registerForm.style.display = 'none';
+            loginForm.style.display = 'block';
+        });
+        
+        // 语言切换
+        langSwitchBtn.addEventListener('click', function() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            updateLanguage();
+            
+            // 保存语言偏好到localStorage
+            localStorage.setItem('preferredLanguage', currentLang);
+        });
+        
+        function updateLanguage() {
+            // 更新UI文本
+            document.getElementById('login-title').textContent = i18n[currentLang].title;
+            document.getElementById('login-subtitle').textContent = i18n[currentLang].subtitle;
+            document.getElementById('email-label').textContent = i18n[currentLang].email;
+            document.getElementById('password-label').textContent = i18n[currentLang].password;
+            document.getElementById('reg-email-label').textContent = i18n[currentLang].email;
+            document.getElementById('reg-password-label').textContent = i18n[currentLang].password;
+            document.getElementById('confirm-password-label').textContent = i18n[currentLang].confirmPassword;
+            
+            document.getElementById('emailInput').placeholder = i18n[currentLang].emailPlaceholder;
+            document.getElementById('passwordInput').placeholder = i18n[currentLang].passwordPlaceholder;
+            document.getElementById('regEmailInput').placeholder = i18n[currentLang].emailPlaceholder;
+            document.getElementById('regPasswordInput').placeholder = i18n[currentLang].regPasswordPlaceholder;
+            document.getElementById('confirmPasswordInput').placeholder = i18n[currentLang].confirmPasswordPlaceholder;
+            
+            loginButton.textContent = i18n[currentLang].login;
+            registerButton.textContent = i18n[currentLang].register;
+            forgotPassword.textContent = i18n[currentLang].forgotPassword;
+            switchToRegister.textContent = i18n[currentLang].newAccount;
+            document.getElementById('already-account').textContent = i18n[currentLang].haveAccount;
+            switchToLogin.textContent = i18n[currentLang].backToLogin;
+            guestLoginButton.textContent = i18n[currentLang].guestLogin;
+            document.getElementById('loading-text').textContent = i18n[currentLang].loading;
+            
+            // 更新快速访问区域文本 - 检查元素是否存在
+            const quickAccessTitle = document.getElementById('quick-access-title');
+            if (quickAccessTitle) {
+                quickAccessTitle.textContent = i18n[currentLang].quickAccess;
+            }
+            
+            // 更新语言切换按钮
+            document.getElementById('langSwitchText').textContent = currentLang === 'zh' ? 'EN' : '中';
+        }
+        
+        // 显示错误信息
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        // 清除错误信息
+        function clearErrors() {
+            const errorElements = document.querySelectorAll('.error-message');
+            errorElements.forEach(element => {
+                element.style.display = 'none';
+                element.textContent = '';
+            });
+            
+            successMessage.style.display = 'none';
+            successMessage.textContent = '';
+        }
+        
+        // 表单验证
+        function validateLoginForm() {
+            clearErrors();
+            let isValid = true;
+            
+            const email = document.getElementById('emailInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            
+            if (!email) {
+                showError('emailError', i18n[currentLang].emailRequired);
+                isValid = false;
+            } else if (!/\S+@\S+\.\S+/.test(email)) {
+                showError('emailError', i18n[currentLang].emailInvalid);
+                isValid = false;
+            }
+            
+            if (!password) {
+                showError('passwordError', i18n[currentLang].passwordRequired);
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+        
+        function validateRegisterForm() {
+            clearErrors();
+            let isValid = true;
+            
+            const email = document.getElementById('regEmailInput').value.trim();
+            const password = document.getElementById('regPasswordInput').value;
+            const confirmPassword = document.getElementById('confirmPasswordInput').value;
+            
+            if (!email) {
+                showError('regEmailError', i18n[currentLang].emailRequired);
+                isValid = false;
+            } else if (!/\S+@\S+\.\S+/.test(email)) {
+                showError('regEmailError', i18n[currentLang].emailInvalid);
+                isValid = false;
+            }
+            
+            if (!password) {
+                showError('regPasswordError', i18n[currentLang].passwordRequired);
+                isValid = false;
+            } else if (password.length < 6) {
+                showError('regPasswordError', i18n[currentLang].passwordTooShort);
+                isValid = false;
+            }
+            
+            if (password !== confirmPassword) {
+                showError('confirmPasswordError', i18n[currentLang].passwordsMismatch);
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+        
+        // 用户登录 - 启用正常登录功能
+        loginButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            if (!firebaseAvailable) {
+                // 如果Firebase不可用，提示使用游客模式
+                const message = currentLang === 'zh' ? 
+                    '由于Firebase配置问题，当前无法使用邮箱登录，请使用游客模式' : 
+                    'Due to Firebase configuration issues, email login is currently unavailable. Please use guest mode.';
+                
+                clearErrors();
+                showError('generalError', message);
+                highlightGuestMode();
+                return;
+            }
+            
+            // 正常登录流程
+            if (!validateLoginForm()) {
+                return;
+            }
+            
+            const email = document.getElementById('emailInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            
+            loadingIndicator.style.display = 'block';
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // 登录成功
+                    loadingIndicator.style.display = 'none';
+                    successMessage.textContent = i18n[currentLang].loginSuccess;
+                    successMessage.style.display = 'block';
+                    
+                    // 存储登录状态和语言偏好
+                    localStorage.setItem('userLoggedIn', 'true');
+                    localStorage.setItem('userEmail', email);
+                    localStorage.setItem('isGuestUser', 'false');
+                    
+                    setTimeout(function() {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                })
+                .catch((error) => {
+                    // 登录失败
+                    loadingIndicator.style.display = 'none';
+                    console.error("登录错误: ", error);
+                    
+                    // 显示具体错误
+                    let errorMessage = '';
+                    switch(error.code) {
+                        case 'auth/user-not-found':
+                            errorMessage = currentLang === 'zh' ? '用户不存在' : 'User not found';
+                            break;
+                        case 'auth/wrong-password':
+                            errorMessage = currentLang === 'zh' ? '密码错误' : 'Wrong password';
+                            break;
+                        case 'auth/too-many-requests':
+                            errorMessage = currentLang === 'zh' ? '登录尝试次数过多，请稍后再试' : 'Too many attempts, please try again later';
+                            break;
+                        default:
+                            errorMessage = i18n[currentLang].genericError;
+                    }
+                    
+                    showError('generalError', errorMessage);
+                });
+        });
+        
+        // 用户注册 - 启用正常注册功能
+        registerButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            if (!firebaseAvailable) {
+                // 如果Firebase不可用，提示使用游客模式
+                const message = currentLang === 'zh' ? 
+                    '由于Firebase配置问题，当前无法使用邮箱注册，请使用游客模式' : 
+                    'Due to Firebase configuration issues, email registration is currently unavailable. Please use guest mode.';
+                
+                clearErrors();
+                showError('generalError', message);
+                highlightGuestMode();
+                return;
+            }
+            
+            // 正常注册流程
+            if (!validateRegisterForm()) {
+                return;
+            }
+            
+            const email = document.getElementById('regEmailInput').value.trim();
+            const password = document.getElementById('regPasswordInput').value;
+            
+            loadingIndicator.style.display = 'block';
+            
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // 注册成功
+                    loadingIndicator.style.display = 'none';
+                    successMessage.textContent = i18n[currentLang].registerSuccess;
+                    successMessage.style.display = 'block';
+                    
+                    // 存储登录状态和语言偏好
+                    localStorage.setItem('userLoggedIn', 'true');
+                    localStorage.setItem('userEmail', email);
+                    localStorage.setItem('isGuestUser', 'false');
+                    
+                    setTimeout(function() {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                })
+                .catch((error) => {
+                    // 注册失败
+                    loadingIndicator.style.display = 'none';
+                    console.error("注册错误: ", error);
+                    
+                    // 显示具体错误
+                    let errorMessage = '';
+                    switch(error.code) {
+                        case 'auth/email-already-in-use':
+                            errorMessage = currentLang === 'zh' ? '该邮箱已被注册' : 'Email already in use';
+                            break;
+                        case 'auth/weak-password':
+                            errorMessage = currentLang === 'zh' ? '密码强度不足' : 'Password is too weak';
+                            break;
+                        default:
+                            errorMessage = i18n[currentLang].genericError;
+                    }
+                    
+                    showError('generalError', errorMessage);
+                });
+        });
+        
+        // 忘记密码
+        forgotPassword.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('emailInput').value.trim();
+            
+            if (!email) {
+                showError('emailError', i18n[currentLang].emailRequired);
+                return;
+            } else if (!/\S+@\S+\.\S+/.test(email)) {
+                showError('emailError', i18n[currentLang].emailInvalid);
+                return;
+            }
+            
+            loadingIndicator.style.display = 'block';
+            
+            auth.sendPasswordResetEmail(email)
+                .then(() => {
+                    loadingIndicator.style.display = 'none';
+                    successMessage.textContent = i18n[currentLang].resetEmailSent;
+                    successMessage.style.display = 'block';
+                })
+                .catch((error) => {
+                    loadingIndicator.style.display = 'none';
+                    console.error("重置密码错误: ", error);
+                    showError('generalError', i18n[currentLang].genericError);
+                });
+        });
+        
+        // 检查Firebase Auth是否支持匿名登录
+        function checkAnonymousAuthEnabled() {
+            // Firebase配置中检查是否启用了匿名登录
+            try {
+                if (auth && auth.settings && typeof auth.settings.appVerificationDisabledForTesting !== 'undefined') {
+                    console.log("Firebase Auth已加载，尝试匿名登录功能检查");
+                    return true;
+                } else {
+                    console.log("Firebase Auth匿名登录功能可能未启用");
+                    return false;
+                }
+            } catch (error) {
+                console.error("检查匿名登录功能时出错:", error);
+                return false;
+            }
+        }
+        
+        // 初始化语言 - 检查是否有保存的语言偏好
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查是否从登出页面跳转
+            checkLogoutRedirect();
+            
+            // 在登录页面加载时主动清除登录状态，确保干净的登录环境
+            clearAllLoginState();
+            
+            // 检查是否有保存的语言偏好
+            const savedLanguage = localStorage.getItem('preferredLanguage');
+            if (savedLanguage) {
+                currentLang = savedLanguage;
+                updateLanguage();
+            }
+            
+            // 恢复普通登录表单样式
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.style.opacity = '1';
+            }
+            
+            // 恢复游客登录按钮的样式为次要按钮
+            const guestLoginButton = document.getElementById('guestLoginButton');
+            if (guestLoginButton) {
+                guestLoginButton.style.background = '';
+                guestLoginButton.style.color = '';
+                guestLoginButton.classList.add('btn-secondary');
+                guestLoginButton.style.animation = '';
+            }
+            
+            // 恢复游客登录区域的样式
+            const guestLoginDiv = document.querySelector('.guest-login');
+            if (guestLoginDiv) {
+                guestLoginDiv.style.backgroundColor = '';
+                guestLoginDiv.style.padding = '';
+                guestLoginDiv.style.borderRadius = '';
+                guestLoginDiv.style.marginTop = '20px';
+                guestLoginDiv.style.border = '';
+            }
+            
+            // 仅在Firebase不可用时才高亮
+            if (!firebaseAvailable) {
+                setTimeout(() => {
+                    highlightGuestMode();
+                }, 800);
+            }
+        });
+        
+        // 初始化语言
+        updateLanguage();
+        
+        // 初始化QR码
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置QR码样式
+            const quickAccessStyle = document.createElement('style');
+            quickAccessStyle.textContent = `
+                .quick-access {
+                    background-color: rgba(50, 50, 54, 0.95);
+                    border-radius: 16px;
+                    padding: 25px;
+                    width: 100%;
+                    max-width: 400px;
+                    margin-top: 20px;
+                    text-align: center;
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                }
+                
+                .quick-access h3 {
+                    margin-bottom: 15px;
+                    color: #fff;
+                    font-size: 20px;
+                }
+                
+                .quick-access-content {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                }
+                
+                .qr-code {
+                    background-color: white;
+                    padding: 10px;
+                    border-radius: 8px;
+                    display: inline-block;
+                }
+                
+                .toast {
+                    position: fixed;
+                    bottom: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background-color: rgba(0, 0, 0, 0.8);
+                    color: white;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    z-index: 1000;
+                    opacity: 0;
+                    transition: opacity 0.3s;
+                }
+                
+                .toast.show {
+                    opacity: 1;
+                }
+            `;
+            document.head.appendChild(quickAccessStyle);
+            
+            // 创建动态背景效果
+            function createFallingEmojis() {
+                const emojis = ['🚓', '🚔', '🚨', '🚉', '🚇', '🚋', '🚊', '🚄'];
+                const animatedBg = document.getElementById('animatedBg');
+                
+                // 初始生成15个emoji
+                for (let i = 0; i < 15; i++) {
+                    createEmoji();
+                }
+                
+                // 每隔2秒生成一个新的emoji
+                setInterval(createEmoji, 2000);
+                
+                function createEmoji() {
+                    const emoji = document.createElement('div');
+                    emoji.className = 'falling-emoji';
+                    
+                    // 随机选择emoji
+                    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+                    emoji.textContent = randomEmoji;
+                    
+                    // 随机位置
+                    const posX = Math.random() * 100;
+                    emoji.style.left = `${posX}%`;
+                    
+                    // 随机持续时间 (8-15秒)
+                    const duration = 8 + Math.random() * 7;
+                    emoji.style.animationDuration = `${duration}s`;
+                    
+                    // 随机大小
+                    const size = 20 + Math.random() * 20;
+                    emoji.style.fontSize = `${size}px`;
+                    
+                    // 随机透明度
+                    const opacity = 0.3 + Math.random() * 0.5;
+                    emoji.style.opacity = opacity;
+                    
+                    // 添加到背景
+                    animatedBg.appendChild(emoji);
+                    
+                    // 动画结束后移除元素
+                    setTimeout(() => {
+                        emoji.remove();
+                    }, duration * 1000);
+                }
+            }
+            
+            // 增强追逐动画效果
+            function enhanceChaseAnimation() {
+                const chaseAnimation = document.querySelector('.chase-animation');
+                const personEmoji = document.querySelector('.person');
+                const pigEmoji = document.querySelector('.pig');
+                
+                // 使猪与人的距离随机变化，增加紧张感
+                setInterval(() => {
+                    const gap = 10 + Math.random() * 15;
+                    chaseAnimation.style.gap = `${gap}px`;
+                    
+                    // 随机调整猪的大小，表示接近或远离
+                    const pigSize = 28 + Math.random() * 8;
+                    pigEmoji.style.fontSize = `${pigSize}px`;
+                }, 1000);
+            }
+            
+            // 初始化动态背景和追逐动画
+            createFallingEmojis();
+            enhanceChaseAnimation();
+            
+            // 确保QR码正确显示
+            setTimeout(() => {
+                const qrCodeContainer = document.getElementById('qrCode');
+                if (qrCodeContainer && qrCodeContainer.childElementCount === 0) {
+                    new QRCode(qrCodeContainer, {
+                        text: "https://edwardidaniels449.github.io/ptvalert/",
+                        width: 150,
+                        height: 150,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                }
+            }, 500);
+        });
+        
+        // 检查是否已登录，如果已登录则跳转到主页
+        window.addEventListener('DOMContentLoaded', function() {
+            // 只有在确实已登录的情况下才跳转到主页
+            if (localStorage.getItem('userLoggedIn') === 'true') {
+                console.log("用户已登录，正在跳转到主页...");
+                window.location.href = 'index.html';
+            } else {
+                console.log("用户未登录，显示登录页面");
+            }
+        });
+        
+        // 游客登录 - 作为可靠的备选登录方式
+        guestLoginButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            loadingIndicator.style.display = 'block';
+            clearErrors(); // 清除之前的所有错误信息
+            
+            console.log("正在使用本地游客模式...");
+            
+            try {
+                // 确保localStorage可用
+                const testKey = '_test_localStorage_';
+                localStorage.setItem(testKey, '1');
+                if (localStorage.getItem(testKey) !== '1') {
+                    throw new Error('localStorage不可用');
+                }
+                localStorage.removeItem(testKey);
+                
+                // 设置游客标识，不使用Firebase认证
+                const guestId = 'guest_' + Math.random().toString(36).substring(2, 12);
+                localStorage.setItem('isGuestUser', 'true');
+                localStorage.setItem('userLoggedIn', 'true');
+                localStorage.setItem('guestId', guestId);
+                
+                loadingIndicator.style.display = 'none';
+                successMessage.textContent = currentLang === 'zh' ? '游客登录成功' : 'Guest login successful';
+                successMessage.style.display = 'block';
+                
+                console.log("游客登录成功，即将跳转到主页...");
+                console.log("游客ID:", guestId);
+                
+                // 确保localStorage设置成功后再跳转
+                setTimeout(function() {
+                    if (localStorage.getItem('isGuestUser') === 'true' && 
+                        localStorage.getItem('userLoggedIn') === 'true') {
+                        window.location.href = 'index.html';
+                    } else {
+                        throw new Error("localStorage设置失败");
+                    }
+                }, 1000);
+            } catch (error) {
+                console.error("游客登录出错:", error);
+                loadingIndicator.style.display = 'none';
+                showError('generalError', currentLang === 'zh' ? 
+                    '游客登录失败: ' + error.message : 
+                    'Guest login failed: ' + error.message);
+                    
+                // 如果是localStorage不可用，则提供Cookie替代方案
+                if (error.message && error.message.includes('localStorage')) {
+                    // 尝试使用cookie作为备选
+                    try {
+                        document.cookie = "isGuestUser=true; path=/; max-age=86400";
+                        document.cookie = "userLoggedIn=true; path=/; max-age=86400";
+                        document.cookie = "guestId=guest_cookie_" + Math.random().toString(36).substring(2, 12) + "; path=/; max-age=86400";
+                        
+                        successMessage.textContent = currentLang === 'zh' ? '游客登录成功(使用Cookie)' : 'Guest login successful (using cookies)';
+                        successMessage.style.display = 'block';
+                        generalError.style.display = 'none';
+                        
+                        setTimeout(function() {
+                            window.location.href = 'index.html';
+                        }, 1000);
+                    } catch (cookieError) {
+                        console.error("Cookie设置失败:", cookieError);
+                    }
+                }
+            }
+        });
+    </script>
+    
+    <!-- 添加QR码生成库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</body>
+</html>

@@ -94,6 +94,28 @@
                 geocodeFromDescription();
             });
         }
+        
+        // Quick add form handlers
+        const quickAddClose = document.getElementById('quickAddClose');
+        if (quickAddClose) {
+            quickAddClose.addEventListener('click', function() {
+                document.getElementById('quickAddForm').style.display = 'none';
+            });
+        }
+        
+        const cancelQuickAdd = document.getElementById('cancelQuickAdd');
+        if (cancelQuickAdd) {
+            cancelQuickAdd.addEventListener('click', function() {
+                document.getElementById('quickAddForm').style.display = 'none';
+            });
+        }
+        
+        const submitQuickAdd = document.getElementById('submitQuickAdd');
+        if (submitQuickAdd) {
+            submitQuickAdd.addEventListener('click', function() {
+                submitQuickDescription();
+            });
+        }
 
         // User menu handling
         const userDisplayName = document.getElementById('userDisplayName');
@@ -103,13 +125,47 @@
             });
         }
 
-        // Counter popup close button
-        const closeCounterPopup = document.getElementById('closeCounterPopup');
-        if (closeCounterPopup) {
-            closeCounterPopup.addEventListener('click', function() {
-                document.getElementById('reportCounterPopup').style.display = 'none';
+        // Image upload handling
+        const imageUploadArea = document.getElementById('imageUploadArea');
+        const imageInput = document.getElementById('imageInput');
+        if (imageUploadArea && imageInput) {
+            imageUploadArea.addEventListener('click', function() {
+                imageInput.click();
+            });
+            
+            imageInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file && file.type.match('image.*')) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        const previewImg = document.getElementById('previewImg');
+                        const imagePlaceholder = document.getElementById('imagePlaceholder');
+                        
+                        previewImg.src = e.target.result;
+                        previewImg.style.display = 'block';
+                        imagePlaceholder.style.display = 'none';
+                    };
+                    
+                    reader.readAsDataURL(file);
+                }
             });
         }
+
+        // Add keyboard shortcut for quick description form
+        document.addEventListener('keydown', function(e) {
+            if (document.getElementById('quickAddForm').style.display === 'block') {
+                // Ctrl+Enter or Cmd+Enter to submit
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    submitQuickDescription();
+                }
+                
+                // Escape to cancel
+                if (e.key === 'Escape') {
+                    document.getElementById('quickAddForm').style.display = 'none';
+                }
+            }
+        });
         
         // Add click listener to map for location selection
         if (window.map) {
@@ -340,6 +396,17 @@
             }
         }
 
+        // Special handling for push notification button
+        const pushBtn = document.getElementById('requestPushPermission');
+        if (pushBtn) {
+            // Check if notifications are already enabled
+            if (pushBtn.classList.contains('active')) {
+                pushBtn.textContent = lang === 'zh' ? '已启用推送通知' : 'Push Notifications Enabled';
+            } else {
+                pushBtn.textContent = lang === 'zh' ? '启用推送通知' : 'Enable Push Notifications';
+            }
+        }
+        
         // Also update placeholders
         const descInput = document.getElementById('descriptionInput');
         if (descInput) {

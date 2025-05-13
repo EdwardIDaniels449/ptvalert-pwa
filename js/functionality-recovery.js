@@ -81,56 +81,51 @@
     // Initialize map event listeners
     function initializeMapEventListeners() {
         if (window.map) {
-            // Check if click listener for location selection exists
-            let hasClickListener = false;
-            
             // Add click listener if not already present
-            if (!hasClickListener) {
-                window.map.addListener('click', function(event) {
-                    if (window.isSelectingLocation) {
-                        if (window.UIController && window.UIController.selectMapLocation) {
-                            window.UIController.selectMapLocation(event.latLng);
-                        } else {
-                            // Fallback selection logic
-                            window.selectedLocation = {
-                                lat: event.latLng.lat(),
-                                lng: event.latLng.lng()
-                            };
-                            
-                            // Add marker
-                            if (window.selectionMarker) {
-                                window.selectionMarker.setMap(null);
-                            }
-                            
-                            window.selectionMarker = new google.maps.Marker({
-                                position: window.selectedLocation,
-                                map: window.map,
-                                zIndex: 1000
-                            });
-                            
-                            // Open report form
-                            if (typeof window.openReportForm === 'function') {
-                                window.openReportForm();
-                            } else {
-                                const reportForm = document.getElementById('reportForm');
-                                if (reportForm) {
-                                    reportForm.style.display = 'block';
-                                    reportForm.style.transform = 'translateY(0)';
-                                }
-                            }
-                            
-                            // Exit selection mode
-                            window.isSelectingLocation = false;
-                            document.getElementById('addReportTip').style.display = 'none';
-                            document.getElementById('addReportBtn').textContent = 
-                                window.currentLang === 'zh' ? '+ 添加报告' : '+ Add Report';
-                            document.body.style.cursor = 'default';
+            window.map.addListener('click', function(event) {
+                if (window.isSelectingLocation) {
+                    if (window.UIController && window.UIController.selectMapLocation) {
+                        window.UIController.selectMapLocation(event.latLng);
+                    } else {
+                        // Fallback selection logic
+                        window.selectedLocation = {
+                            lat: event.latLng.lat(),
+                            lng: event.latLng.lng()
+                        };
+                        
+                        // Add marker
+                        if (window.selectionMarker) {
+                            window.selectionMarker.setMap(null);
                         }
+                        
+                        window.selectionMarker = new google.maps.Marker({
+                            position: window.selectedLocation,
+                            map: window.map,
+                            zIndex: 1000
+                        });
+                        
+                        // Open report form
+                        if (typeof window.openReportForm === 'function') {
+                            window.openReportForm();
+                        } else {
+                            const reportForm = document.getElementById('reportForm');
+                            if (reportForm) {
+                                reportForm.style.display = 'block';
+                                reportForm.style.transform = 'translateY(0)';
+                            }
+                        }
+                        
+                        // Exit selection mode
+                        window.isSelectingLocation = false;
+                        document.getElementById('addReportTip').style.display = 'none';
+                        document.getElementById('addReportBtn').textContent = 
+                            window.currentLang === 'zh' ? '+ 添加报告' : '+ Add Report';
+                        document.body.style.cursor = 'default';
                     }
-                });
-                
-                console.log('[Function Recovery] Map click listener added');
-            }
+                }
+            });
+            
+            console.log('[Function Recovery] Map click listener added');
         }
     }
     
@@ -160,7 +155,7 @@
                 logoutMenuItem.addEventListener('click', function() {
                     if (typeof firebase !== 'undefined' && firebase.auth) {
                         firebase.auth().signOut().then(function() {
-                            window.location.reload();
+                            window.location.href = 'login.html?logout=1';
                         });
                     }
                 });
@@ -243,6 +238,34 @@
             if (cancelReport) {
                 cancelReport.addEventListener('click', function() {
                     window.closeReportForm();
+                });
+            }
+        }
+        
+        // Check quick add form functionality
+        const quickAddForm = document.getElementById('quickAddForm');
+        if (quickAddForm) {
+            const quickAddClose = document.getElementById('quickAddClose');
+            const cancelQuickAdd = document.getElementById('cancelQuickAdd');
+            const submitQuickAdd = document.getElementById('submitQuickAdd');
+            
+            if (quickAddClose) {
+                quickAddClose.addEventListener('click', function() {
+                    quickAddForm.style.display = 'none';
+                });
+            }
+            
+            if (cancelQuickAdd) {
+                cancelQuickAdd.addEventListener('click', function() {
+                    quickAddForm.style.display = 'none';
+                });
+            }
+            
+            if (submitQuickAdd && !submitQuickAdd.onclick) {
+                submitQuickAdd.addEventListener('click', function() {
+                    if (window.UIController && typeof window.UIController.submitQuickDescription === 'function') {
+                        window.UIController.submitQuickDescription();
+                    }
                 });
             }
         }
@@ -344,8 +367,14 @@
         const imageInput = document.getElementById('imageInput');
         const previewImg = document.getElementById('previewImg');
         const imagePlaceholder = document.getElementById('imagePlaceholder');
+        const imageUploadArea = document.getElementById('imageUploadArea');
         
-        if (imageInput && previewImg && imagePlaceholder) {
+        if (imageInput && previewImg && imagePlaceholder && imageUploadArea) {
+            // Make sure image upload area has click handler
+            imageUploadArea.addEventListener('click', function() {
+                imageInput.click();
+            });
+            
             // Make sure image input has change handler
             if (!imageInput.onchange) {
                 imageInput.addEventListener('change', function(e) {
@@ -440,6 +469,19 @@
         if (!window.openReportForm || !window.closeReportForm) {
             console.error('[Function Recovery] Report form functions not available');
             issues++;
+        }
+        
+        // Check login status
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            const isOnLoginPage = window.location.pathname.indexOf('login.html') !== -1;
+            
+            if (!firebase.auth().currentUser && !isOnLoginPage) {
+                console.warn('[Function Recovery] User not logged in, redirecting to login page');
+                window.location.href = 'login.html';
+            } else if (firebase.auth().currentUser && isOnLoginPage) {
+                console.log('[Function Recovery] User already logged in, redirecting to main page');
+                window.location.href = 'index.html';
+            }
         }
         
         // Show final status

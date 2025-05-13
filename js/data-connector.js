@@ -35,6 +35,12 @@
                 } else {
                     // User is signed out, check if there's a login button and set up handler
                     setupLoginHandler();
+                    
+                    // Check if we're on login page
+                    if (window.location.pathname.indexOf('login.html') === -1) {
+                        // Redirect to login page
+                        window.location.href = 'login.html';
+                    }
                 }
             });
             
@@ -154,8 +160,8 @@
                                 userMenu.style.display = 'none';
                             }
                             
-                            // Reload page to refresh state
-                            window.location.reload();
+                            // Redirect to login page
+                            window.location.href = 'login.html?logout=1';
                         })
                         .catch(function(error) {
                             console.error('[Data Connector] Sign out error:', error);
@@ -204,7 +210,8 @@
                                 if (window.UIController && window.UIController.addReportMarker) {
                                     window.UIController.addReportMarker(
                                         report.location,
-                                        report.description
+                                        report.description,
+                                        childSnapshot.key
                                     );
                                 }
                             }
@@ -256,7 +263,8 @@
                     if (window.UIController && window.UIController.addReportMarker) {
                         window.UIController.addReportMarker(
                             report.location,
-                            report.description
+                            report.description,
+                            snapshot.key
                         );
                     }
                     

@@ -68,6 +68,12 @@
                     // User is signed out
                     console.log('[App Connector] No user is signed in');
                     
+                    // Check if we're on login page
+                    if (window.location.pathname.indexOf('login.html') === -1) {
+                        // Redirect to login page
+                        window.location.href = 'login.html';
+                    }
+                    
                     // Hide user menu
                     const userMenu = document.getElementById('userMenu');
                     if (userMenu) {
@@ -215,12 +221,6 @@
         if (langSwitchBtn) {
             langSwitchBtn.style.display = 'flex';
         }
-        
-        // Ensure map control container is visible
-        const mapControl = document.querySelector('.map-control');
-        if (mapControl) {
-            mapControl.style.display = 'block';
-        }
     }
 
     // Apply extra fixes for form display
@@ -268,10 +268,18 @@
         applyExtraFormFixes();
         
         // Check if anything is still not working and apply final fixes
-        if (window.map && window.markers && window.markers.length === 0) {
+        if (window.map && (!window.markers || window.markers.length === 0)) {
             // Try to load markers one more time
             if (window.UIController && window.UIController.loadExistingMarkers) {
                 window.UIController.loadExistingMarkers();
+            }
+        }
+        
+        // Check for login status
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            if (!firebase.auth().currentUser && window.location.pathname.indexOf('login.html') === -1) {
+                // User not logged in and not on login page
+                window.location.href = 'login.html';
             }
         }
     }, 1000);

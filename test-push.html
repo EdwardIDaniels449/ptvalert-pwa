@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Push Notification Test</title>
+    <script src="vapid-keys.js"></script>
+    <script src="push-client.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            background-color: #0071e3;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #e7f7e7;
+            color: #2c662d;
+        }
+        .error {
+            background-color: #f8e7e7;
+            color: #912d2b;
+        }
+        .info {
+            background-color: #e7f1f8;
+            color: #2d5986;
+        }
+    </style>
+</head>
+<body>
+    <h1>Push Notification Test</h1>
+    
+    <div id="browserSupport" class="status info">Checking browser support...</div>
+    
+    <button id="requestPushPermission">Enable Push Notifications</button>
+    <button id="testNotification">Send Test Notification</button>
+    
+    <h2>Status</h2>
+    <div id="notificationStatus" class="status info">No actions taken yet</div>
+    
+    <script>
+        // Check browser support on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const supportDiv = document.getElementById('browserSupport');
+            const pushBtn = document.getElementById('requestPushPermission');
+            const testBtn = document.getElementById('testNotification');
+            
+            // Disable test button initially
+            testBtn.disabled = true;
+            
+            if (window.PushNotifications && window.PushNotifications.isPushNotificationSupported()) {
+                supportDiv.textContent = 'Your browser supports push notifications';
+                supportDiv.className = 'status success';
+                
+                // Check if already subscribed
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.ready.then(function(registration) {
+                        registration.pushManager.getSubscription().then(function(subscription) {
+                            if (subscription) {
+                                pushBtn.textContent = 'Push Notifications Enabled';
+                                pushBtn.classList.add('active');
+                                testBtn.disabled = false;
+                            }
+                        });
+                    });
+                }
+            } else {
+                supportDiv.textContent = 'Your browser does not support push notifications';
+                supportDiv.className = 'status error';
+                pushBtn.disabled = true;
+            }
+            
+            // Add click handlers
+            pushBtn.addEventListener('click', handlePushButtonClick);
+            testBtn.addEventListener('click', sendTestNotification);
+        });
+        
+        // Handle push button click
+        async function handlePushButtonClick() {
+            const pushBtn = document.getElementById('requestPushPermission');
+            const testBtn = document.getElementById('testNotification');
+            const statusDiv = document.getElementById('notificationStatus');
+            
+            try {
+                // Check if already subscribed
+                const registration = await navigator.serviceWorker.ready;
+                const subscription = await registration.pushManager.getSubscription();
+                
+                if (subscription) {
+                    // Already subscribed, unsubscribe
+                    if (confirm('Push notifications are enabled. Do you want to disable them?')) {
+                        statusDiv.textContent = 'Disabling push notifications...';
+                        statusDiv.className = 'status info';
+                        
+                        const result = await window.PushNotifications.unsubscribeFromPushNotifications();
+                        
+                        if (result.success) {
+                            statusDiv.textContent = 'Push notifications disabled successfully';
+                            statusDiv.className = 'status success';
+                            pushBtn.textContent = 'Enable Push Notifications';
+                            pushBtn.classList.remove('active');
+                            testBtn.disabled = true;
+                        } else {
+                            statusDiv.textContent = 'Failed to disable push notifications: ' + result.error;
+                            statusDiv.className = 'status error';
+                        }
+                    }
+                } else {
+                    // Not subscribed, subscribe
+                    statusDiv.textContent = 'Enabling push notifications...';
+                    statusDiv.className = 'status info';
+                    
+                    const result = await window.PushNotifications.subscribeToPushNotifications();
+                    
+                    if (result.success) {
+                        statusDiv.textContent = 'Push notifications enabled successfully';
+                        statusDiv.className = 'status success';
+                        pushBtn.textContent = 'Push Notifications Enabled';
+                        pushBtn.classList.add('active');
+                        testBtn.disabled = false;
+                    } else {
+                        statusDiv.textContent = 'Failed to enable push notifications: ' + result.error;
+                        statusDiv.className = 'status error';
+                    }
+                }
+            } catch (error) {
+                statusDiv.textContent = 'Error: ' + error.message;
+                statusDiv.className = 'status error';
+                console.error('Push notification operation failed:', error);
+            }
+        }
+        
+        // Send a test notification
+        function sendTestNotification() {
+            const statusDiv = document.getElementById('notificationStatus');
+            
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.ready.then(function(registration) {
+                    statusDiv.textContent = 'Sending test notification...';
+                    statusDiv.className = 'status info';
+                    
+                    // Create notification payload
+                    const testPayload = {
+                        title: 'Test Notification',
+                        body: 'This is a test notification from the push test page',
+                        icon: './images/icon-192x192.png',
+                        badge: './images/badge-72x72.png',
+                        data: {
+                            url: window.location.origin,
+                            timeStamp: Date.now()
+                        }
+                    };
+                    
+                    // Use built-in notification API since we're on the same page
+                    registration.showNotification(testPayload.title, testPayload)
+                        .then(() => {
+                            statusDiv.textContent = 'Test notification sent successfully!';
+                            statusDiv.className = 'status success';
+                        })
+                        .catch(error => {
+                            statusDiv.textContent = 'Failed to send test notification: ' + error.message;
+                            statusDiv.className = 'status error';
+                        });
+                });
+            } else {
+                statusDiv.textContent = 'Service workers not supported in this browser';
+                statusDiv.className = 'status error';
+            }
+        }
+    </script>
+</body>
+</html> 

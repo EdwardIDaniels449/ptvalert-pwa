@@ -236,26 +236,77 @@ window.PushNotifications = {
   subscribeToPushNotifications,
   unsubscribeFromPushNotifications,
   testPushConfiguration,
-  getConfig: () => ({ ...CONFIG }) // 添加获取配置的方法
+  getConfig: () => ({ ...CONFIG })
 };
 
 // 页面加载时初始化
 document.addEventListener('DOMContentLoaded', async () => {
-  // 添加示例UI按钮的事件监听器
-  const subscribeButton = document.getElementById('push-subscribe');
-  const unsubscribeButton = document.getElementById('push-unsubscribe');
-  
-  if (subscribeButton) {
-    subscribeButton.addEventListener('click', async () => {
-      const result = await subscribeToPushNotifications();
-      alert(result.success ? '订阅成功！' : `订阅失败: ${result.error}`);
-    });
-  }
-  
-  if (unsubscribeButton) {
-    unsubscribeButton.addEventListener('click', async () => {
-      const result = await unsubscribeFromPushNotifications();
-      alert(result.success ? '取消订阅成功！' : `取消订阅失败: ${result.error}`);
-    });
+  // 添加推送通知按钮的事件监听器
+  const pushBtn = document.getElementById('requestPushPermission');
+  if (pushBtn) {
+    // 根据浏览器支持情况更新按钮状态
+    if (!isPushNotificationSupported()) {
+      pushBtn.disabled = true;
+      pushBtn.title = '您的浏览器不支持推送通知';
+      pushBtn.classList.add('disabled');
+    } else {
+      // 检查当前订阅状态并更新按钮文本
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        
+        if (subscription) {
+          pushBtn.textContent = window.currentLang === 'zh' ? '已启用推送通知' : 'Push Notifications Enabled';
+          pushBtn.classList.add('active');
+        }
+      } catch (error) {
+        console.warn('检查推送通知状态失败:', error);
+      }
+      
+      // 添加点击事件处理
+      pushBtn.addEventListener('click', async () => {
+        // 检查当前订阅状态
+        let registration;
+        try {
+          registration = await navigator.serviceWorker.ready;
+          const currentSubscription = await registration.pushManager.getSubscription();
+          
+          if (currentSubscription) {
+            // 已订阅，询问是否取消订阅
+            if (confirm(window.currentLang === 'zh' ? 
+                      '您已启用推送通知，是否要关闭？' : 
+                      'Push notifications are enabled. Do you want to disable them?')) {
+              const result = await unsubscribeFromPushNotifications();
+              if (result.success) {
+                pushBtn.textContent = window.currentLang === 'zh' ? '启用推送通知' : 'Enable Push Notifications';
+                pushBtn.classList.remove('active');
+                alert(window.currentLang === 'zh' ? '推送通知已关闭' : 'Push notifications disabled');
+              } else {
+                alert(window.currentLang === 'zh' ? 
+                      '无法关闭推送通知: ' + result.error : 
+                      'Could not disable push notifications: ' + result.error);
+              }
+            }
+          } else {
+            // 未订阅，订阅推送通知
+            const result = await subscribeToPushNotifications();
+            if (result.success) {
+              pushBtn.textContent = window.currentLang === 'zh' ? '已启用推送通知' : 'Push Notifications Enabled';
+              pushBtn.classList.add('active');
+              alert(window.currentLang === 'zh' ? '推送通知已启用' : 'Push notifications enabled');
+            } else {
+              alert(window.currentLang === 'zh' ? 
+                    '无法启用推送通知: ' + result.error : 
+                    'Could not enable push notifications: ' + result.error);
+            }
+          }
+        } catch (error) {
+          console.error('处理推送通知订阅失败:', error);
+          alert(window.currentLang === 'zh' ? 
+                '推送通知操作失败: ' + error.message : 
+                'Push notification operation failed: ' + error.message);
+        }
+      });
+    }
   }
 }); 

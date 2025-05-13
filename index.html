@@ -28,6 +28,7 @@
     <script src="force-real-api.js"></script>
     <script src="config.js"></script>
     <script src="vapid-keys.js"></script>
+    <script src="push-client.js"></script>
     
     <!-- Firebase与Cloudflare同步脚本 -->
     <script src="./js/firebase-to-cloudflare-sync.js"></script>
@@ -45,6 +46,7 @@
         let isSelectingLocation = false;
         let selectedLocation = null;
         let mapsInitialized = false;
+        let currentLang = localStorage.getItem('preferredLanguage') || 'zh'; // Default language
         
         // Google Maps API加载完成的回调函数
         function googleMapsLoadedCallback() {
@@ -68,7 +70,7 @@
             
             // 创建地图实例
             window.map = new google.maps.Map(document.getElementById('map'), {
-                center: { lat: -37.8136, lng: 144.9631 }, // 墨尔本中心坐标
+                center: MELBOURNE_CENTER,
                 zoom: 13,
                 mapTypeId: google.maps.MapTypeId.ROADMAP,
                 fullscreenControl: false,
@@ -99,7 +101,7 @@
         function openReportForm() {
             isSelectingLocation = false;
             document.getElementById('addReportTip').style.display = 'none';
-            document.getElementById('addReportBtn').textContent = '+ 添加报告';
+            document.getElementById('addReportBtn').textContent = currentLang === 'zh' ? '+ 添加报告' : '+ Add Report';
             document.body.style.cursor = 'default';
             
             const reportForm = document.getElementById('reportForm');
@@ -303,7 +305,7 @@
     <!-- 全局变量声明 -->
     <script>
       // 初始化全局变量
-      window.currentLang = 'zh'; // 默认语言
+      window.currentLang = currentLang;
     </script>
     
     <script>
@@ -1111,7 +1113,7 @@
     
     // 创建地图实例
     window.map = new google.maps.Map(document.getElementById('map'), {
-      center: { lat: -37.8136, lng: 144.9631 }, // 墨尔本中心坐标
+      center: MELBOURNE_CENTER,
       zoom: 13,
       mapTypeId: google.maps.MapTypeId.ROADMAP,
       fullscreenControl: false,
@@ -1148,8 +1150,7 @@
 
 <!-- Google Maps API 脚本 -->
 <script async defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places,visualization&v=weekly">
-</script>
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places" async defer></script>
 
 </body>
 </html>

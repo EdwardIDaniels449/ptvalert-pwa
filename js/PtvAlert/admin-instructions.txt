@@ -1,0 +1,65 @@
+# How to Mark a User as Admin in PtvAlert
+
+There are several ways to mark user FNfqX2piSaZPOY2yzAwDORoDQNY2 as an administrator:
+
+## Method 1: Using the make-admin.html Tool
+
+1. Open the file `make-admin.html` in your web browser
+2. The user ID field is pre-filled with "FNfqX2piSaZPOY2yzAwDORoDQNY2"
+3. Click the "Set as Admin" button
+4. A success message will appear if the operation was successful
+
+## Method 2: Using the Admin Panel in PtvAlert
+
+If you already have admin access:
+
+1. Log in to PtvAlert
+2. Click on your username in the top-right corner
+3. Select "管理员控制面板" (Admin Control Panel) from the dropdown
+4. Go to the "用户管理" (User Management) section
+5. Enter "FNfqX2piSaZPOY2yzAwDORoDQNY2" in the user ID input field
+6. Click "提升为管理员" (Promote to Admin) button
+
+## Method 3: Using the Browser Console
+
+1. Open PtvAlert in your browser
+2. Open the browser developer console (F12 or Right-click > Inspect > Console)
+3. Run one of these commands:
+
+```javascript
+// Direct database update
+adminUsersRef.child('FNfqX2piSaZPOY2yzAwDORoDQNY2').set(true)
+  .then(() => console.log('User set as admin successfully'))
+  .catch(error => console.error('Error:', error));
+
+// Or use the built-in function
+grantAdminRole('FNfqX2piSaZPOY2yzAwDORoDQNY2');
+```
+
+## Method 4: Using the admin-helper.js Script
+
+If you want to include this functionality in an existing page:
+
+1. Add the Firebase scripts to your HTML:
+   ```html
+   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+   ```
+
+2. Add the admin-helper.js script:
+   ```html
+   <script src="admin-helper.js"></script>
+   ```
+
+3. Call the function when needed:
+   ```javascript
+   setUserAsAdmin('FNfqX2piSaZPOY2yzAwDORoDQNY2');
+   ```
+
+## Verification
+
+To verify that the user has been granted admin privileges:
+
+1. Open the Firebase console
+2. Navigate to Realtime Database
+3. Check that there is an entry in "adminUsers" with the key "FNfqX2piSaZPOY2yzAwDORoDQNY2" set to true 
