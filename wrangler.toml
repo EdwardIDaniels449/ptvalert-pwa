@@ -1,8 +1,7 @@
 name = "ptvalert"
 main = "cloudflare-worker.js"
 compatibility_date = "2023-10-02"
-usage_model = "bundled"
-node_compat = true
+compatibility_flags = ["nodejs_compat"]
 
 # Triggers
 [triggers]
@@ -16,23 +15,23 @@ crons = ["0 * * * *"] # Run hourly
 
 [[kv_namespaces]]
 binding = "SUBSCRIPTIONS"
-id = "YOUR_KV_NAMESPACE_ID" # Replace with actual ID
-preview_id = "YOUR_PREVIEW_KV_NAMESPACE_ID" # Replace with actual preview ID
+id = "3e834580823b431f93239c9092cc062d"
+preview_id = "28ee480143b04681872115416e9bb745"
 
 [[kv_namespaces]]
 binding = "MARKERS"
-id = "YOUR_KV_NAMESPACE_ID" # Replace with actual ID
-preview_id = "YOUR_PREVIEW_KV_NAMESPACE_ID" # Replace with actual preview ID
+id = "f0687e4580d64df484752257469e7742"
+preview_id = "8633673b6cdd488bb3a17629c66a3005"
 
 [[kv_namespaces]]
 binding = "ADMIN_USERS"
-id = "YOUR_KV_NAMESPACE_ID" # Replace with actual ID
-preview_id = "YOUR_PREVIEW_KV_NAMESPACE_ID" # Replace with actual preview ID
+id = "90d07da1d69a4c0cbdfeec29e0db07a1"
+preview_id = "6e7d37b686074fb1a2c748dc34b34a14"
 
 [[kv_namespaces]]
 binding = "BANNED_USERS"
-id = "YOUR_KV_NAMESPACE_ID" # Replace with actual ID
-preview_id = "YOUR_PREVIEW_KV_NAMESPACE_ID" # Replace with actual preview ID
+id = "e6ca3f9fb8264b078fc172106a4638b5"
+preview_id = "4dad5b24f23b479a9cce8f68567b24b7"
 
 # Environment variables
 [vars]
