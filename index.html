@@ -10,6 +10,72 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PtvAlert">
     
+    <!-- 紧急内联修复GitHub Pages的路径问题 -->
+    <script>
+        (function() {
+            // 检测是否为GitHub Pages环境
+            if (window.location.hostname.includes('github.io')) {
+                console.log('[内联修复] 检测到GitHub Pages环境，应用紧急修复');
+                
+                // 获取仓库名称
+                const getRepoName = function() {
+                    const pathSegments = window.location.pathname.split('/');
+                    if (pathSegments.length >= 2 && pathSegments[1]) {
+                        return pathSegments[1];
+                    }
+                    // 可能的硬编码回退值
+                    return 'ptvalert-pwa';
+                };
+                
+                const repoName = getRepoName();
+                const basePath = '/' + repoName + '/';
+                
+                console.log('[内联修复] 检测到GitHub Pages仓库:', repoName);
+                
+                // 存储基础路径供后续脚本使用
+                window.GITHUB_PAGES_BASE_PATH = basePath;
+                window.IS_GITHUB_PAGES = true;
+                
+                // 修复API路径
+                window.API_BASE_URL = 'https://ptvalert.pages.dev';
+                
+                // 修复Service Worker路径问题
+                if ('serviceWorker' in navigator) {
+                    // 保存原始注册方法
+                    const originalRegister = navigator.serviceWorker.register;
+                    
+                    // 替换注册方法
+                    navigator.serviceWorker.register = function(scriptURL, options) {
+                        console.log('[内联修复] 拦截Service Worker注册:', scriptURL);
+                        
+                        // 添加仓库名称到路径
+                        let newScriptURL = scriptURL;
+                        if (scriptURL.startsWith('./')) {
+                            newScriptURL = basePath + scriptURL.substring(2);
+                        } else if (scriptURL.startsWith('/')) {
+                            newScriptURL = basePath + scriptURL.substring(1);
+                        } else if (!scriptURL.includes('://')) {
+                            newScriptURL = basePath + scriptURL;
+                        }
+                        
+                        // 修复作用域
+                        let newOptions = options || {};
+                        if (!newOptions.scope || newOptions.scope === '/' || newOptions.scope === './') {
+                            newOptions.scope = basePath;
+                        }
+                        
+                        console.log('[内联修复] 重写为:', newScriptURL, newOptions);
+                        
+                        // 使用修复后的参数调用原始方法
+                        return originalRegister.call(this, newScriptURL, newOptions);
+                    };
+                    
+                    console.log('[内联修复] Service Worker注册方法已修复');
+                }
+            }
+        })();
+    </script>
+    
     <!-- GitHub Pages环境修复脚本 - 必须最先加载 -->
     <script src="./js/github-pages-fix.js"></script>
     

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>正在重定向... - PtvAlert</title>
+    <script>
+        // GitHub Pages重定向脚本
+        (function() {
+            // 仓库名称
+            const repoName = 'ptvalert-pwa';
+            
+            // 重组URL，确保指向正确的仓库路径
+            const redirectPath = '/' + repoName + '/';
+            
+            // 检测特殊资源并修复
+            const path = window.location.pathname;
+            
+            // 如果是尝试直接访问service-worker.js，应该重定向到项目根目录
+            if (path.includes('service-worker.js') || path.includes('url-fix.js') || path.includes('github-pages-fix.js')) {
+                console.log('检测到对Service Worker或工具脚本的直接访问，重定向到项目首页');
+                window.location.href = redirectPath;
+            }
+            
+            // 对于其他404，重定向到项目根目录
+            window.location.replace(redirectPath);
+        })();
+    </script>
+</head>
+<body style="background-color: #1c1c1e; color: white; font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', sans-serif; text-align: center; padding-top: 100px;">
+    <h1>正在重定向...</h1>
+    <p>返回PtvAlert主页</p>
+    <div style="width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #0071e3; border-radius: 50%; margin: 30px auto; animation: spin 1s linear infinite;"></div>
+    
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</body>
+</html> 

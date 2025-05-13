@@ -1,19 +1,53 @@
 // 推送通知Service Worker
-const CACHE_NAME = 'ptvalert-cache-v4';
+const CACHE_NAME = 'ptvalert-cache-v5';
 const APP_NAME = '网站地图标记';
-const APP_VERSION = '1.0.5';
+const APP_VERSION = '1.0.6';
+
+// 调试输出
+console.log('[Service Worker] 启动，版本:', APP_VERSION);
 
 // 确定基础路径 - 处理GitHub Pages的仓库路径问题
-let BASE_PATH = './';
-if (self.location.hostname.includes('github.io')) {
-  // 从URL中提取仓库名称
-  const pathSegments = self.location.pathname.split('/');
-  if (pathSegments.length >= 2 && pathSegments[1] !== 'service-worker.js') {
-    // GitHub Pages项目页面 (username.github.io/repo-name)
-    BASE_PATH = '/' + pathSegments[1] + '/';
+function getBasePath() {
+  console.log('[Service Worker] 检测运行环境...');
+  
+  // 记录当前地址
+  const currentLocation = self.location.href;
+  console.log('[Service Worker] 当前脚本URL:', currentLocation);
+  
+  let basePath = './';
+  
+  // 检测GitHub Pages环境
+  if (self.location.hostname.includes('github.io')) {
+    console.log('[Service Worker] 检测到GitHub Pages环境');
+    
+    // 从URL中提取仓库名称
+    const pathSegments = self.location.pathname.split('/');
+    console.log('[Service Worker] URL路径段:', pathSegments);
+    
+    if (pathSegments.length >= 2 && pathSegments[1] && pathSegments[1] !== 'service-worker.js') {
+      // GitHub Pages项目页面 (username.github.io/repo-name)
+      basePath = '/' + pathSegments[1] + '/';
+      console.log('[Service Worker] 从URL提取仓库名:', pathSegments[1]);
+    } else {
+      // 硬编码的回退值
+      basePath = '/ptvalert-pwa/';
+      console.log('[Service Worker] 使用硬编码的仓库名: ptvalert-pwa');
+    }
   }
+  
+  console.log('[Service Worker] 使用基础路径:', basePath);
+  return basePath;
 }
-console.log('[Service Worker] 使用基础路径:', BASE_PATH);
+
+const BASE_PATH = getBasePath();
+
+// 记录一些调试信息
+console.log('[Service Worker] 启动配置:');
+console.log('- 缓存名称:', CACHE_NAME);
+console.log('- 应用名称:', APP_NAME);
+console.log('- 版本:', APP_VERSION);
+console.log('- 基础路径:', BASE_PATH);
+console.log('- 主机名:', self.location.hostname);
 
 // 要缓存的资源 - 使用相对路径以兼容GitHub Pages
 const urlsToCache = [
