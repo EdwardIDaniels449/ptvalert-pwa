@@ -45,7 +45,6 @@ Worker 使用以下 KV 命名空间：
 
 1. **cloudflare-config.js** - 定义 API 配置
 2. **fix-api-mode.js** - 确保使用真实 API 而非模拟响应
-3. **api-diagnostics.js** - API 连接诊断工具
 
 ### 推送通知配置
 
@@ -93,8 +92,7 @@ npx wrangler tail
 2. If(API请求失败):
     a. 使用 `/ping` 和 `/version` 端点测试 API 可用性
     b. 检查 `fix-api-mode.js` 中的日志输出
-    c. 使用 `api-diagnostics.js` 工具进行更深入的诊断
-    d. **确保使用正确的HTTP方法**（POST/GET）
+    c. **确保使用正确的HTTP方法**（POST/GET）
 
 #### 已知问题及解决方案
 
