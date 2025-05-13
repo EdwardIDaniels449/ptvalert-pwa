@@ -24,7 +24,7 @@ export default {
     if (path === '/favicon.ico') {
       // 提供一个真正的favicon图标 (基本的云形状图标)
       // 这是一个16x16像素的ico文件的Base64编码
-      const faviconBase64 = 'AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAAMMOAADDDgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACEfHwwhHx9nIR8fZyEfH2chHx9nIR8fZyEfH2chHx9nIR8fZyEfH2chHx9nIR8fZyEfH2chHx8MAAAAACEfH2chHx//IR8f/yEfH/8hHx//IR8f/yEfH/8hHx//IR8f/yEfH/8hHx//IR8f/yEfH/8hHx9nAAAAACEfH2chHx//IR8f/yEfH/8hHx//IR8f/yEfH/8hHx//IR8f/yEfH/8hHx//IR8f/yEfH/8hHx9nAAAAACEfH2chHx//IR8f/yEfH/8hHx//IR8f/yEfH/8hHx//IR8f/yEfH/8hHx//IR8f/yEfH/8hHx9nAAAAACEfH2chHx//IR8f/yEeHv8eFhb/IBIS/3JoaP+MhIT/Khsb/x8XF/8hHh7/IR8f/yEfH/8hHx9nAAAAACEfH2chHx//IBoZ/yASEv9LPj7/rqen/9HOzv/b2dn/qaGh/1lPT/8gEhL/IBoZ/yEfH/8hHx9nAAAAACEfH2cgGBj/IBIS/3JoaP/JxcX/3dzc/8rGxv/JxcX/3Nvb/9LPz/95cHD/IBIS/yAYGP8hHx9nAAAAACEfH2ceEhL/STw8/8jDw//W1NT/mJCQ/zQnJ/81KCj/nJSU/9jW1v/LyMj/UD4+/x4SEv8hHx9nAAAAACEfH2ceEhL/lIuL/9vZ2f+tpqb/JBgY/yEfH/8hHx//JhoY/7Kqqv/c29v/mpCQ/x4SEv8hHx9nAAAAACEfH2cgFhb/v7m5/87Kyv9kWFj/IBoZ/yEfH/8hHx//IBoZ/2ldXf/Qzc3/w7y8/yAWFv8hHx9nAAAAACEfH2chFRX/xcDA/7u2tv9GNzf/IBoa/yEfH/8hHx//IBoa/0c5Of+9uLj/xsHB/yEVFf8hHx9nAAAAACEfH2chHR3/l5CQ/9LOzv9+d3f/Hi4u/yEfH/8hHx//IBkZ/4N9ff/Uz8//nZaW/yEdHf8hHx9nAAAAACEfH2chHx//IRER/3tycv/GwcH/cmlp/xcVFf8WFxf/b2Vl/8jDw/+AdXX/IRER/yEfH/8hHx9nAAAAACEfH2chHx//IR8f/xwPD/82KSn/WVFR/15XVv9dVVX/W1NR/zosK/8cDw//IR8f/yEfH/8hHx9nAAAAACEfHwwhHx9nIR8fZyEfH2chHx9nIR8fZyEfH2chHx9nIR8fZyEfH2chHx9nIR8fZyEfH2chHx8MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
+      const faviconBase64 = 'AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAAMMOAADDDgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACEfHwwhHx9nIR8fZyEfH2chHx9nIR8fZyEfH2chHx9nIR8fZyEfH2chHx9nIR8fZyEfH2chHx8MAAAAACEfH2chHx//IR8f/yEfH/8hHx//IR8f/yEfH/8hHx//IR8f/yEfH/8hHx//IR8f/yEfH/8hHx9nAAAAACEfH2chHx//IR8f/yEfH/8hHx//IR8f/yEfH/8hHx//IR8f/yEfH/8hHx//IR8f/yEfH/8hHx9nAAAAACEfH2chHx//IR8f/yEeHv8eFhb/IBIS/3JoaP+MhIT/Khsb/x8XF/8hHh7/IR8f/yEfH/8hHx9nAAAAACEfH2chHx//IBoZ/yASEv9LPj7/rqen/9HOzv/b2dn/qaGh/1lPT/8gEhL/IBoZ/yEfH/8hHx9nAAAAACEfH2cgGBj/IBIS/3JoaP/JxcX/3dzc/8rGxv/JxcX/3Nvb/9LPz/95cHD/IBIS/yAYGP8hHx9nAAAAACEfH2ceEhL/STw8/8jDw//W1NT/mJCQ/zQnJ/81KCj/nJSU/9jW1v/LyMj/UD4+/x4SEv8hHx9nAAAAACEfH2ceEhL/lIuL/9vZ2f+tpqb/JBgY/yEfH/8hHx//JhoY/7Kqqv/c29v/mpCQ/x4SEv8hHx9nAAAAACEfH2cgFhb/v7m5/87Kyv9kWFj/IBoZ/yEfH/8hHx//IBoZ/2ldXf/Qzc3/w7y8/yAWFv8hHx9nAAAAACEfH2chFRX/xcDA/7u2tv9GNzf/IBoa/yEfH/8hHx//IBoa/0c5Of+9uLj/xsHB/yEVFf8hHx9nAAAAACEfH2chHR3/l5CQ/9LOzv9+d3f/Hi4u/yEfH/8hHx//IBkZ/4N9ff/Uz8//nZaW/yEdHf8hHx9nAAAAACEfH2chHx//IRER/3tycv/GwcH/cmlp/xcVFf8WFxf/b2Vl/8jDw/+AdXX/IRER/yEfH/8hHx9nAAAAACEfH2chHx//IR8f/xwPD/82KSn/WVFR/15XVv9dVVX/W1NR/zosK/8cDw//IR8f/yEfH/8hHx9nAAAAACEfHwwhHx9nIR8fZyEfH2chHx9nIR8fZyEfH2chHx9nIR8fZyEfH2chHx9nIR8fZyEfH2chHx8MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
       
       return new Response(atob(faviconBase64), {
         status: 200,
@@ -54,7 +54,9 @@ export default {
       }
     } else if (path === '/api/send-notification' && request.method === 'POST') {
       return handleSendNotification(request, env, corsHeaders);
-    } 
+    } else if (path === '/api/sync-from-firebase' && request.method === 'POST') {
+      return handleSyncFromFirebase(request, env, ctx, corsHeaders);
+    }
     // 标记数据管理路由
     else if (path === '/api/markers' && request.method === 'GET') {
       return handleGetMarkers(request, env, corsHeaders);
@@ -1261,4 +1263,139 @@ async function createHash(str) {
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+// 添加处理从Firebase同步数据的函数
+async function handleSyncFromFirebase(request, env, ctx, corsHeaders) {
+  try {
+    console.log("接收到Firebase同步请求");
+    
+    // 获取请求数据
+    const syncData = await request.json();
+    
+    if (!syncData || !syncData.reports || !Array.isArray(syncData.reports)) {
+      return new Response(JSON.stringify({ 
+        error: '无效的同步数据格式，需要包含reports数组' 
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      });
+    }
+    
+    console.log(`同步${syncData.reports.length}条报告数据`);
+    
+    // 处理报告数据，保存到Cloudflare KV
+    const processResults = [];
+    
+    for (const report of syncData.reports) {
+      try {
+        // 确保report有id
+        if (!report.id) {
+          processResults.push({
+            success: false,
+            error: '报告缺少ID'
+          });
+          continue;
+        }
+        
+        // 格式化为标记数据
+        const marker = {
+          ...report,
+          timestamp: report.time || new Date().toISOString(),
+          createdAt: report.time || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          location: {
+            lat: report.lat,
+            lng: report.lng
+          },
+          title: report.description || '未命名位置',
+          description: report.originalDescription || report.description || '',
+          source: 'firebase_sync'
+        };
+        
+        // 保存到KV存储
+        await env.MARKERS.put(report.id.toString(), JSON.stringify(marker));
+        
+        processResults.push({
+          success: true,
+          id: report.id
+        });
+      } catch (error) {
+        console.error(`处理报告 ${report.id} 失败:`, error);
+        processResults.push({
+          success: false,
+          id: report.id,
+          error: error.message
+        });
+      }
+    }
+    
+    // 如果请求中明确要求发送通知
+    if (syncData.sendNotifications === true) {
+      const subscriptions = await getAllSubscriptions(env);
+      
+      // 对于成功同步的每个报告，发送通知
+      for (const result of processResults) {
+        if (result.success) {
+          const report = syncData.reports.find(r => r.id.toString() === result.id.toString());
+          
+          if (report) {
+            // 构建通知内容
+            const notificationPayload = {
+              title: `实时交通报告: ${report.description || '未命名位置'}`,
+              body: report.originalDescription || report.description || '新的交通报告已添加',
+              icon: '/ptvalert-pwa/images/icon-192x192.png',
+              badge: '/ptvalert-pwa/images/badge-72x72.png',
+              data: {
+                url: `/ptvalert-pwa/marker-details.html?id=${report.id}`,
+                dateOfArrival: Date.now(),
+                primaryKey: 1,
+                markerId: report.id,
+                markerInfo: report
+              },
+              actions: [
+                {
+                  action: 'view',
+                  title: '查看详情'
+                },
+                {
+                  action: 'navigate',
+                  title: '查看地图'
+                }
+              ]
+            };
+            
+            // 异步发送通知，不等待结果
+            ctx.waitUntil(sendNotificationsToAll(subscriptions, notificationPayload, env));
+          }
+        }
+      }
+    }
+    
+    return new Response(JSON.stringify({ 
+      success: true, 
+      processed: processResults.length,
+      succeeded: processResults.filter(r => r.success).length,
+      failed: processResults.filter(r => !r.success).length,
+      results: processResults
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders
+      }
+    });
+  } catch (error) {
+    console.error("Firebase同步处理失败:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders
+      }
+    });
+  }
 } 

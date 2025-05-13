@@ -12,6 +12,9 @@
     <!-- 全局变量修复脚本 - 必须最先加载 -->
     <script src="./js/globals-fix.js"></script>
     
+    <!-- Firebase与Cloudflare同步脚本 -->
+    <script src="./js/firebase-to-cloudflare-sync.js"></script>
+    
     <!-- URL诊断和修复脚本 - 最先执行 -->
     <script>
         (function() {
@@ -981,6 +984,9 @@
         // 确定当前使用的存储系统
         const useCloudflare = true; // 设置为true使用Cloudflare, false使用Firebase
         
+        // 增加同步选项
+        const syncToCloudflare = true; // 即使使用Firebase也同步到Cloudflare
+        
         // 初始化Firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
@@ -1902,18 +1908,73 @@
                     
                     // 增加用户报告计数
                     incrementUserReportCount();
+                    
+                    // 如果设置了同步选项，将数据同步到Cloudflare
+                    if (syncToCloudflare && !useCloudflare) {
+                        syncReportToCloudflare(reportData);
+                    }
                 })
                 .catch((error) => {
-                    console.error("Error saving quick report to Firebase:", error);
-                    sendDanmaku(currentLang === 'zh' ? 
-                        '标记已添加到地图，但保存到服务器失败' : 
-                        'Marker added to map, but failed to save to server'
-                    );
+                    console.error("Error saving report to Firebase", error);
                 });
+        }
+        
+        // 同步报告到Cloudflare
+        function syncReportToCloudflare(reportData) {
+            console.log("正在同步报告到Cloudflare...", reportData);
+            
+            fetch(`${cloudflareConfig.apiUrl}${cloudflareConfig.dataEndpoint}/${reportData.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(reportData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("报告已同步到Cloudflare", data);
+                
+                // 发送通知
+                sendNotificationForReport(reportData);
+            })
+            .catch((error) => {
+                console.error("同步报告到Cloudflare失败:", error);
+            });
+        }
+        
+        // 发送报告通知
+        function sendNotificationForReport(reportData) {
+            console.log("为报告发送通知...", reportData);
+            
+            fetch(`${cloudflareConfig.apiUrl}/api/send-notification`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    markerId: reportData.id,
+                    markerData: reportData
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("通知发送结果:", data);
+                
+                // 显示成功消息
+                sendDanmaku(currentLang === 'zh' ? 
+                    '报告已保存并发送通知' : 
+                    'Report saved and notification sent'
+                );
+            })
+            .catch((error) => {
+                console.error("发送通知失败:", error);
+            });
         }
         
         // 保存报告到Cloudflare Workers
         function saveReportToCloudflare(reportData) {
+            console.log("Saving report to Cloudflare Workers...", reportData);
+            
             fetch(`${cloudflareConfig.apiUrl}${cloudflareConfig.dataEndpoint}`, {
                 method: 'POST',
                 headers: {
@@ -1928,8 +1989,8 @@
                 // 为了兼容性，同时保存到Firebase
                 saveReportToFirebase(reportData);
                 
-                // 增加用户报告计数
-                incrementUserReportCount();
+                // 发送通知
+                sendNotificationForReport(reportData);
             })
             .catch((error) => {
                 console.error("Error saving quick report to Cloudflare:", error);
@@ -3785,6 +3846,12 @@
             }
             
             console.log("用户已登录，等待Google Maps API回调...");
+            
+            // 初始化Firebase到Cloudflare同步系统
+            if (typeof window.firebaseCloudflareSync !== 'undefined') {
+                console.log('初始化Firebase到Cloudflare同步系统...');
+                window.firebaseCloudflareSync.init();
+            }
             
             // 关闭报告计数器弹窗按钮事件
             document.getElementById('closeCounterPopup').addEventListener('click', function() {
