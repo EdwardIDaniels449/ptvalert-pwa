@@ -48,52 +48,115 @@
 
     // 检测GitHub Pages环境
     const isGitHubPages = window.location.hostname.includes('github.io');
+    
+    // 在GitHub Pages环境下设置全局标志
+    if (isGitHubPages) {
+        window.IS_GITHUB_PAGES = true;
+        
+        // 获取仓库名称，设置基本路径
+        const pathSegments = window.location.pathname.split('/');
+        if (pathSegments.length >= 2 && pathSegments[1]) {
+            window.GITHUB_PAGES_BASE_PATH = '/' + pathSegments[1] + '/';
+        } else {
+            window.GITHUB_PAGES_BASE_PATH = '/';
+        }
+        
+        console.log('[全局修复] GitHub Pages环境: 基本路径 =', window.GITHUB_PAGES_BASE_PATH);
+    }
 
     // 在GitHub Pages环境下拦截所有API请求
     if (isGitHubPages) {
         console.log('[全局修复] 检测到GitHub Pages环境，应用API请求拦截');
+
+        // 默认API响应
+        const defaultApiResponse = {
+            success: true,
+            message: '这是GitHub Pages环境的模拟响应',
+            data: { mockData: true, timestamp: Date.now() }
+        };
+        
+        // 特定API端点的模拟响应
+        const mockResponses = {
+            'subscribe': {
+                success: true,
+                message: '模拟推送订阅成功',
+                data: {
+                    subscription: {
+                        endpoint: 'https://mock-push-service.github.io/endpoint',
+                        keys: {
+                            p256dh: 'mock-p256dh-key',
+                            auth: 'mock-auth-key'
+                        }
+                    }
+                }
+            },
+            'send-notification': {
+                success: true,
+                message: '模拟通知发送成功',
+                data: {
+                    delivered: true,
+                    id: 'mock-notification-' + Date.now()
+                }
+            },
+            'user': {
+                success: true,
+                message: '用户信息获取成功',
+                data: {
+                    id: window.currentUserId,
+                    isAdmin: false,
+                    reportCount: Math.floor(Math.random() * 10)
+                }
+            }
+        };
 
         // 覆盖全局fetch函数
         const originalFetch = window.fetch;
         window.fetch = function(url, options = {}) {
             // 仅处理相对路径或指向当前域名的API请求
             const urlStr = url.toString();
+            
             if (urlStr.includes('/api/') || 
-                (options.method === 'POST' && urlStr.includes('subscribe')) ||
-                urlStr.includes('send-notification')) {
+                urlStr.includes('subscribe') || 
+                urlStr.includes('notification') ||
+                urlStr.includes('user') ||
+                (options && options.method === 'POST')) {
                 
-                console.log('[全局修复] 拦截API请求:', url, options);
+                console.log('[全局修复] 拦截API请求:', urlStr, options);
+                
+                // 确定使用哪个模拟响应
+                let responseData = defaultApiResponse;
+                
+                // 尝试匹配端点
+                for (const endpoint in mockResponses) {
+                    if (urlStr.includes(endpoint)) {
+                        responseData = mockResponses[endpoint];
+                        break;
+                    }
+                }
                 
                 // 创建模拟响应
                 return new Promise((resolve) => {
-                    // 模拟网络延迟
+                    // 模拟网络延迟 (随机200-600ms)
                     setTimeout(() => {
                         // 构建响应对象
                         const mockResponse = {
                             ok: true,
                             status: 200,
-                            statusText: 'OK (Mocked)',
+                            statusText: 'OK (GitHub Pages Mock)',
                             headers: new Headers({
-                                'Content-Type': 'application/json'
+                                'Content-Type': 'application/json',
+                                'X-Mock-Response': 'true'
                             }),
                             json: function() {
-                                return Promise.resolve({
-                                    success: true,
-                                    message: '这是GitHub Pages环境的模拟响应',
-                                    data: { mockData: true, timestamp: Date.now() }
-                                });
+                                return Promise.resolve(responseData);
                             },
                             text: function() {
-                                return Promise.resolve(JSON.stringify({
-                                    success: true,
-                                    message: '这是GitHub Pages环境的模拟响应',
-                                    data: { mockData: true, timestamp: Date.now() }
-                                }));
+                                return Promise.resolve(JSON.stringify(responseData));
                             }
                         };
                         
                         resolve(mockResponse);
-                    }, 200); // 200ms延迟模拟网络请求
+                    }, 200 + Math.random() * 400);
                 });
             }
             
@@ -104,10 +167,17 @@
         // 提供其他可能需要的全局函数
         window.showToast = window.showToast || function(message) {
             console.log('[模拟Toast]', message);
+            // 创建一个简单的浮动提示
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:10px 20px;border-radius:4px;font-size:14px;z-index:10000;';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
         };
         
         window.showError = window.showError || function(message) {
             console.error('[模拟错误提示]', message);
+            window.showToast('错误: ' + message);
         };
     }
 

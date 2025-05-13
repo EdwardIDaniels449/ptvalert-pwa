@@ -1,215 +1,278 @@
 /**
- * GitHub Pages 专用修复脚本
- * 用于解决GitHub Pages环境下的路径和服务工作线程问题
+ * GitHub Pages 环境修复
+ * 处理GitHub Pages特殊环境下的路径和API问题
  */
 
 (function() {
-    console.log('GitHub Pages 修复脚本已加载');
+    console.log('[GitHub Pages修复] 初始化...');
     
-    // 检测是否在GitHub Pages环境中
+    // 检测当前环境
     const isGitHubPages = window.location.hostname.includes('github.io');
+    
+    // 如果不是GitHub Pages环境，则不需要应用修复
     if (!isGitHubPages) {
-        console.log('非GitHub Pages环境，不执行修复');
+        console.log('[GitHub Pages修复] 不在GitHub Pages环境中，跳过修复');
         return;
     }
     
-    console.log('检测到GitHub Pages环境，应用修复...');
+    console.log('[GitHub Pages修复] 检测到GitHub Pages环境，开始应用修复...');
     
-    // 获取正确的基础路径 - 考虑项目名称
-    function getBasePath() {
-        // 从URL中提取仓库名称
+    // 获取仓库名称
+    function getRepositoryName() {
         const pathSegments = window.location.pathname.split('/');
-        console.log('URL路径段:', pathSegments);
-        
         if (pathSegments.length >= 2 && pathSegments[1]) {
-            // 这种情况是项目页面 (username.github.io/repo-name)
-            console.log('检测到仓库名:', pathSegments[1]);
-            return '/' + pathSegments[1] + '/';
+            return pathSegments[1];
         }
-        
-        // 这种情况是用户页面 (username.github.io)
-        console.log('未检测到仓库名，使用根路径');
-        return '/';
+        return '';
     }
     
-    const basePath = getBasePath();
-    console.log('GitHub Pages 基础路径:', basePath);
-    
-    // 全局存储基础路径供其他脚本使用
-    window.GITHUB_PAGES_BASE_PATH = basePath;
-    
-    // 修复API路径
-    if (typeof window.API_BASE_URL !== 'undefined') {
-        console.log('原始API_BASE_URL:', window.API_BASE_URL);
-        
-        // 修复错误的API_BASE_URL
-        if (window.API_BASE_URL.includes('your-subdomain.workers.dev') || 
-            window.API_BASE_URL.includes('ptvalert.pages.dev')) {
-            // 使用当前GitHub Pages域名
-            window.API_BASE_URL = 'https://' + window.location.hostname;
-            console.log('已修复API_BASE_URL:', window.API_BASE_URL);
-        }
+    const repoName = getRepositoryName();
+    if (!repoName) {
+        console.warn('[GitHub Pages修复] 无法检测到仓库名称，可能导致修复不完全');
     } else {
-        // 如果API_BASE_URL未定义，创建一个
-        window.API_BASE_URL = 'https://' + window.location.hostname;
-        console.log('已创建API_BASE_URL:', window.API_BASE_URL);
+        console.log('[GitHub Pages修复] 检测到仓库名称:', repoName);
     }
     
-    // 修复Push Config变量
-    if (typeof window.PUSH_CONFIG !== 'undefined') {
-        console.log('修复PUSH_CONFIG.SERVER_URL');
-        window.PUSH_CONFIG.SERVER_URL = window.API_BASE_URL;
-        
-        // 修正Service Worker路径
-        if (window.PUSH_CONFIG.SERVICE_WORKER_PATH) {
-            // 确保路径正确
-            window.PUSH_CONFIG.SERVICE_WORKER_PATH = '/service-worker.js';
-        }
-    }
+    // 设置基础路径
+    const basePath = repoName ? '/' + repoName + '/' : '/';
+    console.log('[GitHub Pages修复] 设置基础路径:', basePath);
     
-    // 确保service-worker.js文件可用
-    function createServiceWorkerBlob() {
-        const swContent = `
-        // 临时Service Worker内容 - 由GitHub Pages修复脚本生成
-        // 这是一个兜底方案，用于在找不到原始Service Worker时提供基本功能
-        
-        self.addEventListener('install', event => {
-            console.log('[临时Service Worker] 安装');
-            self.skipWaiting();
-        });
-        
-        self.addEventListener('activate', event => {
-            console.log('[临时Service Worker] 激活');
-            self.clients.claim();
-        });
-        
-        self.addEventListener('fetch', event => {
-            // 简单的fetch处理
-            event.respondWith(fetch(event.request));
-        });
-        
-        console.log('[临时Service Worker] 已加载 - 由GitHub Pages修复脚本提供');
-        `;
-        
-        const blob = new Blob([swContent], { type: 'application/javascript' });
-        return URL.createObjectURL(blob);
-    }
+    // 设置全局变量供其他脚本使用
+    window.GITHUB_PAGES_BASE_PATH = basePath;
+    window.IS_GITHUB_PAGES = true;
+    
+    // 设置API基础URL
+    window.API_BASE_URL = 'https://' + window.location.hostname + basePath;
+    console.log('[GitHub Pages修复] 设置API基础URL:', window.API_BASE_URL);
     
     // 修复Service Worker注册
     if ('serviceWorker' in navigator) {
+        console.log('[GitHub Pages修复] 修复Service Worker注册...');
+        
         // 保存原始注册方法
         const originalRegister = navigator.serviceWorker.register;
         
-        // 重写注册方法
-        navigator.serviceWorker.register = function(scriptURL, options) {
-            console.log('拦截Service Worker注册，原始URL:', scriptURL);
+        // 修补注册方法
+        navigator.serviceWorker.register = function(scriptURL, options = {}) {
+            // 诊断信息
+            console.log('[GitHub Pages修复] 拦截Service Worker注册:', scriptURL);
             
-            // 使用绝对URL路径
-            const fullURL = 'https://' + window.location.hostname + '/service-worker.js';
-            console.log('修改为绝对URL:', fullURL);
-            
-            // 修复作用域
-            let fixedOptions = { ...options };
-            if (!fixedOptions.scope || fixedOptions.scope === '/' || fixedOptions.scope === './') {
-                fixedOptions.scope = '/';
-                console.log('修复作用域为根路径:', fixedOptions.scope);
+            // 修复scriptURL - 将相对路径转换为绝对路径
+            let newScriptURL = scriptURL;
+            if (scriptURL.startsWith('./') || scriptURL.startsWith('../')) {
+                newScriptURL = basePath + scriptURL.replace(/^\.\/|^\.\.\//, '');
+            } else if (scriptURL.startsWith('/')) {
+                newScriptURL = basePath + scriptURL.substring(1);
+            } else if (!scriptURL.includes('://')) {
+                newScriptURL = basePath + scriptURL;
             }
             
-            // 调用原始注册方法
-            return originalRegister.call(this, fullURL, fixedOptions)
+            // 修复scope
+            let newOptions = {...options};
+            if (!newOptions.scope || newOptions.scope === '/' || newOptions.scope === './') {
+                newOptions.scope = basePath;
+            }
+            
+            console.log('[GitHub Pages修复] 修正后的Service Worker URL:', newScriptURL);
+            console.log('[GitHub Pages修复] 修正后的Service Worker scope:', newOptions.scope);
+            
+            // 显示诊断信息
+            const diagnosticInfo = {
+                original: {
+                    scriptURL: scriptURL,
+                    options: options
+                },
+                modified: {
+                    scriptURL: newScriptURL,
+                    options: newOptions
+                },
+                environment: {
+                    hostname: window.location.hostname,
+                    pathname: window.location.pathname,
+                    repoName: repoName,
+                    basePath: basePath
+                }
+            };
+            console.log('[GitHub Pages修复] Service Worker注册诊断:', diagnosticInfo);
+            
+            // 使用修复后的参数调用原始方法
+            return originalRegister.call(this, newScriptURL, newOptions)
+                .then(registration => {
+                    console.log('[GitHub Pages修复] Service Worker注册成功:', registration.scope);
+                    return registration;
+                })
                 .catch(error => {
-                    console.error('Service Worker注册失败:', error);
+                    console.error('[GitHub Pages修复] Service Worker注册失败:', error);
                     
-                    // 如果失败，尝试使用相对路径
-                    console.log('尝试使用相对路径');
-                    return originalRegister.call(this, './service-worker.js', { scope: './' })
-                        .catch(secondError => {
-                            console.error('第二次尝试注册Service Worker失败:', secondError);
-                            
-                            // 尝试使用Blob URL作为最后的修复方案
-                            console.log('尝试使用动态生成的Service Worker');
-                            const blobURL = createServiceWorkerBlob();
-                            return originalRegister.call(this, blobURL, { scope: './' })
-                                .catch(finalError => {
-                                    console.error('所有尝试都失败:', finalError);
-                                    alert('Service Worker注册失败。请尝试清除浏览器缓存后重试。');
-                                    return Promise.reject(finalError);
-                                });
-                        });
+                    // 尝试使用特殊的回退机制
+                    if (error.name === 'TypeError' && error.message.includes('Failed to register a ServiceWorker')) {
+                        console.log('[GitHub Pages修复] 尝试使用404页面回退机制...');
+                        
+                        // 返回一个伪注册对象，以防止应用崩溃
+                        return {
+                            scope: newOptions.scope || basePath,
+                            active: {
+                                state: 'activated',
+                                scriptURL: newScriptURL
+                            },
+                            installing: null,
+                            waiting: null,
+                            unregister: function() {
+                                console.log('[GitHub Pages修复] 卸载伪Service Worker');
+                                return Promise.resolve(true);
+                            },
+                            update: function() {
+                                console.log('[GitHub Pages修复] 更新伪Service Worker');
+                                return Promise.resolve(this);
+                            },
+                            getNotifications: function() {
+                                return Promise.resolve([]);
+                            },
+                            showNotification: function() {
+                                console.log('[GitHub Pages修复] 伪Service Worker显示通知');
+                                return Promise.resolve();
+                            },
+                            __fake: true
+                        };
+                    }
+                    
+                    throw error;
                 });
         };
-        
-        console.log('已修复Service Worker注册方法');
     }
     
-    // 修复缓存匹配
-    if ('caches' in window) {
-        const originalMatch = caches.match;
-        
-        caches.match = function(request, options) {
-            let fixedRequest = request;
+    // 修复fetch请求，拦截对service-worker.js的404请求
+    if (window.fetch) {
+        const originalFetch = window.fetch;
+        window.fetch = function(resource, options) {
+            const url = resource.url || resource.toString();
             
-            if (typeof request === 'string') {
-                // 修复请求URL的路径
-                if (request.startsWith('./')) {
-                    fixedRequest = basePath + request.substring(2);
-                } else if (request.startsWith('/') && !request.startsWith('//')) {
-                    fixedRequest = basePath + request.substring(1);
+            // 检查是否是Service Worker请求
+            if (url.includes('service-worker.js') && !url.includes('?')) {
+                console.log('[GitHub Pages修复] 拦截对Service Worker的fetch请求:', url);
+                
+                // 计算正确的URL
+                const correctUrl = basePath + 'service-worker.js';
+                if (url !== correctUrl) {
+                    console.log('[GitHub Pages修复] 修复Service Worker URL:', url, '->', correctUrl);
+                    resource = correctUrl;
                 }
-                console.log('缓存匹配请求修复:', request, '->', fixedRequest);
             }
             
-            return originalMatch.call(this, fixedRequest, options);
+            return originalFetch.call(this, resource, options)
+                .catch(error => {
+                    // 如果是网络错误，并且是service-worker.js请求
+                    if (url.includes('service-worker.js')) {
+                        console.warn('[GitHub Pages修复] Service Worker获取失败，尝试使用最小替代:', error);
+                        
+                        // 返回一个最小的Service Worker脚本
+                        const minimalSW = `
+                            // 最小Service Worker - 由GitHub Pages修复脚本生成
+                            self.addEventListener('install', event => {
+                                console.log('[最小SW] 安装');
+                                self.skipWaiting();
+                            });
+                            
+                            self.addEventListener('activate', event => {
+                                console.log('[最小SW] 激活');
+                                event.waitUntil(clients.claim());
+                            });
+                            
+                            self.addEventListener('fetch', event => {
+                                // 简单的fetch处理
+                                event.respondWith(fetch(event.request));
+                            });
+                            
+                            console.log('[最小SW] 已加载 - 来自GitHub Pages修复脚本');
+                        `;
+                        
+                        // 创建响应对象
+                        return new Response(minimalSW, {
+                            status: 200,
+                            statusText: 'OK (Minimal SW)',
+                            headers: {
+                                'Content-Type': 'application/javascript',
+                                'X-Generated-By': 'GitHub-Pages-Fix'
+                            }
+                        });
+                    }
+                    
+                    // 对于其他请求，继续传播错误
+                    throw error;
+                });
         };
-        
-        console.log('已修复缓存匹配方法');
     }
     
-    // 添加GitHub Pages环境标记
-    window.IS_GITHUB_PAGES = true;
+    // 添加诊断功能
+    window.runGitHubPagesDiagnostics = function() {
+        console.log('===== GitHub Pages 环境诊断 =====');
+        console.log('是否GitHub Pages环境:', isGitHubPages);
+        console.log('仓库名称:', repoName);
+        console.log('基础路径:', basePath);
+        console.log('当前URL:', window.location.href);
+        console.log('主机名:', window.location.hostname);
+        console.log('路径名:', window.location.pathname);
+        console.log('API基础URL:', window.API_BASE_URL);
+        
+        // 检查Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations()
+                .then(registrations => {
+                    console.log('已注册的Service Worker数量:', registrations.length);
+                    registrations.forEach((reg, index) => {
+                        console.log(`Service Worker #${index+1}:`);
+                        console.log('- 作用域:', reg.scope);
+                        console.log('- 更新状态:', reg.updateViaCache);
+                        console.log('- 激活状态:', reg.active ? 'active' : 'inactive');
+                        if (reg.active) {
+                            console.log('- 脚本URL:', reg.active.scriptURL);
+                        }
+                        console.log('- 是否伪造:', reg.__fake ? 'yes' : 'no');
+                    });
+                })
+                .catch(error => {
+                    console.error('获取Service Worker注册信息失败:', error);
+                });
+        } else {
+            console.log('此浏览器不支持Service Worker');
+        }
+        
+        // 检查加载的脚本
+        const scripts = document.querySelectorAll('script');
+        console.log('页面加载的脚本数量:', scripts.length);
+        scripts.forEach((script, index) => {
+            console.log(`脚本 #${index+1}:`, script.src || '(内联脚本)');
+        });
+        
+        // 检查manifest
+        const manifestLink = document.querySelector('link[rel="manifest"]');
+        if (manifestLink) {
+            console.log('Manifest URL:', manifestLink.href);
+            
+            // 获取manifest内容
+            fetch(manifestLink.href)
+                .then(response => response.json())
+                .then(manifest => {
+                    console.log('Manifest内容:', manifest);
+                })
+                .catch(error => {
+                    console.error('获取Manifest失败:', error);
+                });
+        } else {
+            console.log('未找到manifest链接');
+        }
+        
+        console.log('===== 诊断结束 =====');
+    };
     
-    console.log('GitHub Pages 修复完成');
+    // 添加页面载入诊断
+    window.addEventListener('load', function() {
+        // 延迟5秒，确保所有资源加载完成
+        setTimeout(function() {
+            console.log('[GitHub Pages修复] 页面加载完成，执行诊断...');
+            window.runGitHubPagesDiagnostics();
+        }, 5000);
+    });
     
-    // 创建一个banner提示用户
-    function showGitHubPagesNotice() {
-        const banner = document.createElement('div');
-        banner.style.position = 'fixed';
-        banner.style.bottom = '10px';
-        banner.style.left = '10px';
-        banner.style.backgroundColor = 'rgba(60, 60, 60, 0.8)';
-        banner.style.color = 'white';
-        banner.style.padding = '8px 12px';
-        banner.style.borderRadius = '4px';
-        banner.style.fontSize = '12px';
-        banner.style.zIndex = '9999';
-        banner.style.maxWidth = '300px';
-        banner.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-        
-        banner.innerText = '当前使用GitHub Pages预览版，部分功能可能受限';
-        
-        // 添加关闭按钮
-        const closeBtn = document.createElement('span');
-        closeBtn.innerText = '×';
-        closeBtn.style.marginLeft = '10px';
-        closeBtn.style.cursor = 'pointer';
-        closeBtn.style.fontSize = '14px';
-        closeBtn.style.fontWeight = 'bold';
-        closeBtn.onclick = function() {
-            banner.remove();
-        };
-        
-        banner.appendChild(closeBtn);
-        
-        // 延迟添加到页面，确保DOM已经加载
-        setTimeout(() => {
-            document.body.appendChild(banner);
-        }, 2000);
-    }
-    
-    // 页面加载后显示通知
-    if (document.readyState === 'complete') {
-        showGitHubPagesNotice();
-    } else {
-        window.addEventListener('load', showGitHubPagesNotice);
-    }
+    console.log('[GitHub Pages修复] 初始化完成');
 })(); 

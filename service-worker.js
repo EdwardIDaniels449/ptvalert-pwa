@@ -14,21 +14,27 @@ function getBasePath() {
   const currentLocation = self.location.href;
   console.log('[Service Worker] 当前脚本URL:', currentLocation);
   
-  // 默认使用根路径
-  let basePath = '/';
-  
   // 检测GitHub Pages环境
   if (self.location.hostname.includes('github.io')) {
     console.log('[Service Worker] 检测到GitHub Pages环境');
     
-    // 简化GitHub Pages环境下的路径处理 - 始终使用根路径
-    // 这是为了避免路径嵌套问题
-    console.log('[Service Worker] 在GitHub Pages上使用根路径');
-    return '/';
+    // 从URL中提取仓库名称
+    const pathMatch = self.location.pathname.match(/\/([^\/]+)\//);
+    if (pathMatch && pathMatch[1]) {
+      const repoName = pathMatch[1];
+      const basePath = '/' + repoName + '/';
+      console.log('[Service Worker] GitHub Pages仓库名:', repoName);
+      console.log('[Service Worker] 使用基础路径:', basePath);
+      return basePath;
+    } else {
+      console.log('[Service Worker] 无法检测到GitHub Pages仓库名，使用根路径');
+      return '/';
+    }
   }
   
-  console.log('[Service Worker] 使用基础路径:', basePath);
-  return basePath;
+  // 默认使用根路径
+  console.log('[Service Worker] 非GitHub Pages环境，使用根路径');
+  return '/';
 }
 
 const BASE_PATH = getBasePath();

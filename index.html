@@ -252,8 +252,29 @@
     
     <!-- Manifest和图标 -->
     <link rel="manifest" href="./manifest.json">
-    <link rel="icon" href="./favicon.ico">
+    <!-- 内联基本favicon避免404错误 -->
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJiZmVuXlZOZlJaRyZeZmPOTl5P/lJaU/5qamv+YmJj/l5aW/5eXl5qYmJg7AAAAAAAAAAAAAAAAqamoEpaUktGNlIv/jJ+G/4eoev+ItHX/iL96/4m5ff+GuXz/iLh8/4u0fv+MqIH/kZyI/5qZmP+cm5rpq62uRJWXlpGMl4r/iLF4/4a7eP+DwHj/f8N5/3vBdf96wHT/e8J0/3/EeP+ExXz/ib6A/4y7g/+OqYP/lZeR/5ycm5uTmpKxhaV5/4C2cf95vXH/cL1t/2i7Zv9iumP/YLph/2a9Z/9twG7/ecV4/4DDe/+FwX//i7iD/5KikP+ampmrlaKS1YGwcf94u2z/bLxn/2DAY/9cwWL/Wr9h/1q+Yf9ewmL/ZcJm/27Ebv91xXX/fMZ9/4XCgf+OqYb/mpmXspiolt+Er3f/eMBx/23FaP9lyGb/X8dj/17HYv9ex2P/Y8hm/2nKaf9wzm//ds9z/3zOe/+CxoD/j6yJ/5qZmLWco5nfiLJ3/3nCcf9ux2n/ZMtm/17LY/9cy2L/Xctj/2LNZv9p0Gn/cNRw/3XUdf970Xv/g8eB/5Cvif+amZi1nKOZ34eyef95wnL/b8hp/2XMZv9fzWP/Xc1j/13NY/9jzmb/adFp/3DUcf921nf/e9R7/4PHgf+QrYn/mpmYtZijmdyHsHn/ecJy/2/Jaf9kzGb/X81j/13NY/9dzWP/Y85l/2jQaP9v1HD/ddV2/3rSev+CxYD/j6qH/5qZmLWWoZXYg693/3jAcP9sxmf/ZMpm/1/KZP9dylP/XcxR/2PNU/9pz1v/cNJt/3XSdf97z3r/gcJ//42mhP+amJizmJ2XyoOqdf94u27/bsFn/2TEZP9dxTj/W9IK/1vTCP9h1Az/Z9QS/3HSDv91zB//esRw/3+8ff+MoIT/l5eWtpaWlreBpHH/drdt/2y9Zf9hwV3/W9IA/1rVAP9a1QD/YNcA/2bYAP9w0QD/c8AA/3i4cP98tHn/iphq/52KecqVkpGldKBn/3S2a/9pumL/X79Z/1vRAP9a1QD/WtUA/2DXAP9m2AD/cNEA/3PAAP94tW7/erBz/4eSWf+bfFzMnYuCu3KeYP9ytGj/Z7Vf/16+Vv9b0QD/WtUA/1rVAP9g1wD/ZtgA/3DRAP9zwAD/drFr/3erav+GkFX/mHZT1KSEf9hql1T/b7Fj/2SyW/9au1P/W9IA/1rVAP9a1QD/YNcA/2bYAP9w0QD/c8IA/3Wvaf91p2f/hY1R/5VyTuajeXviYZBM/2uuX/9hsFj/WblR/1vSAP9a1QD/WtUA/2DXAP9m2AD/cNEA/3PCAP9zrWf/c6Rk/4OKUP+TbknwAAA=" />
     <link rel="apple-touch-icon" href="./images/icon-192x192.png">
+    
+    <script>
+        // 处理GitHub Pages环境下图标路径问题
+        if (window.location.hostname.includes('github.io')) {
+            const pathSegments = window.location.pathname.split('/');
+            if (pathSegments.length >= 2 && pathSegments[1]) {
+                const repoName = pathSegments[1];
+                const basePath = '/' + repoName;
+                
+                // 更新图标链接
+                document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"], link[rel="manifest"]').forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (href && href.startsWith('./')) {
+                        link.setAttribute('href', basePath + href.substring(1));
+                        console.log('[路径修复] 更新资源路径:', href, '->', basePath + href.substring(1));
+                    }
+                });
+            }
+        }
+    </script>
     
     <!-- 样式表 -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
@@ -4809,8 +4830,22 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', async function() {
                 try {
-                    // 注册Service Worker
-                    const registration = await navigator.serviceWorker.register('./service-worker.js', {
+                    // 为GitHub Pages环境处理正确的Service Worker路径
+                    let swPath = './service-worker.js';
+                    
+                    // 检测GitHub Pages环境并修正路径
+                    if (window.location.hostname.includes('github.io')) {
+                        // 获取仓库名称(从路径的第一部分)
+                        const pathSegments = window.location.pathname.split('/');
+                        if (pathSegments.length >= 2 && pathSegments[1]) {
+                            const repoName = pathSegments[1];
+                            swPath = '/' + repoName + '/service-worker.js';
+                            console.log('[Service Worker] 检测到GitHub Pages环境，使用路径:', swPath);
+                        }
+                    }
+                    
+                    // 注册Service Worker - 使用修正后的路径
+                    const registration = await navigator.serviceWorker.register(swPath, {
                         scope: './'
                     });
                     console.log('Service Worker 注册成功，作用域为:', registration.scope);
@@ -5111,6 +5146,90 @@
                         await registration.unregister();
                     }
                     console.log('所有服务工作线程已卸载，将重新注册最新版本');
+                    
+                    // 添加修复manifest在GitHub Pages下的路径问题
+                    // 如果在GitHub Pages环境下，修改manifest.json文件中的路径
+                    if (window.location.hostname.includes('github.io')) {
+                      try {
+                        // 获取仓库名称(从路径的第一部分)
+                        const pathSegments = window.location.pathname.split('/');
+                        if (pathSegments.length >= 2 && pathSegments[1]) {
+                          const repoName = pathSegments[1];
+                          const basePath = '/' + repoName + '/';
+                          
+                          console.log('检测到GitHub Pages环境，尝试修复manifest路径...');
+                          
+                          // 获取manifest内容
+                          fetch('./manifest.json')
+                            .then(response => response.json())
+                            .then(manifest => {
+                              // 修正start_url和scope
+                              manifest.start_url = basePath;
+                              manifest.scope = basePath;
+                              
+                              // 修正service worker路径
+                              if (manifest.serviceworker) {
+                                manifest.serviceworker.src = basePath + 'service-worker.js';
+                                manifest.serviceworker.scope = basePath;
+                              }
+                              
+                              // 更新图标路径
+                              if (manifest.icons) {
+                                manifest.icons.forEach(icon => {
+                                  if (icon.src && icon.src.startsWith('./')) {
+                                    icon.src = basePath + icon.src.substring(2);
+                                  }
+                                });
+                              }
+                              
+                              // 更新快捷方式URL
+                              if (manifest.shortcuts) {
+                                manifest.shortcuts.forEach(shortcut => {
+                                  if (shortcut.url && shortcut.url.startsWith('./')) {
+                                    shortcut.url = basePath + shortcut.url.substring(2);
+                                  }
+                                  
+                                  // 更新快捷方式图标
+                                  if (shortcut.icons) {
+                                    shortcut.icons.forEach(icon => {
+                                      if (icon.src && icon.src.startsWith('./')) {
+                                        icon.src = basePath + icon.src.substring(2);
+                                      }
+                                    });
+                                  }
+                                });
+                              }
+                              
+                              // 更新截图路径
+                              if (manifest.screenshots) {
+                                manifest.screenshots.forEach(screenshot => {
+                                  if (screenshot.src && screenshot.src.startsWith('./')) {
+                                    screenshot.src = basePath + screenshot.src.substring(2);
+                                  }
+                                });
+                              }
+                              
+                              console.log('Manifest路径已修复:', manifest);
+                              
+                              // 创建Blob并提供更新后的manifest URL
+                              const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+                              const manifestURL = URL.createObjectURL(blob);
+                              
+                              // 更新manifest链接
+                              const manifestLink = document.querySelector('link[rel="manifest"]');
+                              if (manifestLink) {
+                                manifestLink.href = manifestURL;
+                                console.log('Manifest链接已更新为:', manifestURL);
+                              }
+                            })
+                            .catch(error => {
+                              console.error('获取或修复manifest失败:', error);
+                            });
+                        }
+                      } catch (error) {
+                        console.error('处理Manifest路径时出错:', error);
+                      }
+                    }
                 } catch (error) {
                     console.error('卸载服务工作线程失败:', error);
                 }
@@ -5242,6 +5361,116 @@
             console.log('显示标记:', markerId, centerOnMap ? '并居中显示' : '');
             // 地图组件应实现此函数的实际逻辑
         };
+    </script>
+    
+    <!-- 添加诊断控制台功能，方便在浏览器控制台中调试 -->
+    <script>
+        // 创建一个全局诊断函数，方便在浏览器控制台中使用
+        window.diagnose = function() {
+            console.log('===== PtvAlert 诊断工具 =====');
+            
+            // 环境信息
+            console.log('【环境信息】');
+            console.log('- 页面URL:', window.location.href);
+            console.log('- 主机名:', window.location.hostname);
+            console.log('- 是否GitHub Pages:', window.IS_GITHUB_PAGES ? '是' : '否');
+            
+            if (window.IS_GITHUB_PAGES) {
+                console.log('- GitHub Pages基础路径:', window.GITHUB_PAGES_BASE_PATH);
+                console.log('- API基础URL:', window.API_BASE_URL);
+            }
+            
+            // Service Worker诊断
+            console.log('\n【Service Worker状态】');
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations()
+                    .then(registrations => {
+                        if (registrations.length === 0) {
+                            console.log('- 未注册Service Worker');
+                        } else {
+                            registrations.forEach((reg, idx) => {
+                                console.log(`- Service Worker #${idx+1}:`);
+                                console.log('  · 作用域:', reg.scope);
+                                console.log('  · 状态:', reg.active ? '活动' : (reg.installing ? '安装中' : (reg.waiting ? '等待' : '未知')));
+                                
+                                if (reg.active) {
+                                    console.log('  · 脚本URL:', reg.active.scriptURL);
+                                }
+                                
+                                console.log('  · 是否伪Service Worker:', reg.__fake ? '是' : '否');
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        console.error('- 获取Service Worker注册信息失败:', err);
+                    });
+            } else {
+                console.log('- 浏览器不支持Service Worker');
+            }
+            
+            // 通知权限
+            console.log('\n【通知权限】');
+            if ('Notification' in window) {
+                console.log('- 当前权限状态:', Notification.permission);
+                
+                if (window.notificationHandler) {
+                    console.log('- 通知处理程序已加载');
+                    window.notificationHandler.isSubscribedToPush()
+                        .then(isSubscribed => {
+                            console.log('- 是否已订阅推送:', isSubscribed ? '是' : '否');
+                        })
+                        .catch(err => {
+                            console.error('- 检查推送订阅状态失败:', err);
+                        });
+                } else {
+                    console.log('- 通知处理程序未加载');
+                }
+            } else {
+                console.log('- 浏览器不支持通知API');
+            }
+            
+            // 缓存信息
+            console.log('\n【缓存信息】');
+            if ('caches' in window) {
+                caches.keys()
+                    .then(cacheNames => {
+                        if (cacheNames.length === 0) {
+                            console.log('- 无缓存');
+                        } else {
+                            console.log('- 缓存列表:');
+                            cacheNames.forEach(name => {
+                                console.log('  · ' + name);
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        console.error('- 获取缓存列表失败:', err);
+                    });
+            } else {
+                console.log('- 浏览器不支持Cache API');
+            }
+            
+            // 故障排除指南
+            console.log('\n【常见故障排除】');
+            console.log('1. 如果Service Worker注册失败，尝试以下步骤:');
+            console.log('   - 清除浏览器缓存: Chrome -> 设置 -> 隐私设置和安全性 -> 清除浏览数据');
+            console.log('   - 确保URL使用https或localhost');
+            console.log('   - 在控制台运行: navigator.serviceWorker.getRegistrations().then(r => r.forEach(reg => reg.unregister()))');
+            
+            console.log('2. 如果推送通知不工作:');
+            console.log('   - 检查浏览器通知权限设置');
+            console.log('   - 重新订阅推送: window.notificationHandler.subscribeUserToPush()');
+            
+            console.log('3. 修复GitHub Pages路径问题:');
+            console.log('   - 刷新页面并清除缓存: Ctrl+F5 或 Cmd+Shift+R');
+            console.log('   - 在控制台运行: window.runGitHubPagesDiagnostics()');
+            
+            console.log('\n如需重新运行诊断，请在控制台输入: window.diagnose()');
+            console.log('===== 诊断结束 =====');
+        };
+        
+        // 在控制台中提示用户可以使用的诊断功能
+        console.log('%c 🛠️ PtvAlert 诊断工具可用! 输入 window.diagnose() 或 diagnose() 以获取详细信息', 'background:#0071e3;color:white;padding:5px 10px;border-radius:4px;font-weight:bold;');
     </script>
 </body>
 </html>
