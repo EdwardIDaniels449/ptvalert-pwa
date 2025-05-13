@@ -94,4 +94,80 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+# 地图标记推送通知系统
+
+这个项目是一个基于Cloudflare Worker的推送通知系统，用于地图标记的实时更新通知。
+
+## 功能特点
+
+- 完全基于Cloudflare Worker，无需传统服务器
+- 使用Web Push API实现浏览器推送通知
+- 支持离线功能和后台同步
+- 完整的ECE加密实现 (RFC 8291)
+- 地图标记的实时更新
+
+## 安装与配置
+
+### 1. Cloudflare Worker 配置
+
+1. 在Cloudflare Worker中部署`cloudflare-worker.js`
+2. 设置以下环境变量:
+   - `VAPID_PUBLIC_KEY`: Web Push的公钥
+   - `VAPID_PRIVATE_KEY`: Web Push的私钥
+   - `VAPID_SUBJECT`: 联系邮箱(例如 mailto:your-email@example.com)
+
+3. 绑定以下KV命名空间:
+   - `SUBSCRIPTIONS`: 存储推送订阅
+   - `MARKERS`: 存储地图标记
+   - `ADMIN_USERS`: 存储管理员用户
+
+### 2. 前端配置
+
+1. 复制`config.example.js`为`config.js`
+2. 在`config.js`中填入以下信息:
+   - `SERVER_URL`: 您的Cloudflare Worker URL
+   - `VAPID_PUBLIC_KEY`: 与Worker中相同的VAPID公钥
+
+### 3. 生成VAPID密钥
+
+```bash
+# 使用web-push库生成VAPID密钥
+npx web-push generate-vapid-keys
+```
+
+## 使用方法
+
+1. 确保服务配置正确
+2. 打开`push-demo.html`测试推送通知功能
+3. 点击"订阅推送通知"按钮授权接收通知
+4. 添加或更新地图标记时将自动接收通知
+
+## 文件结构
+
+- `cloudflare-worker.js`: 后端Worker代码
+- `push-client.js`: 前端推送客户端API
+- `service-worker.js`: 处理推送通知的Service Worker
+- `push-demo.html`: 演示页面
+- `config.example.js`: 配置文件示例
+- `config.js`: 实际配置文件 (需自行创建，**不要提交到GitHub**)
+
+## 同步到GitHub
+
+使用提供的脚本同步代码到GitHub:
+
+```bash
+chmod +x sync-to-github.sh
+./sync-to-github.sh
+```
+
+## 安全注意事项
+
+- 确保`.gitignore`中包含`config.js`以避免泄露VAPID密钥
+- VAPID私钥应只存在于Cloudflare环境变量中
+- 定期更新VAPID密钥以增强安全性
+
+## 许可证
+
+MIT 

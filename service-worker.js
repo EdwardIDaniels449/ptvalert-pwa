@@ -1,22 +1,17 @@
-// Define cache name and app version
+// 推送通知Service Worker
 const CACHE_NAME = 'ptvalert-cache-v3';
+const APP_NAME = '网站地图标记';
 const APP_VERSION = '1.0.3';
 
-// Resources to cache
+// 要缓存的资源
 const urlsToCache = [
   './',
   './index.html',
   './manifest.json',
   './offline.html',
-  // CSS
-  'https://unpkg.com/leaflet@1.7.1/dist/leaflet.css',
-  // JavaScript
-  'https://unpkg.com/leaflet@1.7.1/dist/leaflet.js',
-  'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js',
-  'https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js',
-  'https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js',
-  './js/notification-handler.js',
-  // Icons and images
+  './push-client.js',
+  './styles.css',
+  // 图标和图片
   './images/icon-72x72.png',
   './images/icon-96x96.png',
   './images/icon-128x128.png',
@@ -25,45 +20,44 @@ const urlsToCache = [
   './images/icon-192x192.png',
   './images/icon-384x384.png',
   './images/icon-512x512.png',
-  './images/icon-512x512-maskable.png',
-  './images/report-icon-192x192.png',
-  './images/map-icon-192x192.png',
+  './images/badge-72x72.png',
   './images/offline-image.png'
 ];
 
-// Install Service Worker
+// 安装Service Worker
 self.addEventListener('install', event => {
-  console.log('[Service Worker] Installing');
+  console.log('[Service Worker] 正在安装');
   
-  // Skip waiting to immediately activate
+  // 跳过等待，让新的service worker立即激活
   self.skipWaiting();
   
+  // 缓存核心静态资源
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('[Service Worker] Caching app shell');
+        console.log('[Service Worker] 缓存静态资源');
         return cache.addAll(urlsToCache);
       })
       .catch(error => {
-        console.error('[Service Worker] Cache failed:', error);
+        console.error('[Service Worker] 缓存失败:', error);
       })
   );
 });
 
-// Activate Service Worker
+// 激活Service Worker
 self.addEventListener('activate', event => {
-  console.log('[Service Worker] Activating');
+  console.log('[Service Worker] 已激活');
   
-  // Take control immediately
+  // 声明控制权
   event.waitUntil(clients.claim());
   
-  // Clean up old caches
+  // 清理旧版本缓存
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
-            console.log('[Service Worker] Deleting old cache:', cacheName);
+            console.log('[Service Worker] 删除旧缓存:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -72,24 +66,20 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Handle fetch requests with cache-first strategy
+// 处理fetch请求，使用缓存优先策略
 self.addEventListener('fetch', event => {
-  // Skip non-GET requests
+  // 跳过非GET请求
   if (event.request.method !== 'GET') return;
   
-  // Skip API requests and other non-cacheable requests
+  // 跳过API请求和其他不可缓存的请求
   if (
     event.request.url.includes('/api/') ||
-    event.request.url.includes('firebaseio.com') ||
-    event.request.url.includes('googleapis.com') ||
-    event.request.url.includes('tile.openstreetmap.org') ||
-    event.request.url.includes('analytics') ||
     event.request.url.includes('chrome-extension')
   ) {
     return;
   }
   
-  // Handle navigation requests - serve index.html or return offline page if offline
+  // 处理导航请求 - 提供index.html或离线页面
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -100,27 +90,27 @@ self.addEventListener('fetch', event => {
     return;
   }
   
-  // For other requests, try cache first, then network with cache update
+  // 对于其他请求，先尝试缓存，然后网络，同时更新缓存
   event.respondWith(
     caches.match(event.request)
       .then(cachedResponse => {
-        // If found in cache, return cached response
+        // 如果在缓存中找到，返回缓存的响应
         if (cachedResponse) {
           return cachedResponse;
         }
         
-        // Otherwise fetch from network
+        // 否则从网络获取
         return fetch(event.request)
           .then(response => {
-            // Check for valid response
+            // 检查有效响应
             if (!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
             
-            // Clone response to save in cache
+            // 克隆响应以保存在缓存中
             const responseToCache = response.clone();
             
-            // Add to cache
+            // 添加到缓存
             caches.open(CACHE_NAME)
               .then(cache => {
                 cache.put(event.request, responseToCache);
@@ -129,113 +119,106 @@ self.addEventListener('fetch', event => {
             return response;
           })
           .catch(error => {
-            console.log('[Service Worker] Fetch failed:', error);
+            console.log('[Service Worker] Fetch失败:', error);
             
-            // Return placeholder for images
+            // 图片返回占位符
             if (event.request.url.match(/\.(jpg|jpeg|png|gif|svg)$/)) {
               return caches.match('./images/offline-image.png');
             }
             
-            // Return empty response for other requests
+            // 其他请求返回空响应
             return new Response('', {
               status: 408,
-              statusText: 'Offline mode: Resource unavailable'
+              statusText: '离线模式：资源不可用'
             });
           });
       })
   );
 });
 
-// Handle push events (notifications)
+// 处理推送事件（通知）
 self.addEventListener('push', event => {
-  console.log('[Service Worker] Push notification received', event);
+  console.log('[Service Worker] 收到推送事件', event);
   
-  let notificationData = {};
-  
-  try {
-    if (event.data) {
-      console.log('Push data:', event.data.text());
-      notificationData = event.data.json();
-    } else {
-      console.log('Push event has no data');
+  let notificationData = {
+    title: APP_NAME,
+    body: '有新的更新',
+    icon: './images/icon-192x192.png',
+    badge: './images/badge-72x72.png',
+    data: {
+      url: '/'
     }
-  } catch (e) {
-    console.error('Error parsing push data:', e);
-    notificationData = {
-      title: 'PtvAlert Notification',
-      body: event.data ? event.data.text() : 'New message',
-      icon: '/images/icon-192x192.png',
-      badge: '/images/badge-72x72.png',
-      data: {
-        url: '/'
-      }
-    };
+  };
+  
+  // 尝试解析推送数据
+  if (event.data) {
+    try {
+      console.log('推送数据:', event.data.text());
+      notificationData = {
+        ...notificationData,
+        ...event.data.json()
+      };
+    } catch (e) {
+      console.error('解析推送数据失败:', e);
+      notificationData.body = event.data.text();
+    }
   }
   
-  console.log('Notification data:', notificationData);
+  console.log('通知数据:', notificationData);
   
-  // Handle push notification
-  if (notificationData.title) {
-    const options = {
+  // 显示通知
+  event.waitUntil(
+    self.registration.showNotification(notificationData.title, {
       body: notificationData.body,
-      icon: notificationData.icon || '/images/icon-192x192.png',
-      badge: notificationData.badge || '/images/badge-72x72.png',
+      icon: notificationData.icon,
+      badge: notificationData.badge,
       vibrate: [100, 50, 100],
       data: notificationData.data || {},
       actions: notificationData.actions || [
         { action: 'view', title: '查看详情' }
       ]
-    };
-    
-    // If there's marker info, save it to IndexedDB
-    if (notificationData.data && notificationData.data.markerId && notificationData.data.markerInfo) {
-      updateLocalMarkers(notificationData.data.markerInfo);
-    }
-    
-    event.waitUntil(
-      self.registration.showNotification(notificationData.title, options)
-        .then(() => console.log('Notification shown successfully'))
-        .catch(err => console.error('Failed to show notification:', err))
-    );
-  }
+    })
+    .then(() => console.log('通知显示成功'))
+    .catch(err => console.error('显示通知失败:', err))
+  );
 });
 
-// Handle notification clicks
+// 处理通知点击事件
 self.addEventListener('notificationclick', event => {
-  console.log('[Service Worker] Notification click:', event);
+  console.log('[Service Worker] 通知被点击', event);
   
-  // Close the notification
+  // 关闭通知
   event.notification.close();
   
-  // Get notification data
+  // 获取通知数据
   const data = event.notification.data || {};
   let url = data.url || '/';
   
-  // Handle different actions
+  // 处理不同的操作
   if (event.action === 'view' || event.action === 'view-details') {
-    // View details
+    // 查看详情
     if (data.markerId) {
       url = `/marker-details.html?id=${data.markerId}`;
     }
   } else if (event.action === 'navigate' || event.action === 'view-map') {
-    // View on map
+    // 在地图上查看
     if (data.markerInfo && data.markerInfo.lat && data.markerInfo.lng) {
       url = `/?lat=${data.markerInfo.lat}&lng=${data.markerInfo.lng}&zoom=15`;
     }
   }
   
-  // Open the appropriate URL
+  // 打开相应的URL
   event.waitUntil(
     clients.matchAll({ type: 'window' })
       .then(clientList => {
-        // Check if a window is already open
+        // 检查是否已有窗口打开
         for (const client of clientList) {
           if (client.url.includes(url) && 'focus' in client) {
             return client.focus();
           }
         }
         
-        // If no window is open, open a new one
+        // 如果没有窗口打开，打开一个新窗口
         if (clients.openWindow) {
           return clients.openWindow(url);
         }
@@ -243,219 +226,100 @@ self.addEventListener('notificationclick', event => {
   );
 });
 
-// Handle sync events for offline support
+// 处理同步事件以支持离线功能
 self.addEventListener('sync', event => {
-  console.log('[Service Worker] Background sync:', event);
+  console.log('[Service Worker] 后台同步:', event);
   
-  if (event.tag === 'submit-report') {
-    event.waitUntil(syncOfflineReports());
-  } else if (event.tag === 'update-markers') {
-    event.waitUntil(updateMarkersFromServer());
+  if (event.tag === 'sync-markers') {
+    event.waitUntil(syncMarkers());
   }
 });
 
-// Sync offline reports
-async function syncOfflineReports() {
+// 在后台同步标记
+async function syncMarkers() {
   try {
-    // Get offline reports from IndexedDB
-    const db = await openDatabase();
-    const transaction = db.transaction('offlineReports', 'readwrite');
-    const store = transaction.objectStore('offlineReports');
-    const reports = await store.getAll();
+    console.log('开始同步标记...');
     
-    console.log('[Service Worker] Syncing offline reports:', reports.length);
-    
-    // Send each report to the server
-    for (const report of reports) {
-      try {
-        // Send to the API
-        const response = await fetch('/api/markers', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(report)
-        });
-        
-        if (response.ok) {
-          // Remove from offline store on success
-          await store.delete(report.id);
-          console.log('[Service Worker] Synced report:', report.id);
-        }
-      } catch (error) {
-        console.error('[Service Worker] Failed to sync report:', error);
-      }
-    }
-  } catch (error) {
-    console.error('[Service Worker] Error syncing offline reports:', error);
-  }
-}
-
-// Update markers from server
-async function updateMarkersFromServer() {
-  try {
-    const response = await fetch('/api/markers');
+    // 从服务器获取最新标记数据
+    const lastUpdate = await getLastUpdateTime() || 0;
+    const response = await fetch(`/api/markers?updated_since=${new Date(lastUpdate).toISOString()}`);
     
     if (!response.ok) {
-      throw new Error('Failed to fetch markers');
+      throw new Error('服务器响应错误: ' + response.statusText);
     }
     
-    const markers = await response.json();
-    const db = await openDatabase();
-    const transaction = db.transaction('markers', 'readwrite');
-    const store = transaction.objectStore('markers');
+    const data = await response.json();
     
-    // Get last update time
-    const lastUpdateTime = await getLastUpdateTime();
-    let newMarkers = 0;
-    
-    // Process each marker
-    for (const [id, marker] of Object.entries(markers)) {
-      // Add ID to marker object if not present
-      const markerWithId = { ...marker, id: id };
+    if (data.success && data.markers) {
+      console.log(`同步到${data.markers.length}个标记`);
       
-      // Check if marker is newer than last update
-      const markerTime = new Date(marker.timestamp || marker.time).getTime();
-      if (!lastUpdateTime || markerTime > lastUpdateTime) {
-        newMarkers++;
-        // Save to IndexedDB
-        await store.put(markerWithId);
-        
-        // Notify about new marker if it's recent (last hour)
-        const oneHourAgo = Date.now() - (60 * 60 * 1000);
-        if (markerTime > oneHourAgo) {
-          notifyMarkerUpdate(markerWithId);
-        }
+      // 将标记保存到本地
+      for (const marker of data.markers) {
+        await saveMarkerToIndexedDB(marker);
       }
-    }
-    
-    // Update last sync time
-    await updateLastSyncTime(Date.now());
-    
-    console.log(`[Service Worker] Updated markers: ${newMarkers} new/updated of ${Object.keys(markers).length} total`);
-  } catch (error) {
-    console.error('[Service Worker] Error updating markers:', error);
-  }
-}
-
-// Get last update time from IndexedDB
-async function getLastUpdateTime() {
-  const db = await openDatabase();
-  const transaction = db.transaction('meta', 'readonly');
-  const store = transaction.objectStore('meta');
-  return await store.get('lastUpdate') || 0;
-}
-
-// Update last sync time in IndexedDB
-async function updateLastSyncTime(timestamp) {
-  const db = await openDatabase();
-  const transaction = db.transaction('meta', 'readwrite');
-  const store = transaction.objectStore('meta');
-  return await store.put(timestamp, 'lastUpdate');
-}
-
-// Save marker to IndexedDB
-async function saveMarkerToIndexedDB(marker) {
-  const db = await openDatabase();
-  const transaction = db.transaction('markers', 'readwrite');
-  const store = transaction.objectStore('markers');
-  return await store.put(marker);
-}
-
-// Update local markers from notification data
-async function updateLocalMarkers(markerData) {
-  if (!markerData || !markerData.id) {
-    console.error('[Service Worker] Invalid marker data:', markerData);
-    return;
-  }
-  
-  try {
-    // Ensure we have a database connection
-    const db = await openDatabase();
-    const transaction = db.transaction('markers', 'readwrite');
-    const store = transaction.objectStore('markers');
-    
-    // Check if we already have this marker
-    const existingMarker = await store.get(markerData.id);
-    
-    // If the marker already exists and is not older, skip the update
-    if (existingMarker) {
-      const existingTime = new Date(existingMarker.timestamp || existingMarker.time).getTime();
-      const newTime = new Date(markerData.timestamp || markerData.time).getTime();
       
-      if (existingTime >= newTime) {
-        console.log('[Service Worker] Marker already up to date:', markerData.id);
-        return;
-      }
+      // 更新上次同步时间
+      await updateLastSyncTime(Date.now());
     }
-    
-    // Save or update the marker
-    await store.put(markerData);
-    console.log('[Service Worker] Updated local marker:', markerData.id);
-    
-    // Update the last sync time
-    await updateLastSyncTime(Date.now());
     
     return true;
   } catch (error) {
-    console.error('[Service Worker] Error updating local marker:', error);
+    console.error('同步标记失败:', error);
     return false;
   }
 }
 
-// Open IndexedDB
-async function openDatabase() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open('ptvalert-db', 1);
-    
-    request.onupgradeneeded = event => {
-      const db = event.target.result;
-      
-      // Create markers store
-      if (!db.objectStoreNames.contains('markers')) {
-        const markersStore = db.createObjectStore('markers', { keyPath: 'id' });
-        markersStore.createIndex('timestamp', 'timestamp', { unique: false });
-      }
-      
-      // Create offline reports store
-      if (!db.objectStoreNames.contains('offlineReports')) {
-        const reportsStore = db.createObjectStore('offlineReports', { keyPath: 'id' });
-        reportsStore.createIndex('timestamp', 'timestamp', { unique: false });
-      }
-      
-      // Create meta store for app data
-      if (!db.objectStoreNames.contains('meta')) {
-        db.createObjectStore('meta');
-      }
-    };
-    
-    request.onsuccess = event => resolve(event.target.result);
-    request.onerror = event => reject(event.target.error);
-  });
+// 获取上次更新时间
+async function getLastUpdateTime() {
+  // 简化示例：从localStorage获取
+  return parseInt(localStorage.getItem('markers_last_sync') || '0');
 }
 
-// Show notification for marker update
-function notifyMarkerUpdate(marker) {
-  if (!marker) return;
+// 更新上次同步时间
+async function updateLastSyncTime(timestamp) {
+  // 简化示例：保存到localStorage
+  localStorage.setItem('markers_last_sync', timestamp.toString());
+}
+
+// 保存标记到本地数据库
+async function saveMarkerToIndexedDB(marker) {
+  // 这里应该实现IndexedDB存储逻辑
+  // 简化示例，实际应使用IndexedDB API
+  console.log('保存标记到本地:', marker.id);
   
-  const title = marker.title || marker.description || '未命名位置';
-  const options = {
-    body: marker.description || '新的地图标记已添加',
-    icon: '/images/map-icon-192x192.png',
-    badge: '/images/badge-72x72.png',
-    vibrate: [100, 50, 100],
+  // 如果有更新，通知用户
+  if (marker.priority === 'high') {
+    notifyMarkerUpdate(marker);
+  }
+}
+
+// 通知标记更新
+function notifyMarkerUpdate(marker) {
+  self.registration.showNotification(`${APP_NAME}: 标记更新`, {
+    body: marker.title || '地图标记已更新',
+    icon: './images/icon-192x192.png',
+    badge: './images/badge-72x72.png',
     data: {
-      url: `/marker-details.html?id=${marker.id}`,
       markerId: marker.id,
       markerInfo: marker
     },
     actions: [
-      { action: 'view', title: '查看详情' },
-      { action: 'navigate', title: '查看地图' }
+      { action: 'view-details', title: '查看详情' },
+      { action: 'view-map', title: '在地图上查看' }
     ]
-  };
+  })
+  .then(() => console.log('[Service Worker] 标记通知已显示:', marker.id))
+  .catch(error => console.error('[Service Worker] 显示标记通知失败:', error));
+}
+
+// 处理消息事件 - 从网页接收消息
+self.addEventListener('message', event => {
+  console.log('[Service Worker] 收到消息', event.data);
   
-  self.registration.showNotification(`新地图标记: ${title}`, options)
-    .then(() => console.log('[Service Worker] Marker notification shown:', marker.id))
-    .catch(error => console.error('[Service Worker] Failed to show marker notification:', error));
-} 
+  // 处理来自网页的消息
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+console.log('[Service Worker] 已加载'); 

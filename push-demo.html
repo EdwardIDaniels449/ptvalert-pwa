@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>推送通知演示</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    
+    .container {
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .status-container {
+      margin: 20px 0;
+      padding: 15px;
+      border-radius: 4px;
+      background-color: #f0f0f0;
+    }
+    
+    .status-ok {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    
+    .status-error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    
+    button {
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 10px 2px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background-color 0.3s;
+    }
+    
+    button:hover {
+      background-color: #45a049;
+    }
+    
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    #unsubscribe-btn {
+      background-color: #f44336;
+    }
+    
+    #unsubscribe-btn:hover {
+      background-color: #d32f2f;
+    }
+    
+    .btn-container {
+      text-align: center;
+      margin: 20px 0;
+    }
+    
+    #config-info, #subscription-info {
+      font-family: monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    
+    .section {
+      margin-bottom: 30px;
+    }
+    
+    .section-title {
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 5px;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1>推送通知演示</h1>
+  
+  <div class="container">
+    <div class="section">
+      <h2 class="section-title">浏览器支持</h2>
+      <div id="browser-support" class="status-container">
+        检查浏览器支持...
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2 class="section-title">服务器配置</h2>
+      <div id="server-config-status" class="status-container">
+        检查服务器配置...
+      </div>
+      <div id="config-info"></div>
+    </div>
+    
+    <div class="section">
+      <h2 class="section-title">推送通知订阅</h2>
+      
+      <div class="btn-container">
+        <button id="push-subscribe" disabled>订阅推送通知</button>
+        <button id="push-unsubscribe" disabled>取消订阅</button>
+      </div>
+      
+      <div id="subscription-status" class="status-container">
+        未订阅
+      </div>
+      <div id="subscription-info"></div>
+    </div>
+    
+    <div class="section">
+      <h2 class="section-title">测试通知</h2>
+      <div class="btn-container">
+        <button id="test-notification" disabled>发送测试通知</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 加载配置和推送客户端脚本 -->
+  <script src="config.js"></script>
+  <script src="push-client.js"></script>
+  
+  <script>
+    // 定义状态更新函数
+    function updateElementStatus(elementId, isSuccess, message) {
+      const element = document.getElementById(elementId);
+      element.textContent = message;
+      element.className = 'status-container ' + (isSuccess ? 'status-ok' : 'status-error');
+    }
+    
+    // 当文档加载完成时初始化
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 检查配置
+      const config = window.PushNotifications.getConfig();
+      if (!config.VAPID_PUBLIC_KEY) {
+        updateElementStatus(
+          'server-config-status',
+          false,
+          '❌ 未配置VAPID公钥，请在config.js中设置'
+        );
+      }
+      
+      // 检查浏览器支持
+      const isSupported = window.PushNotifications.isPushNotificationSupported();
+      updateElementStatus(
+        'browser-support',
+        isSupported,
+        isSupported ? '✅ 您的浏览器支持推送通知' : '❌ 您的浏览器不支持推送通知'
+      );
+      
+      // 检查服务器配置
+      try {
+        const configResult = await window.PushNotifications.testPushConfiguration();
+        updateElementStatus(
+          'server-config-status',
+          configResult.success,
+          configResult.success ? '✅ 服务器推送配置正确' : '❌ 服务器推送配置错误'
+        );
+        
+        document.getElementById('config-info').textContent = JSON.stringify(configResult, null, 2);
+        
+        // 只有在浏览器支持且服务器配置正确时启用按钮
+        if (isSupported && configResult.success) {
+          document.getElementById('push-subscribe').disabled = false;
+        }
+      } catch (error) {
+        updateElementStatus(
+          'server-config-status',
+          false,
+          `❌ 无法连接到服务器: ${error.message}`
+        );
+      }
+      
+      // 检查现有订阅
+      if (isSupported) {
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          const subscription = await registration.pushManager.getSubscription();
+          
+          if (subscription) {
+            updateElementStatus(
+              'subscription-status',
+              true,
+              '✅ 已订阅推送通知'
+            );
+            document.getElementById('subscription-info').textContent = 
+              JSON.stringify(subscription.toJSON(), null, 2);
+            
+            document.getElementById('push-unsubscribe').disabled = false;
+            document.getElementById('test-notification').disabled = false;
+          }
+        } catch (error) {
+          console.error('检查订阅状态时出错:', error);
+        }
+      }
+      
+      // 订阅按钮事件
+      document.getElementById('push-subscribe').addEventListener('click', async () => {
+        try {
+          const result = await window.PushNotifications.subscribeToPushNotifications();
+          
+          if (result.success) {
+            updateElementStatus(
+              'subscription-status',
+              true,
+              '✅ 成功订阅推送通知'
+            );
+            document.getElementById('subscription-info').textContent = 
+              JSON.stringify(result.subscription.toJSON(), null, 2);
+            
+            document.getElementById('push-unsubscribe').disabled = false;
+            document.getElementById('test-notification').disabled = false;
+            document.getElementById('push-subscribe').disabled = true;
+          } else {
+            updateElementStatus(
+              'subscription-status',
+              false,
+              `❌ 订阅失败: ${result.error}`
+            );
+          }
+        } catch (error) {
+          updateElementStatus(
+            'subscription-status',
+            false,
+            `❌ 订阅出错: ${error.message}`
+          );
+        }
+      });
+      
+      // 取消订阅按钮事件
+      document.getElementById('push-unsubscribe').addEventListener('click', async () => {
+        try {
+          const result = await window.PushNotifications.unsubscribeFromPushNotifications();
+          
+          if (result.success) {
+            updateElementStatus(
+              'subscription-status',
+              false,
+              '❌ 已取消订阅推送通知'
+            );
+            document.getElementById('subscription-info').textContent = '';
+            
+            document.getElementById('push-unsubscribe').disabled = true;
+            document.getElementById('test-notification').disabled = true;
+            document.getElementById('push-subscribe').disabled = false;
+          } else {
+            updateElementStatus(
+              'subscription-status',
+              false,
+              `❌ 取消订阅失败: ${result.error}`
+            );
+          }
+        } catch (error) {
+          updateElementStatus(
+            'subscription-status',
+            false,
+            `❌ 取消订阅出错: ${error.message}`
+          );
+        }
+      });
+      
+      // 测试通知按钮事件
+      document.getElementById('test-notification').addEventListener('click', async () => {
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          
+          // 创建测试通知
+          registration.showNotification('测试通知', {
+            body: '这是一个本地测试通知，不是通过服务器推送的',
+            icon: './images/icon-192x192.png',
+            badge: './images/badge-72x72.png',
+            vibrate: [100, 50, 100],
+            data: {
+              url: '/push-demo.html',
+              dateOfArrival: Date.now()
+            },
+            actions: [
+              { action: 'view', title: '查看' },
+              { action: 'close', title: '关闭' }
+            ]
+          });
+          
+          console.log('测试通知已发送');
+        } catch (error) {
+          console.error('发送测试通知失败:', error);
+          alert(`发送测试通知失败: ${error.message}`);
+        }
+      });
+    });
+  </script>
+</body>
+</html> 
