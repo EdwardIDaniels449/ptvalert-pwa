@@ -2,7 +2,7 @@
 
 // 从配置文件加载配置
 let CONFIG = {
-  SERVER_URL: 'https://your-worker.your-account.workers.dev', // 默认值，会被config.js中的值覆盖
+  SERVER_URL: 'https://ptvalert.pages.dev', // 默认值，会被config.js中的值覆盖
   VAPID_PUBLIC_KEY: '',
   SERVICE_WORKER_PATH: '/service-worker.js'
 };
