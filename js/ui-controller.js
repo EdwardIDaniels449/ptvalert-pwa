@@ -538,22 +538,127 @@
             return;
         }
         
-        // Here you would normally send the data to your backend
-        console.log('[UI Controller] Submitting report:', {
+        // Get the image if available
+        const imageData = document.getElementById('previewImg').style.display !== 'none' ?
+            document.getElementById('previewImg').src : null;
+        
+        // Create report data
+        const reportData = {
             description: description,
             location: window.selectedLocation,
-            image: document.getElementById('previewImg').src || null
-        });
+            image: imageData,
+            timestamp: new Date().toISOString(),
+            user: firebase.auth().currentUser ? firebase.auth().currentUser.uid : 'anonymous'
+        };
         
-        // For demo, just show success and close the form
-        document.getElementById('reportCounterPopup').style.display = 'block';
-        closeReportForm();
+        console.log('[UI Controller] Submitting report:', reportData);
         
-        // Add a new marker for the report
-        addReportMarker(window.selectedLocation, description);
-        
-        // Save markers to localStorage
-        saveMarkersToStorage();
+        // Try to send data to Firebase if available
+        if (typeof firebase !== 'undefined' && firebase.database) {
+            try {
+                // Save to Firebase
+                const reportRef = firebase.database().ref('reports').push();
+                reportRef.set(reportData)
+                    .then(function() {
+                        console.log('[UI Controller] Report saved to Firebase successfully');
+                        
+                        // Show success message
+                        document.getElementById('reportCounterPopup').style.display = 'block';
+                        
+                        // Update report counter
+                        updateReportCounter();
+                        
+                        // Close the form
+                        closeReportForm();
+                        
+                        // Add marker to map
+                        addReportMarker(window.selectedLocation, description);
+                        
+                        // Save markers to localStorage
+                        saveMarkersToStorage();
+                    })
+                    .catch(function(error) {
+                        console.error('[UI Controller] Error saving to Firebase:', error);
+                        
+                        // Fallback to localStorage if Firebase fails
+                        saveReportToLocalStorage(reportData);
+                        
+                        // Show success and close form
+                        document.getElementById('reportCounterPopup').style.display = 'block';
+                        closeReportForm();
+                        
+                        // Add marker
+                        addReportMarker(window.selectedLocation, description);
+                        saveMarkersToStorage();
+                    });
+            } catch (error) {
+                console.error('[UI Controller] Error with Firebase:', error);
+                
+                // Fallback to localStorage
+                saveReportToLocalStorage(reportData);
+                
+                // Show success and close form
+                document.getElementById('reportCounterPopup').style.display = 'block';
+                closeReportForm();
+                
+                // Add marker
+                addReportMarker(window.selectedLocation, description);
+                saveMarkersToStorage();
+            }
+        } else {
+            // Firebase not available, use localStorage
+            saveReportToLocalStorage(reportData);
+            
+            // Show success message and close form
+            document.getElementById('reportCounterPopup').style.display = 'block';
+            closeReportForm();
+            
+            // Add marker
+            addReportMarker(window.selectedLocation, description);
+            saveMarkersToStorage();
+        }
+    }
+    
+    // Save report to localStorage (fallback method)
+    function saveReportToLocalStorage(reportData) {
+        try {
+            // Get existing reports or initialize empty array
+            const reports = JSON.parse(localStorage.getItem('reports') || '[]');
+            
+            // Add new report
+            reports.push(reportData);
+            
+            // Save back to localStorage
+            localStorage.setItem('reports', JSON.stringify(reports));
+            
+            console.log('[UI Controller] Report saved to localStorage successfully');
+        } catch (error) {
+            console.error('[UI Controller] Error saving to localStorage:', error);
+        }
+    }
+    
+    // Update report counter
+    function updateReportCounter() {
+        try {
+            // Get current count from localStorage
+            let count = parseInt(localStorage.getItem('reportCount') || '0');
+            
+            // Increment
+            count++;
+            
+            // Update localStorage
+            localStorage.setItem('reportCount', count.toString());
+            
+            // Update UI
+            const countElement = document.getElementById('reportCountValue');
+            if (countElement) {
+                countElement.textContent = count.toString();
+            }
+            
+            console.log('[UI Controller] Report count updated:', count);
+        } catch (error) {
+            console.error('[UI Controller] Error updating report count:', error);
+        }
     }
 
     // Add a new marker for a submitted report
