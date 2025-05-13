@@ -230,13 +230,17 @@
             return;
         }
         
+        // 创建一个格式正确的同步请求体
+        const syncRequestBody = {
+            reports: [],
+            sendNotifications: false
+        };
+        
         // 测试基本API端点
         Promise.all([
             testEndpoint(`${apiUrl}/ping`, 'Ping', 'GET'),
             testEndpoint(`${apiUrl}/api/reports`, '报告列表', 'GET'),
-            testEndpoint(`${apiUrl}/api/sync-from-firebase`, '同步端点', 'POST', {
-                reports: [] // 空数组作为有效载荷
-            }),
+            testEndpoint(`${apiUrl}/api/sync-from-firebase`, '同步端点', 'POST', syncRequestBody),
             testEndpoint(`${apiUrl}/api/send-notification`, '通知端点', 'POST', {
                 message: '测试通知消息',
                 title: '测试标题',
@@ -279,6 +283,8 @@
     
     // 测试单个端点
     function testEndpoint(url, name, method = 'GET', body = null) {
+        console.log(`[API诊断] 测试端点: ${name}, URL: ${url}, 方法: ${method}`);
+        
         const options = {
             method: method,
             headers: {
@@ -292,6 +298,7 @@
         
         return fetch(url, options)
         .then(response => {
+            console.log(`[API诊断] ${name} 响应: ${response.status} ${response.statusText}`);
             return {
                 name: name,
                 success: response.ok,
@@ -300,6 +307,7 @@
             };
         })
         .catch(error => {
+            console.error(`[API诊断] ${name} 错误:`, error);
             return {
                 name: name,
                 success: false,

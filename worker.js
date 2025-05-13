@@ -59,18 +59,66 @@ async function handleRequest(request) {
       return await handleCreateReport(request);
     }
     
-    // 与Firebase同步
+    // 与Firebase同步 - 要求POST方法
     if (path === '/api/sync-from-firebase') {
+      // 检查方法是否为POST
+      if (request.method !== 'POST') {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Method Not Allowed',
+          message: 'This endpoint requires POST method',
+          details: 'Please use POST method with a valid JSON body containing "reports" array'
+        }), {
+          status: 405,
+          headers: {
+            'Content-Type': 'application/json',
+            'Allow': 'POST',
+            ...corsHeaders
+          }
+        });
+      }
       return await handleSyncFromFirebase(request);
     }
     
     // 发送通知
     if (path === '/api/send-notification') {
+      // 检查方法是否为POST
+      if (request.method !== 'POST') {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Method Not Allowed',
+          message: 'This endpoint requires POST method',
+          details: 'Please use POST method with a valid JSON body containing "message" field'
+        }), {
+          status: 405,
+          headers: {
+            'Content-Type': 'application/json',
+            'Allow': 'POST',
+            ...corsHeaders
+          }
+        });
+      }
       return await handleSendNotification(request);
     }
     
     // 订阅推送通知
     if (path === '/api/subscribe') {
+      // 检查方法是否为POST
+      if (request.method !== 'POST') {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Method Not Allowed',
+          message: 'This endpoint requires POST method',
+          details: 'Please use POST method with a valid JSON body containing subscription data'
+        }), {
+          status: 405,
+          headers: {
+            'Content-Type': 'application/json',
+            'Allow': 'POST',
+            ...corsHeaders
+          }
+        });
+      }
       return await handleSubscribe(request);
     }
     

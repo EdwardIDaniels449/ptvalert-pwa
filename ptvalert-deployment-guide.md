@@ -94,6 +94,7 @@ npx wrangler tail
     a. 使用 `/ping` 和 `/version` 端点测试 API 可用性
     b. 检查 `fix-api-mode.js` 中的日志输出
     c. 使用 `api-diagnostics.js` 工具进行更深入的诊断
+    d. **确保使用正确的HTTP方法**（POST/GET）
 
 #### 已知问题及解决方案
 
@@ -130,7 +131,22 @@ npx wrangler tail
    })
    ```
 
-2. **CORS 问题**
+2. **405 Method Not Allowed 错误**
+
+   如果收到此错误，表示您尝试使用错误的HTTP方法访问端点。例如，对需要POST请求的端点使用了GET请求。
+
+   ```json
+   {
+     "success": false,
+     "error": "Method Not Allowed",
+     "message": "This endpoint requires POST method",
+     "details": "Please use POST method with a valid JSON body"
+   }
+   ```
+
+   解决方案是确保严格按照API参考表中指定的HTTP方法发送请求。
+
+3. **CORS 问题**
 
    如果遇到跨域资源共享 (CORS) 错误，确保 Worker 中包含了正确的 CORS 头部：
    
@@ -174,4 +190,21 @@ async function handleGetReports(request) {
 
 ## 联系与支持
 
-如有任何问题，请联系项目维护者。 
+如有任何问题，请联系项目维护者。
+
+## API端点参考
+
+Worker提供以下API端点：
+
+| 端点 | 方法 | 描述 | 请求体示例 |
+|------|------|------|------------|
+| `/ping` | GET | 健康检查和连接测试 | 无需请求体 |
+| `/version` | GET | 获取API版本信息 | 无需请求体 |
+| `/api/reports` | GET | 获取所有事件报告 | 无需请求体 |
+| `/api/reports/{id}` | GET | 获取指定ID的报告 | 无需请求体 |
+| `/api/reports` | POST | 创建新报告 | `{"id":"reportId","location":{"lat":123,"lng":456}}` |
+| `/api/sync-from-firebase` | POST | 从Firebase同步数据 | `{"reports":[]}` |
+| `/api/send-notification` | POST | 发送推送通知 | `{"message":"通知内容"}` |
+| `/api/subscribe` | POST | 订阅推送通知 | `{"subscription":{"endpoint":"..."}}` |
+
+**重要提示**：所有POST端点必须使用正确的HTTP方法和Content-Type头。GET请求到需要POST的端点将返回405错误。 
