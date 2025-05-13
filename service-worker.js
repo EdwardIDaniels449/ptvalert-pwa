@@ -1,13 +1,13 @@
-// 定义缓存名称和应用版本
+// Define cache name and app version
 const CACHE_NAME = 'ptvalert-cache-v2';
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.0.2';
 
-// 需要缓存的核心资源
+// Resources to cache
 const urlsToCache = [
-  '/ptvalert-pwa/',
-  '/ptvalert-pwa/index.html',
-  '/ptvalert-pwa/manifest.json',
-  '/ptvalert-pwa/offline.html',
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/offline.html',
   // CSS
   'https://unpkg.com/leaflet@1.7.1/dist/leaflet.css',
   // JavaScript
@@ -15,53 +15,54 @@ const urlsToCache = [
   'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js',
   'https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js',
   'https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js',
-  // 图标和图片
-  '/ptvalert-pwa/images/icon-72x72.png',
-  '/ptvalert-pwa/images/icon-96x96.png',
-  '/ptvalert-pwa/images/icon-128x128.png',
-  '/ptvalert-pwa/images/icon-144x144.png',
-  '/ptvalert-pwa/images/icon-152x152.png',
-  '/ptvalert-pwa/images/icon-192x192.png',
-  '/ptvalert-pwa/images/icon-384x384.png',
-  '/ptvalert-pwa/images/icon-512x512.png',
-  '/ptvalert-pwa/images/icon-512x512-maskable.png',
-  '/ptvalert-pwa/images/report-icon-192x192.png',
-  '/ptvalert-pwa/images/map-icon-192x192.png'
+  '/js/notification-handler.js',
+  // Icons and images
+  '/images/icon-72x72.png',
+  '/images/icon-96x96.png',
+  '/images/icon-128x128.png',
+  '/images/icon-144x144.png',
+  '/images/icon-152x152.png',
+  '/images/icon-192x192.png',
+  '/images/icon-384x384.png',
+  '/images/icon-512x512.png',
+  '/images/icon-512x512-maskable.png',
+  '/images/report-icon-192x192.png',
+  '/images/map-icon-192x192.png'
 ];
 
-// 安装Service Worker
+// Install Service Worker
 self.addEventListener('install', event => {
-  console.log('[Service Worker] 安装');
+  console.log('[Service Worker] Installing');
   
-  // 跳过等待，直接激活
+  // Skip waiting to immediately activate
   self.skipWaiting();
   
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('[Service Worker] 缓存应用Shell');
+        console.log('[Service Worker] Caching app shell');
         return cache.addAll(urlsToCache);
       })
       .catch(error => {
-        console.error('[Service Worker] 缓存失败:', error);
+        console.error('[Service Worker] Cache failed:', error);
       })
   );
 });
 
-// 激活Service Worker
+// Activate Service Worker
 self.addEventListener('activate', event => {
-  console.log('[Service Worker] 激活');
+  console.log('[Service Worker] Activating');
   
-  // 立即获取控制权
+  // Take control immediately
   event.waitUntil(clients.claim());
   
-  // 清理旧缓存
+  // Clean up old caches
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
-            console.log('[Service Worker] 删除旧缓存:', cacheName);
+            console.log('[Service Worker] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -70,11 +71,14 @@ self.addEventListener('activate', event => {
   );
 });
 
-// 处理网络请求策略
+// Handle fetch requests with cache-first strategy
 self.addEventListener('fetch', event => {
-  // 排除不需要缓存的请求
-  // 如Firebase API请求、地图瓦片、分析请求等
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') return;
+  
+  // Skip API requests and other non-cacheable requests
   if (
+    event.request.url.includes('/api/') ||
     event.request.url.includes('firebaseio.com') ||
     event.request.url.includes('googleapis.com') ||
     event.request.url.includes('tile.openstreetmap.org') ||
@@ -84,99 +88,97 @@ self.addEventListener('fetch', event => {
     return;
   }
   
-  // 处理导航请求
+  // Handle navigation requests - serve index.html or return offline page if offline
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
         .catch(() => {
-          return caches.match('/ptvalert-pwa/offline.html');
+          return caches.match('/offline.html');
         })
     );
     return;
   }
   
-  // 对其他请求使用"缓存优先，不命中则网络获取并缓存"策略
+  // For other requests, try cache first, then network with cache update
   event.respondWith(
     caches.match(event.request)
       .then(cachedResponse => {
-        // 如果在缓存中找到响应，则返回缓存的版本
+        // If found in cache, return cached response
         if (cachedResponse) {
           return cachedResponse;
         }
         
-        // 否则尝试从网络获取
+        // Otherwise fetch from network
         return fetch(event.request)
           .then(response => {
-            // 检查是否获得了有效的响应
+            // Check for valid response
             if (!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
             
-            // 克隆响应以便我们可以将其添加到缓存中
-            // 因为响应流只能被消费一次
+            // Clone response to save in cache
             const responseToCache = response.clone();
             
+            // Add to cache
             caches.open(CACHE_NAME)
               .then(cache => {
-                // 排除不需要缓存的请求
-                if (!event.request.url.includes('socket.io')) {
-                  cache.put(event.request, responseToCache);
-                }
+                cache.put(event.request, responseToCache);
               });
               
             return response;
           })
           .catch(error => {
-            console.log('[Service Worker] 获取资源失败:', error);
-            // 对于图片等资源，可以返回一个占位图像
+            console.log('[Service Worker] Fetch failed:', error);
+            
+            // Return placeholder for images
             if (event.request.url.match(/\.(jpg|jpeg|png|gif|svg)$/)) {
-              return caches.match('/ptvalert-pwa/images/offline-image.png');
+              return caches.match('/images/offline-image.png');
             }
             
-            // 对于不关键的请求，可以返回一个空响应
+            // Return empty response for other requests
             return new Response('', {
               status: 408,
-              statusText: '离线模式: 资源不可用'
+              statusText: 'Offline mode: Resource unavailable'
             });
           });
       })
   );
 });
 
-// 监听推送事件
+// Handle push events (notifications)
 self.addEventListener('push', event => {
-  console.log('[Service Worker] 收到推送通知', event);
+  console.log('[Service Worker] Push notification received', event);
   
   let notificationData = {};
   
   try {
     if (event.data) {
-      console.log('推送数据:', event.data.text());
+      console.log('Push data:', event.data.text());
       notificationData = event.data.json();
     } else {
-      console.log('推送事件没有数据');
+      console.log('Push event has no data');
     }
   } catch (e) {
-    console.error('解析推送数据出错:', e);
+    console.error('Error parsing push data:', e);
     notificationData = {
-      title: 'PtvAlert通知',
-      body: event.data ? event.data.text() : '有新的消息',
-      icon: '/ptvalert-pwa/images/icon-192x192.png',
-      badge: '/ptvalert-pwa/images/badge-72x72.png',
+      title: 'PtvAlert Notification',
+      body: event.data ? event.data.text() : 'New message',
+      icon: '/images/icon-192x192.png',
+      badge: '/images/badge-72x72.png',
       data: {
-        url: '/ptvalert-pwa/'
+        url: '/'
       }
     };
   }
   
-  console.log('处理的通知数据:', notificationData);
+  console.log('Notification data:', notificationData);
   
-  // Cloudflare Worker 格式的推送通知处理
-  if (notificationData.title && notificationData.data && notificationData.data.url) {
+  // Handle push notification
+  if (notificationData.title) {
     const options = {
       body: notificationData.body,
-      icon: notificationData.icon || '/ptvalert-pwa/images/icon-192x192.png',
-      badge: notificationData.badge || '/ptvalert-pwa/images/badge-72x72.png',
+      icon: notificationData.icon || '/images/icon-192x192.png',
+      badge: notificationData.badge || '/images/badge-72x72.png',
       vibrate: [100, 50, 100],
       data: notificationData.data || {},
       actions: notificationData.actions || [
@@ -184,273 +186,275 @@ self.addEventListener('push', event => {
       ]
     };
     
-    // 如果有markerId，认为是地图标记通知
-    if (notificationData.data.markerId) {
-      console.log('显示地图标记通知:', notificationData.data.markerId);
-      // 保存/更新地图标记数据到IndexedDB
-      if (notificationData.data.markerInfo) {
-        updateLocalMarkers(notificationData.data.markerInfo);
-      }
+    // If there's marker info, save it to IndexedDB
+    if (notificationData.data && notificationData.data.markerId && notificationData.data.markerInfo) {
+      updateLocalMarkers(notificationData.data.markerInfo);
     }
     
     event.waitUntil(
       self.registration.showNotification(notificationData.title, options)
-        .then(() => console.log('通知显示成功'))
-        .catch(err => console.error('显示通知失败:', err))
+        .then(() => console.log('Notification shown successfully'))
+        .catch(err => console.error('Failed to show notification:', err))
     );
-    
-    return;
+  }
+});
+
+// Handle notification clicks
+self.addEventListener('notificationclick', event => {
+  console.log('[Service Worker] Notification click:', event);
+  
+  // Close the notification
+  event.notification.close();
+  
+  // Get notification data
+  const data = event.notification.data || {};
+  let url = data.url || '/';
+  
+  // Handle different actions
+  if (event.action === 'view' || event.action === 'view-details') {
+    // View details
+    if (data.markerId) {
+      url = `/marker-details.html?id=${data.markerId}`;
+    }
+  } else if (event.action === 'navigate' || event.action === 'view-map') {
+    // View on map
+    if (data.markerInfo && data.markerInfo.lat && data.markerInfo.lng) {
+      url = `/?lat=${data.markerInfo.lat}&lng=${data.markerInfo.lng}&zoom=15`;
+    }
   }
   
-  // 处理地图标记推送通知 (兼容旧格式)
-  if (notificationData.type === 'map-marker') {
-    const markerData = notificationData.markerData || {};
-    const options = {
-      body: `新标记: ${markerData.title || '未命名位置'}\n${markerData.description || ''}`,
-      icon: '/ptvalert-pwa/images/map-icon-192x192.png',
-      badge: '/ptvalert-pwa/images/badge-96x96.png',
-      vibrate: [100, 50, 100],
-      data: {
-        url: `/ptvalert-pwa/?lat=${markerData.lat || 0}&lng=${markerData.lng || 0}&zoom=15`,
-        markerId: markerData.id,
-        markerInfo: markerData
-      },
-      actions: [
-        { action: 'view-map', title: '查看地图' },
-        { action: 'view-details', title: '查看详情' }
-      ]
-    };
-    
-    event.waitUntil(
-      self.registration.showNotification(`新地图标记: ${markerData.title || '未命名位置'}`, options)
-    );
-    
-    // 更新地图标记缓存
-    updateLocalMarkers(markerData);
-    
-    return;
-  }
-  
-  // 处理其他类型的推送通知
-  const options = {
-    body: notificationData.body,
-    icon: notificationData.icon || '/ptvalert-pwa/images/icon-192x192.png',
-    badge: notificationData.badge || '/ptvalert-pwa/images/badge-96x96.png',
-    vibrate: [100, 50, 100],
-    data: notificationData.data || {},
-    actions: notificationData.actions || [
-      { action: 'view', title: '查看详情' }
-    ]
-  };
-  
+  // Open the appropriate URL
   event.waitUntil(
-    self.registration.showNotification(notificationData.title, options)
+    clients.matchAll({ type: 'window' })
+      .then(clientList => {
+        // Check if a window is already open
+        for (const client of clientList) {
+          if (client.url.includes(url) && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        
+        // If no window is open, open a new one
+        if (clients.openWindow) {
+          return clients.openWindow(url);
+        }
+      })
   );
 });
 
-// 处理通知点击事件
-self.addEventListener('notificationclick', event => {
-  console.log('[Service Worker] 通知被点击', event.notification.data);
-  
-  event.notification.close();
-  
-  // 处理地图标记通知的特定操作
-  if (event.notification.data && event.notification.data.markerId) {
-    if (event.action === 'view-map') {
-      // 打开地图并将地图定位到标记位置
-      event.waitUntil(
-        clients.openWindow(event.notification.data.url)
-      );
-      return;
-    }
-    
-    if (event.action === 'view-details') {
-      // 打开标记详情页面
-      event.waitUntil(
-        clients.openWindow(`/ptvalert-pwa/marker-details.html?id=${event.notification.data.markerId}`)
-      );
-      return;
-    }
-  }
-  
-  // 处理其他通知动作
-  if (event.action === 'view' && event.notification.data.url) {
-    // 如果定义了特定URL，则打开该URL
-    event.waitUntil(
-      clients.openWindow(event.notification.data.url)
-    );
-  } else {
-    // 默认打开应用
-    event.waitUntil(
-      clients.matchAll({ type: 'window', includeUncontrolled: true })
-        .then(windowClients => {
-          // 检查是否已经有打开的窗口
-          for (let i = 0; i < windowClients.length; i++) {
-            const client = windowClients[i];
-            // 如果已有窗口，则聚焦它
-            if ('focus' in client) {
-              return client.focus();
-            }
-          }
-          // 否则打开新窗口
-          if (clients.openWindow) {
-            return clients.openWindow('/ptvalert-pwa/');
-          }
-        })
-    );
-  }
-});
-
-// 应用程序同步（仅Chrome/Firefox支持）
+// Handle sync events for offline support
 self.addEventListener('sync', event => {
+  console.log('[Service Worker] Background sync:', event);
+  
   if (event.tag === 'submit-report') {
-    console.log('[Service Worker] 尝试同步提交离线报告');
     event.waitUntil(syncOfflineReports());
-  }
-});
-
-// 处理离线报告的同步逻辑（简化示例）
-// 实际实现需要在前端配合indexedDB存储离线数据
-function syncOfflineReports() {
-  return new Promise((resolve, reject) => {
-    // 在此处编写将IndexedDB中的离线报告发送到服务器的代码
-    // 这只是一个框架，实际实现需要在前端代码中配合使用
-    console.log('[Service Worker] 同步离线报告完成');
-    resolve();
-  });
-}
-
-// 周期性同步（仅Chrome支持）
-self.addEventListener('periodicsync', event => {
-  if (event.tag === 'update-markers') {
+  } else if (event.tag === 'update-markers') {
     event.waitUntil(updateMarkersFromServer());
   }
 });
 
-// 从服务器获取最新的标记点数据
-function updateMarkersFromServer() {
-  return new Promise((resolve, reject) => {
-    console.log('[Service Worker] 执行周期性同步，更新地图标记');
+// Sync offline reports
+async function syncOfflineReports() {
+  try {
+    // Get offline reports from IndexedDB
+    const db = await openDatabase();
+    const transaction = db.transaction('offlineReports', 'readwrite');
+    const store = transaction.objectStore('offlineReports');
+    const reports = await store.getAll();
     
-    // 从服务器获取最新的标记数据
-    fetch('/api/markers?updated_since=' + getLastUpdateTime())
-      .then(response => response.json())
-      .then(data => {
-        // 检查是否有新标记
-        if (data.markers && data.markers.length > 0) {
-          // 处理每个新标记
-          return Promise.all(data.markers.map(marker => {
-            // 存储到IndexedDB
-            return saveMarkerToIndexedDB(marker)
-              .then(() => {
-                // 如果这是新标记或有更新，发送通知
-                if (marker.isNew || marker.hasUpdates) {
-                  return notifyMarkerUpdate(marker);
-                }
-              });
-          }));
+    console.log('[Service Worker] Syncing offline reports:', reports.length);
+    
+    // Send each report to the server
+    for (const report of reports) {
+      try {
+        // Send to the API
+        const response = await fetch('/api/markers', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(report)
+        });
+        
+        if (response.ok) {
+          // Remove from offline store on success
+          await store.delete(report.id);
+          console.log('[Service Worker] Synced report:', report.id);
         }
-      })
-      .then(() => {
-        // 更新最后同步时间
-        updateLastSyncTime(new Date().getTime());
-        resolve();
-      })
-      .catch(error => {
-        console.error('[Service Worker] 获取标记更新失败:', error);
-        reject(error);
-      });
-  });
+      } catch (error) {
+        console.error('[Service Worker] Failed to sync report:', error);
+      }
+    }
+  } catch (error) {
+    console.error('[Service Worker] Error syncing offline reports:', error);
+  }
 }
 
-// 从IndexedDB获取最后更新时间
-function getLastUpdateTime() {
-  // 这里需要实现从IndexedDB获取上次更新时间的逻辑
-  // 默认返回24小时前
-  return new Date(Date.now() - 86400000).toISOString();
-}
-
-// 更新最后同步时间
-function updateLastSyncTime(timestamp) {
-  // 将时间戳保存到IndexedDB
-  // 实现保存逻辑
-}
-
-// 将标记保存到IndexedDB
-function saveMarkerToIndexedDB(marker) {
-  return new Promise((resolve, reject) => {
-    // 实现将标记保存到IndexedDB的逻辑
-    resolve();
-  });
-}
-
-// 当有新的标记数据时，更新本地存储
-function updateLocalMarkers(markerData) {
-  // 实现更新本地标记数据的逻辑
-  // 这可以使用IndexedDB来完成
-  return new Promise((resolve, reject) => {
-    // 打开/创建IndexedDB数据库
-    const request = indexedDB.open('PtvAlertDB', 1);
+// Update markers from server
+async function updateMarkersFromServer() {
+  try {
+    const response = await fetch('/api/markers');
     
-    request.onerror = function(event) {
-      console.error('打开数据库失败:', event.target.error);
-      reject(event.target.error);
-    };
+    if (!response.ok) {
+      throw new Error('Failed to fetch markers');
+    }
     
-    request.onupgradeneeded = function(event) {
+    const markers = await response.json();
+    const db = await openDatabase();
+    const transaction = db.transaction('markers', 'readwrite');
+    const store = transaction.objectStore('markers');
+    
+    // Get last update time
+    const lastUpdateTime = await getLastUpdateTime();
+    let newMarkers = 0;
+    
+    // Process each marker
+    for (const [id, marker] of Object.entries(markers)) {
+      // Add ID to marker object if not present
+      const markerWithId = { ...marker, id: id };
+      
+      // Check if marker is newer than last update
+      const markerTime = new Date(marker.timestamp || marker.time).getTime();
+      if (!lastUpdateTime || markerTime > lastUpdateTime) {
+        newMarkers++;
+        // Save to IndexedDB
+        await store.put(markerWithId);
+        
+        // Notify about new marker if it's recent (last hour)
+        const oneHourAgo = Date.now() - (60 * 60 * 1000);
+        if (markerTime > oneHourAgo) {
+          notifyMarkerUpdate(markerWithId);
+        }
+      }
+    }
+    
+    // Update last sync time
+    await updateLastSyncTime(Date.now());
+    
+    console.log(`[Service Worker] Updated markers: ${newMarkers} new/updated of ${Object.keys(markers).length} total`);
+  } catch (error) {
+    console.error('[Service Worker] Error updating markers:', error);
+  }
+}
+
+// Get last update time from IndexedDB
+async function getLastUpdateTime() {
+  const db = await openDatabase();
+  const transaction = db.transaction('meta', 'readonly');
+  const store = transaction.objectStore('meta');
+  return await store.get('lastUpdate') || 0;
+}
+
+// Update last sync time in IndexedDB
+async function updateLastSyncTime(timestamp) {
+  const db = await openDatabase();
+  const transaction = db.transaction('meta', 'readwrite');
+  const store = transaction.objectStore('meta');
+  return await store.put(timestamp, 'lastUpdate');
+}
+
+// Save marker to IndexedDB
+async function saveMarkerToIndexedDB(marker) {
+  const db = await openDatabase();
+  const transaction = db.transaction('markers', 'readwrite');
+  const store = transaction.objectStore('markers');
+  return await store.put(marker);
+}
+
+// Update local markers from notification data
+async function updateLocalMarkers(markerData) {
+  if (!markerData || !markerData.id) {
+    console.error('[Service Worker] Invalid marker data:', markerData);
+    return;
+  }
+  
+  try {
+    // Ensure we have a database connection
+    const db = await openDatabase();
+    const transaction = db.transaction('markers', 'readwrite');
+    const store = transaction.objectStore('markers');
+    
+    // Check if we already have this marker
+    const existingMarker = await store.get(markerData.id);
+    
+    // If the marker already exists and is not older, skip the update
+    if (existingMarker) {
+      const existingTime = new Date(existingMarker.timestamp || existingMarker.time).getTime();
+      const newTime = new Date(markerData.timestamp || markerData.time).getTime();
+      
+      if (existingTime >= newTime) {
+        console.log('[Service Worker] Marker already up to date:', markerData.id);
+        return;
+      }
+    }
+    
+    // Save or update the marker
+    await store.put(markerData);
+    console.log('[Service Worker] Updated local marker:', markerData.id);
+    
+    // Update the last sync time
+    await updateLastSyncTime(Date.now());
+    
+    return true;
+  } catch (error) {
+    console.error('[Service Worker] Error updating local marker:', error);
+    return false;
+  }
+}
+
+// Open IndexedDB
+async function openDatabase() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('ptvalert-db', 1);
+    
+    request.onupgradeneeded = event => {
       const db = event.target.result;
-      // 创建标记存储对象
+      
+      // Create markers store
       if (!db.objectStoreNames.contains('markers')) {
-        const store = db.createObjectStore('markers', { keyPath: 'id' });
-        store.createIndex('location', ['lat', 'lng'], { unique: false });
-        store.createIndex('timestamp', 'timestamp', { unique: false });
+        const markersStore = db.createObjectStore('markers', { keyPath: 'id' });
+        markersStore.createIndex('timestamp', 'timestamp', { unique: false });
+      }
+      
+      // Create offline reports store
+      if (!db.objectStoreNames.contains('offlineReports')) {
+        const reportsStore = db.createObjectStore('offlineReports', { keyPath: 'id' });
+        reportsStore.createIndex('timestamp', 'timestamp', { unique: false });
+      }
+      
+      // Create meta store for app data
+      if (!db.objectStoreNames.contains('meta')) {
+        db.createObjectStore('meta');
       }
     };
     
-    request.onsuccess = function(event) {
-      const db = event.target.result;
-      const transaction = db.transaction(['markers'], 'readwrite');
-      const store = transaction.objectStore('markers');
-      
-      // 添加或更新标记
-      const addRequest = store.put({
-        ...markerData,
-        timestamp: markerData.timestamp || Date.now()
-      });
-      
-      addRequest.onsuccess = function() {
-        console.log('[Service Worker] 标记已保存到IndexedDB');
-        resolve();
-      };
-      
-      addRequest.onerror = function(event) {
-        console.error('[Service Worker] 保存标记失败:', event.target.error);
-        reject(event.target.error);
-      };
-      
-      transaction.oncomplete = function() {
-        db.close();
-      };
-    };
+    request.onsuccess = event => resolve(event.target.result);
+    request.onerror = event => reject(event.target.error);
   });
 }
 
-// 为标记更新发送通知
+// Show notification for marker update
 function notifyMarkerUpdate(marker) {
-  // 检查通知权限
-  return self.registration.showNotification(`新地图标记: ${marker.title || '未命名位置'}`, {
+  if (!marker) return;
+  
+  const title = marker.title || marker.description || '未命名位置';
+  const options = {
     body: marker.description || '新的地图标记已添加',
-    icon: '/ptvalert-pwa/images/map-icon-192x192.png',
-    badge: '/ptvalert-pwa/images/badge-96x96.png',
+    icon: '/images/map-icon-192x192.png',
+    badge: '/images/badge-72x72.png',
     vibrate: [100, 50, 100],
     data: {
-      url: `/ptvalert-pwa/?lat=${marker.lat || 0}&lng=${marker.lng || 0}&zoom=15`,
+      url: `/marker-details.html?id=${marker.id}`,
       markerId: marker.id,
       markerInfo: marker
     },
     actions: [
-      { action: 'view-map', title: '查看地图' },
-      { action: 'view-details', title: '查看详情' }
+      { action: 'view', title: '查看详情' },
+      { action: 'navigate', title: '查看地图' }
     ]
-  });
+  };
+  
+  self.registration.showNotification(`新地图标记: ${title}`, options)
+    .then(() => console.log('[Service Worker] Marker notification shown:', marker.id))
+    .catch(error => console.error('[Service Worker] Failed to show marker notification:', error));
 } 

@@ -1,9 +1,13 @@
-const webpush = require('web-push');
+// Script to generate VAPID keys for Web Push notifications
+const webPush = require('web-push');
 
-// 生成VAPID密钥
-const vapidKeys = webpush.generateVAPIDKeys();
+// Generate VAPID keys
+const vapidKeys = webPush.generateVAPIDKeys();
 
-console.log('=== VAPID 密钥 ===');
-console.log('公钥:', vapidKeys.publicKey);
-console.log('私钥:', vapidKeys.privateKey);
-console.log('\n复制这些密钥并安全保存。公钥将用于客户端订阅，私钥用于服务器发送推送通知。'); 
+console.log('VAPID Public Key:', vapidKeys.publicKey);
+console.log('VAPID Private Key:', vapidKeys.privateKey);
+
+// Instructions for adding keys to wrangler.toml
+console.log('\nAdd these keys to your wrangler.toml file:');
+console.log(`VAPID_PUBLIC_KEY = "${vapidKeys.publicKey}"`);
+console.log(`VAPID_PRIVATE_KEY = "${vapidKeys.privateKey}"`); 

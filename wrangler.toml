@@ -1,0 +1,40 @@
+name = "ptvalert"
+main = "cloudflare-worker.js"
+compatibility_date = "2023-10-02"
+usage_model = "bundled"
+node_compat = true
+
+# Triggers
+[triggers]
+crons = ["0 * * * *"] # Run hourly
+
+# KV Namespaces bindings - Create these using wrangler CLI:
+# wrangler kv:namespace create SUBSCRIPTIONS
+# wrangler kv:namespace create MARKERS
+# wrangler kv:namespace create ADMIN_USERS
+# wrangler kv:namespace create BANNED_USERS
+
+[[kv_namespaces]]
+binding = "SUBSCRIPTIONS"
+id = "YOUR_KV_NAMESPACE_ID" # Replace with actual ID
+preview_id = "YOUR_PREVIEW_KV_NAMESPACE_ID" # Replace with actual preview ID
+
+[[kv_namespaces]]
+binding = "MARKERS"
+id = "YOUR_KV_NAMESPACE_ID" # Replace with actual ID
+preview_id = "YOUR_PREVIEW_KV_NAMESPACE_ID" # Replace with actual preview ID
+
+[[kv_namespaces]]
+binding = "ADMIN_USERS"
+id = "YOUR_KV_NAMESPACE_ID" # Replace with actual ID
+preview_id = "YOUR_PREVIEW_KV_NAMESPACE_ID" # Replace with actual preview ID
+
+[[kv_namespaces]]
+binding = "BANNED_USERS"
+id = "YOUR_KV_NAMESPACE_ID" # Replace with actual ID
+preview_id = "YOUR_PREVIEW_KV_NAMESPACE_ID" # Replace with actual preview ID
+
+# Environment variables
+[vars]
+VAPID_PUBLIC_KEY = "YOUR_VAPID_PUBLIC_KEY" # Replace with your actual VAPID public key
+VAPID_PRIVATE_KEY = "YOUR_VAPID_PRIVATE_KEY" # Replace with your actual VAPID private key 

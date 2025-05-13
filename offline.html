@@ -3,223 +3,308 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>离线模式 - PtvAlert</title>
-    <link rel="manifest" href="/ptvalert-pwa/manifest.json">
     <meta name="theme-color" content="#0071e3">
+    <title>PtvAlert - 离线模式</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
         
         body {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
             background-color: #1c1c1e;
             color: #fff;
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
-            height: 100vh;
-            text-align: center;
+            align-items: center;
             padding: 20px;
+            text-align: center;
         }
         
         .offline-container {
             max-width: 500px;
-            width: 90%;
-            background-color: #2c2c2e;
+            padding: 30px;
+            background-color: rgba(50, 50, 54, 0.95);
             border-radius: 16px;
-            padding: 30px 20px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-            animation: fade-in 0.5s ease-out;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
         
-        @keyframes fade-in {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .app-icon {
-            width: 80px;
-            height: 80px;
-            border-radius: 18px;
+        .icon-container {
             margin-bottom: 20px;
-            background-color: #0071e3;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            box-shadow: 0 5px 15px rgba(0, 113, 227, 0.4);
+        }
+        
+        .icon {
+            font-size: 64px;
         }
         
         h1 {
             font-size: 24px;
-            margin-bottom: 15px;
-            color: #fff;
+            margin-bottom: 20px;
         }
         
         p {
             font-size: 16px;
-            margin-bottom: 25px;
-            color: #aaa;
+            margin-bottom: 20px;
+            color: #bbb;
             line-height: 1.5;
         }
         
-        .reload-btn {
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
             background-color: #0071e3;
             color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
-            font-size: 16px;
+            text-decoration: none;
+            border-radius: 8px;
             font-weight: bold;
+            margin-top: 10px;
             cursor: pointer;
-            transition: background-color 0.2s;
-            display: inline-block;
+            border: none;
+            font-size: 16px;
         }
         
-        .reload-btn:hover {
-            background-color: #0077ed;
+        .secondary-button {
+            background-color: rgba(255, 255, 255, 0.1);
+            margin-right: 10px;
         }
         
-        .features-list {
-            text-align: left;
-            margin: 25px 0;
-            color: #ccc;
-        }
-        
-        .features-list li {
-            margin-bottom: 10px;
-            padding-left: 25px;
-            position: relative;
-        }
-        
-        .features-list li:before {
-            content: "•";
-            position: absolute;
-            left: 10px;
-            color: #0071e3;
-        }
-        
-        .offline-footer {
+        .cached-content {
             margin-top: 30px;
-            font-size: 14px;
-            color: #666;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 20px;
         }
         
-        .signal-icon {
-            font-size: 36px;
-            color: #ff3b30;
+        .cached-content h2 {
+            font-size: 18px;
             margin-bottom: 15px;
         }
         
-        /* 夜间模式适配 */
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: #000;
-            }
+        .cached-list {
+            text-align: left;
+            margin: 0 auto;
+            max-width: 280px;
         }
         
-        /* 动画效果 */
-        .wifi-icon {
-            width: 60px;
-            height: 60px;
-            position: relative;
-            margin: 0 auto 20px;
+        .cached-item {
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
         }
         
-        .wifi-circle {
+        .cached-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .language-switch {
             position: absolute;
-            border: 2px solid #ff3b30;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-        
-        .wifi-circle.c1 {
-            width: 20px;
-            height: 20px;
-            left: 20px;
             top: 20px;
-            animation-delay: 0s;
-        }
-        
-        .wifi-circle.c2 {
-            width: 35px;
-            height: 35px;
-            left: 12.5px;
-            top: 12.5px;
-            animation-delay: 0.3s;
-        }
-        
-        .wifi-circle.c3 {
-            width: 50px;
-            height: 50px;
-            left: 5px;
-            top: 5px;
-            animation-delay: 0.6s;
-        }
-        
-        @keyframes pulse {
-            0% {
-                transform: scale(0.8);
-                opacity: 0.8;
-            }
-            70% {
-                transform: scale(1.2);
-                opacity: 0;
-            }
-            100% {
-                transform: scale(0.8);
-                opacity: 0;
-            }
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
     </style>
 </head>
 <body>
+    <button id="langSwitchBtn" class="language-switch">
+        <span style="font-size:16px;">🌐</span>
+        <span id="langSwitchText">EN</span>
+    </button>
+    
     <div class="offline-container">
-        <div class="wifi-icon">
-            <div class="wifi-circle c1"></div>
-            <div class="wifi-circle c2"></div>
-            <div class="wifi-circle c3"></div>
+        <div class="icon-container">
+            <div class="icon">📶</div>
         </div>
         
-        <h1>您当前处于离线状态</h1>
-        <p>无法连接到网络。请检查您的网络连接，然后重试。</p>
+        <h1 id="offline-title">您已离线</h1>
+        <p id="offline-message">
+            当前无法连接到互联网。PtvAlert在离线模式下仍可使用部分功能，但无法获取最新信息或添加新报告。
+        </p>
         
-        <p>离线模式下，您可以访问缓存的内容，但某些功能可能受限。</p>
+        <div>
+            <button class="button secondary-button" id="viewCached">查看已缓存内容</button>
+            <button class="button" id="tryReconnect">重试连接</button>
+        </div>
         
-        <ul class="features-list">
-            <li>查看已缓存的地图区域</li>
-            <li>查看已加载的事件</li>
-            <li>创建离线报告（将在恢复连接后同步）</li>
-        </ul>
-        
-        <button class="reload-btn" onclick="window.location.reload()">重新连接</button>
-        
-        <div class="offline-footer">
-            PtvAlert 网页版 | 离线模式
+        <div class="cached-content" id="cachedContent" style="display: none;">
+            <h2 id="cached-title">已缓存内容</h2>
+            <div class="cached-list" id="cachedList">
+                <!-- Cached items will be inserted here dynamically -->
+                <div class="cached-item">首页</div>
+            </div>
         </div>
     </div>
-
+    
     <script>
-        // 检测网络状态变化
-        window.addEventListener('online', () => {
-            window.location.href = './';
-        });
+        // Language settings
+        let currentLang = 'zh';
+        const i18n = {
+            zh: {
+                offlineTitle: '您已离线',
+                offlineMessage: '当前无法连接到互联网。PtvAlert在离线模式下仍可使用部分功能，但无法获取最新信息或添加新报告。',
+                viewCached: '查看已缓存内容',
+                tryReconnect: '重试连接',
+                cachedTitle: '已缓存内容',
+                home: '首页'
+            },
+            en: {
+                offlineTitle: 'You\'re Offline',
+                offlineMessage: 'Currently unable to connect to the internet. PtvAlert can still work in offline mode with limited functionality, but you cannot get latest updates or add new reports.',
+                viewCached: 'View Cached Content',
+                tryReconnect: 'Try Again',
+                cachedTitle: 'Cached Content',
+                home: 'Home'
+            }
+        };
         
-        // 存储离线报告的基本框架
-        function setupOfflineSupport() {
-            if ('serviceWorker' in navigator && 'SyncManager' in window) {
-                // 在这里可以添加离线报告支持的代码
-                console.log('设备支持后台同步');
+        // Update UI language
+        function updateLanguage() {
+            document.getElementById('offline-title').textContent = i18n[currentLang].offlineTitle;
+            document.getElementById('offline-message').textContent = i18n[currentLang].offlineMessage;
+            document.getElementById('viewCached').textContent = i18n[currentLang].viewCached;
+            document.getElementById('tryReconnect').textContent = i18n[currentLang].tryReconnect;
+            document.getElementById('cached-title').textContent = i18n[currentLang].cachedTitle;
+            document.getElementById('langSwitchText').textContent = currentLang === 'zh' ? 'EN' : '中';
+            
+            // Update cached items
+            const cachedItems = document.querySelectorAll('.cached-item');
+            if (cachedItems.length > 0) {
+                cachedItems[0].textContent = i18n[currentLang].home;
             }
         }
         
-        // 初始化
-        window.addEventListener('DOMContentLoaded', () => {
-            setupOfflineSupport();
+        // Toggle language
+        document.getElementById('langSwitchBtn').addEventListener('click', function() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            updateLanguage();
+            
+            // Save language preference
+            localStorage.setItem('preferredLanguage', currentLang);
+        });
+        
+        // Show cached content
+        document.getElementById('viewCached').addEventListener('click', function() {
+            const cachedContent = document.getElementById('cachedContent');
+            if (cachedContent.style.display === 'none') {
+                cachedContent.style.display = 'block';
+                this.textContent = currentLang === 'zh' ? '隐藏已缓存内容' : 'Hide Cached Content';
+            } else {
+                cachedContent.style.display = 'none';
+                this.textContent = i18n[currentLang].viewCached;
+            }
+        });
+        
+        // Try reconnect
+        document.getElementById('tryReconnect').addEventListener('click', function() {
+            // Check network status
+            if (navigator.onLine) {
+                // If online, redirect to home page
+                window.location.href = '/';
+            } else {
+                // If still offline, show message
+                alert(currentLang === 'zh' ? '仍然无法连接到网络，请检查您的网络设置。' : 'Still unable to connect. Please check your network settings.');
+            }
+        });
+        
+        // Check for cached pages and display them
+        async function loadCachedPages() {
+            if ('caches' in window) {
+                try {
+                    const cache = await caches.open('ptvalert-cache-v2');
+                    const keys = await cache.keys();
+                    const cachedList = document.getElementById('cachedList');
+                    
+                    // Clear existing items (except Home)
+                    while (cachedList.children.length > 1) {
+                        cachedList.removeChild(cachedList.lastChild);
+                    }
+                    
+                    // Add cached pages to the list
+                    const processedUrls = new Set();
+                    processedUrls.add('/'); // Skip home page as it's already added
+                    
+                    for (const request of keys) {
+                        const url = new URL(request.url);
+                        const path = url.pathname;
+                        
+                        // Skip duplicates, API calls, and assets
+                        if (processedUrls.has(path) || 
+                            path.includes('/api/') || 
+                            path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico)$/)) {
+                            continue;
+                        }
+                        
+                        // Create friendly name
+                        let name = path;
+                        if (path.endsWith('/')) {
+                            name = path.slice(0, -1);
+                        }
+                        if (path.endsWith('.html')) {
+                            name = path.replace('.html', '');
+                        }
+                        name = name.split('/').pop();
+                        if (!name) name = 'home';
+                        
+                        // Make name more readable
+                        name = name.charAt(0).toUpperCase() + name.slice(1);
+                        name = name.replace(/-/g, ' ');
+                        
+                        processedUrls.add(path);
+                        
+                        // Skip if there's nothing readable
+                        if (name === "" || name === "/" || name === "undefined") {
+                            continue;
+                        }
+                        
+                        // Create list item
+                        const item = document.createElement('div');
+                        item.className = 'cached-item';
+                        item.textContent = name;
+                        item.addEventListener('click', function() {
+                            window.location.href = path;
+                        });
+                        
+                        cachedList.appendChild(item);
+                    }
+                } catch (error) {
+                    console.error('Error loading cached pages:', error);
+                }
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load language preference
+            const savedLanguage = localStorage.getItem('preferredLanguage');
+            if (savedLanguage) {
+                currentLang = savedLanguage;
+            }
+            
+            updateLanguage();
+            loadCachedPages();
+            
+            // Listen for online status changes
+            window.addEventListener('online', function() {
+                // When back online, redirect to home
+                window.location.href = '/';
+            });
         });
     </script>
 </body>

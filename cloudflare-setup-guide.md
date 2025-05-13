@@ -1,215 +1,259 @@
-# Cloudflare Worker 推送通知和数据存储设置指南
+# PtvAlert Cloudflare Worker Setup Guide
 
-本指南将帮助您将PtvAlert的推送通知服务和数据存储从Firebase完全迁移到**免费**的Cloudflare Worker平台。
+This guide will walk you through setting up the Cloudflare Worker for PtvAlert, which handles push notifications and data storage using Cloudflare KV.
 
-## 重要注意事项
+## Prerequisites
 
-1. Cloudflare Workers环境与Node.js不同，**不支持直接导入Node.js模块**（如web-push）。
-2. Cloudflare Workers中的**环境变量只能通过`env`参数访问**，不能作为全局变量直接引用。
-3. 本实现使用Cloudflare **KV命名空间**替代Firebase数据库功能，存储订阅信息和地图标记数据。
+1. [Cloudflare Workers account](https://workers.cloudflare.com/) (free tier is sufficient to start)
+2. [Node.js](https://nodejs.org/) installed (version 14 or higher)
+3. [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) installed
 
-## 第一步：创建Cloudflare账户
+## Step 1: Generate VAPID Keys
 
-1. 访问 [Cloudflare注册页面](https://dash.cloudflare.com/sign-up)
-2. 使用您的电子邮箱完成注册流程
-3. 登录到Cloudflare控制面板
+Web Push requires VAPID (Voluntary Application Server Identification) keys. Let's generate them:
 
-## 第二步：创建Worker项目
+1. Create a directory for the keys:
+   ```
+   mkdir -p vapid-keys
+   ```
 
-1. 在Cloudflare控制面板左侧菜单中选择 **Workers & Pages**
-2. 点击 **创建应用程序**
-3. 选择 **创建Worker**
-4. 为Worker命名为 `push-notification-service`
-5. 点击 **部署** 创建一个默认Worker
-6. 部署后，点击 **编辑代码** 进入编辑器
-7. 删除默认代码，然后将 `cloudflare-workers/cloudflare-worker-updated.js` 文件中的所有代码复制粘贴到编辑器中
-8. 点击 **保存并部署**
+2. Create a script to generate keys:
+   ```js
+   // generate-keys.js
+   const webpush = require('web-push');
+   
+   const vapidKeys = webpush.generateVAPIDKeys();
+   
+   console.log('VAPID Public Key:', vapidKeys.publicKey);
+   console.log('VAPID Private Key:', vapidKeys.privateKey);
+   ```
 
-## 第三步：创建KV命名空间
+3. Install the web-push package:
+   ```
+   npm install web-push
+   ```
 
-需要创建三个KV命名空间用于存储数据：
+4. Run the script:
+   ```
+   node generate-keys.js
+   ```
 
-1. 在Cloudflare控制面板左侧菜单中选择 **Workers & Pages**
-2. 点击 **KV**
-3. 创建三个KV命名空间：
-   - **SUBSCRIPTIONS**: 存储推送订阅信息
-   - **MARKERS**: 存储地图标记数据
-   - **ADMIN_USERS**: 存储管理员用户信息
-4. 记下每个命名空间的ID，稍后会用到
+5. Save these keys securely - you'll need them later.
 
-## 第四步：绑定KV命名空间到Worker
+## Step 2: Create KV Namespaces
 
-1. 进入您创建的Worker详情页面
-2. 点击 **设置** -> **变量**
-3. 在 **KV 命名空间绑定** 部分，点击 **添加绑定**
-4. 添加以下三个绑定：
-   - 变量名: `SUBSCRIPTIONS`，选择对应的KV命名空间
-   - 变量名: `MARKERS`，选择对应的KV命名空间
-   - 变量名: `ADMIN_USERS`，选择对应的KV命名空间
-5. 点击 **保存并部署**
+Cloudflare KV is used for data storage. Create the needed namespaces:
 
-## 第五步：设置VAPID密钥
+```bash
+# Login to Cloudflare if you haven't already
+wrangler login
 
-1. 转到Worker的 **设置** -> **变量**
-2. 在 **环境变量** 部分，点击 **添加变量**
-3. 添加两个环境变量：
-   - `VAPID_PUBLIC_KEY`: 您的VAPID公钥
-   - `VAPID_PRIVATE_KEY`: 您的VAPID私钥
-4. 点击 **保存并部署**
+# Create the KV namespaces
+wrangler kv:namespace create SUBSCRIPTIONS
+wrangler kv:namespace create MARKERS  
+wrangler kv:namespace create ADMIN_USERS
+wrangler kv:namespace create BANNED_USERS
 
-如果您需要生成新的VAPID密钥对，可以使用以下在线工具：
-[https://tools.reactpwa.com/vapid](https://tools.reactpwa.com/vapid)
+# Also create preview namespaces for development
+wrangler kv:namespace create SUBSCRIPTIONS --preview
+wrangler kv:namespace create MARKERS --preview
+wrangler kv:namespace create ADMIN_USERS --preview
+wrangler kv:namespace create BANNED_USERS --preview
+```
 
-## 第六步：设置定时触发器
+Take note of the namespace IDs returned for each namespace, as you'll need them for the configuration.
 
-如果您希望定期检查新标记并发送通知，可以设置定时触发器：
+## Step 3: Configure wrangler.toml
 
-1. 在Worker详情页面，点击 **触发器**
-2. 点击 **添加触发器** -> **Cron**
-3. 设置一个Cron表达式，如 `0 */12 * * *`（每12小时运行一次）
-4. 点击 **添加触发器**
+Edit your `wrangler.toml` file with the KV namespace IDs and VAPID keys:
 
-## 第七步：更新前端代码
+```toml
+name = "ptvalert"
+main = "cloudflare-worker.js"
+compatibility_date = "2023-10-02"
+usage_model = "bundled"
+node_compat = true
 
-1. 确保在前端代码中使用正确的Worker URL进行API调用
-2. 标记数据API端点：
-   - 获取所有标记: `https://push-notification-service.xxx.workers.dev/api/markers`
-   - 添加标记: `https://push-notification-service.xxx.workers.dev/api/markers` (POST)
-   - 获取单个标记: `https://push-notification-service.xxx.workers.dev/api/markers/{id}` (GET)
-   - 更新标记: `https://push-notification-service.xxx.workers.dev/api/markers/{id}` (PUT)
-   - 删除标记: `https://push-notification-service.xxx.workers.dev/api/markers/{id}` (DELETE)
+# Triggers for scheduled tasks
+[triggers]
+crons = ["0 * * * *"] # Run hourly
 
-## 第八步：数据迁移
+# KV Namespaces bindings
+[[kv_namespaces]]
+binding = "SUBSCRIPTIONS"
+id = "YOUR_SUBSCRIPTIONS_KV_ID" 
+preview_id = "YOUR_SUBSCRIPTIONS_PREVIEW_KV_ID"
 
-如需从Firebase迁移现有数据，请按照以下步骤操作：
+[[kv_namespaces]]
+binding = "MARKERS"
+id = "YOUR_MARKERS_KV_ID"
+preview_id = "YOUR_MARKERS_PREVIEW_KV_ID"
 
-1. 从Firebase导出数据：
-   - 使用Firebase Admin SDK或Firebase Console导出订阅数据和标记数据
-   - 将数据保存为JSON格式
+[[kv_namespaces]]
+binding = "ADMIN_USERS"
+id = "YOUR_ADMIN_USERS_KV_ID"
+preview_id = "YOUR_ADMIN_USERS_PREVIEW_KV_ID"
 
-2. 使用批量导入脚本将数据导入到Cloudflare KV：
-   - 我们提供了一个简单的导入脚本，您可以在本地运行
-   - 脚本使用Cloudflare API将数据批量导入到对应的KV命名空间
+[[kv_namespaces]]
+binding = "BANNED_USERS"
+id = "YOUR_BANNED_USERS_KV_ID"
+preview_id = "YOUR_BANNED_USERS_PREVIEW_KV_ID"
 
-3. 导入脚本示例：
+# Environment variables
+[vars]
+VAPID_PUBLIC_KEY = "YOUR_VAPID_PUBLIC_KEY"
+VAPID_PRIVATE_KEY = "YOUR_VAPID_PRIVATE_KEY"
+```
+
+Replace the placeholders with your actual KV namespace IDs and VAPID keys.
+
+## Step 4: Deploy the Worker
+
+Deploy your worker to Cloudflare:
+
+```bash
+wrangler publish
+```
+
+## Step 5: Update Client-Side Code
+
+Update your frontend code to use the Cloudflare Worker endpoints instead of Firebase:
+
+### Key changes needed:
+
+1. **Push notification subscription**:
+   - Replace Firebase Cloud Messaging with Web Push API
+   - Update the subscription endpoint to use your Cloudflare Worker
+
+2. **Data storage**:
+   - Replace Firebase Realtime Database with Cloudflare Worker API calls
+
+3. **Authentication**:
+   - Implement a simplified authentication mechanism using your Cloudflare Worker
+
+### Example client code for push notifications:
+
 ```javascript
-// 导入脚本示例 - 保存为import-data.js
-const fs = require('fs');
-const fetch = require('node-fetch');
-
-// Cloudflare API配置
-const CF_API_TOKEN = 'your-api-token';
-const CF_ACCOUNT_ID = 'your-account-id';
-const MARKERS_NAMESPACE_ID = 'your-markers-namespace-id';
-const SUBSCRIPTIONS_NAMESPACE_ID = 'your-subscriptions-namespace-id';
-
-// 读取Firebase导出的数据
-const markersData = JSON.parse(fs.readFileSync('./firebase-markers-export.json', 'utf8'));
-const subscriptionsData = JSON.parse(fs.readFileSync('./firebase-subscriptions-export.json', 'utf8'));
-
-// 导入标记数据
-async function importMarkers() {
-  console.log('Importing markers...');
-  
-  for (const [id, marker] of Object.entries(markersData)) {
-    try {
-      const response = await fetch(
-        `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/storage/kv/namespaces/${MARKERS_NAMESPACE_ID}/values/${id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${CF_API_TOKEN}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(marker)
-        }
-      );
-      
-      if (response.ok) {
-        console.log(`Imported marker ${id}`);
-      } else {
-        console.error(`Failed to import marker ${id}:`, await response.text());
-      }
-    } catch (error) {
-      console.error(`Error importing marker ${id}:`, error);
+// Request permission and subscribe to push notifications
+async function subscribeUserToPush() {
+  try {
+    // Request permission
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      throw new Error('Permission not granted for Notification');
     }
+    
+    // Get the service worker registration
+    const registration = await navigator.serviceWorker.ready;
+    
+    // Get the push subscription
+    let subscription = await registration.pushManager.getSubscription();
+    
+    // If no subscription exists, create one
+    if (!subscription) {
+      // Get the VAPID public key from the server
+      const response = await fetch('/api/vapid-public-key');
+      const vapidData = await response.json();
+      
+      if (!vapidData.publicKey) {
+        throw new Error('No VAPID public key available');
+      }
+      
+      // Convert the VAPID public key to the required format
+      const convertedVapidKey = urlBase64ToUint8Array(vapidData.publicKey);
+      
+      // Subscribe to push notifications
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: convertedVapidKey
+      });
+    }
+    
+    // Send the subscription to the server
+    await fetch('/api/subscribe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        subscription: subscription,
+        userId: currentUserId // Your user ID variable
+      }),
+    });
+    
+    console.log('User subscribed to push notifications');
+    return subscription;
+  } catch (error) {
+    console.error('Error subscribing to push notifications:', error);
+    throw error;
   }
 }
 
-// 导入订阅数据
-async function importSubscriptions() {
-  console.log('Importing subscriptions...');
+// Helper function to convert a base64 string to a Uint8Array
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
   
-  for (const [id, subscription] of Object.entries(subscriptionsData)) {
-    try {
-      const response = await fetch(
-        `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/storage/kv/namespaces/${SUBSCRIPTIONS_NAMESPACE_ID}/values/${id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${CF_API_TOKEN}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(subscription)
-        }
-      );
-      
-      if (response.ok) {
-        console.log(`Imported subscription ${id}`);
-      } else {
-        console.error(`Failed to import subscription ${id}:`, await response.text());
-      }
-    } catch (error) {
-      console.error(`Error importing subscription ${id}:`, error);
-    }
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
   }
-}
-
-// 运行导入
-async function runImport() {
-  await importMarkers();
-  await importSubscriptions();
-  console.log('Import completed!');
-}
-
-runImport();
-```
-
-## 第九步：验证配置
-
-访问以下URL检查配置是否正确:
-```
-https://push-notification-service.qingyangzhou85.workers.dev/api/test-config
-```
-
-如果一切正常，应该返回:
-```json
-{
-  "success": true,
-  "message": "推送通知配置正确",
-  "publicKeyConfigured": true
+  
+  return outputArray;
 }
 ```
 
-## 常见问题解答
+## Step 6: Testing
 
-### KV存储限制
-- 免费账户每日可进行100,000次KV操作
-- 每个KV值最大可存储25MB
-- 更多信息请参见[Cloudflare KV存储限制文档](https://developers.cloudflare.com/workers/platform/limits/#kv-limits)
+Test your setup to ensure everything is working:
 
-### 数据备份建议
-- 定期导出KV数据以防数据丢失
-- 可以使用Cloudflare的API或Wrangler CLI进行数据备份
+1. **Test Push Notifications**:
+   - Subscribe to push notifications
+   - Send a test notification using the `/api/send-notification` endpoint
 
-### 调试提示
-- 使用Cloudflare Workers的日志功能查看错误信息
-- 在Worker编辑器中使用console.log记录关键操作
+2. **Test Data Storage**:
+   - Add a marker using the `/api/markers` endpoint
+   - Retrieve markers to verify they're stored correctly
 
-### 与Firebase相比的优势
-1. **更低的延迟**: Cloudflare Workers在全球边缘网络上运行
-2. **更少的代码**: 无需维护单独的云函数和数据库
-3. **零成本**: 大多数小型应用可以在免费账户限制内运行
-4. **更简单的部署**: 单一代码库，无需分开部署
+## Troubleshooting
 
-如有任何问题，请联系管理员获取帮助。 
+### Common Issues:
+
+1. **Push notifications not working**:
+   - Check that your VAPID keys are correctly configured
+   - Ensure the service worker is registered and active
+   - Verify that the subscription is saved in the KV storage
+
+2. **KV storage issues**:
+   - Check that the KV namespace IDs are correct in wrangler.toml
+   - Verify that the worker has permission to access the KV namespaces
+
+3. **CORS errors**:
+   - Ensure the CORS headers are correctly set in the worker
+   - Check that the worker is responding with the appropriate headers
+
+### Debugging Tips:
+
+- Use `wrangler tail` to see real-time logs from your worker
+- Check the browser console for client-side errors
+- Verify KV namespace contents using `wrangler kv:key get` commands
+
+## Next Steps
+
+After successful deployment, consider these improvements:
+
+1. **Add authentication** - Implement a more secure authentication system
+2. **Optimize KV usage** - Consider caching frequently accessed data
+3. **Add analytics** - Track usage patterns to improve your application
+4. **Set up monitoring** - Monitor your worker's performance and errors
+
+## Resources
+
+- [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
+- [Cloudflare KV Documentation](https://developers.cloudflare.com/workers/runtime-apis/kv/)
+- [Web Push Documentation](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)
+- [Wrangler CLI Documentation](https://developers.cloudflare.com/workers/wrangler/) 
