@@ -236,6 +236,11 @@
             testEndpoint(`${apiUrl}/api/reports`, '报告列表', 'GET'),
             testEndpoint(`${apiUrl}/api/sync-from-firebase`, '同步端点', 'POST', {
                 reports: [] // 空数组作为有效载荷
+            }),
+            testEndpoint(`${apiUrl}/api/send-notification`, '通知端点', 'POST', {
+                message: '测试通知消息',
+                title: '测试标题',
+                icon: '/images/icon-192x192.png'
             })
         ]).then(results => {
             let html = '<h4>API测试结果</h4>';

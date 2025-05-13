@@ -99,12 +99,12 @@ npx wrangler tail
 
 1. **Response body is already used 错误**
 
-   如果在 `/api/sync-from-firebase` 端点测试中遇到以下错误：
+   如果在任何 POST 请求的端点（如 `/api/sync-from-firebase` 或 `/api/send-notification`）测试中遇到以下错误：
    ```
    TypeError: Failed to execute 'clone' on 'Response': Response body is already used
    ```
    
-   这是因为 Worker 代码中尝试多次读取请求体。解决方案是在读取请求体之前克隆请求：
+   这是因为 Worker 代码中尝试多次读取请求体。解决方案是在读取请求体之前克隆请求。所有处理 POST 请求的函数都应该包含此逻辑：
    
    ```javascript
    // 创建请求的副本，以防止原始请求体已被使用
@@ -115,6 +115,14 @@ npx wrangler tail
    同时，确保前端测试工具使用 POST 请求并提供有效的 JSON 格式数据：
    
    ```javascript
+   // 发送通知示例
+   fetch(`${apiUrl}/api/send-notification`, {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({ message: '测试消息' })
+   })
+   
+   // 同步数据示例
    fetch(`${apiUrl}/api/sync-from-firebase`, {
      method: 'POST',
      headers: { 'Content-Type': 'application/json' },

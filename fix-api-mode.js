@@ -253,6 +253,33 @@
             .catch(error => {
                 console.error('[全面修复] 同步测试网络错误:', error);
             });
+            
+        // 测试通知端点 - 确保使用POST并提供有效的message参数
+        fetch(`${apiUrl}/api/send-notification`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: '测试通知消息',
+                title: '测试标题',
+                icon: '/images/icon-192x192.png'
+            })
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('[全面修复] 通知测试成功');
+                } else {
+                    console.error(`[全面修复] 通知测试失败: ${response.status} ${response.statusText}`);
+                    // 尝试获取更详细的错误信息
+                    return response.text().then(text => {
+                        console.error('[全面修复] 通知错误响应:', text);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('[全面修复] 通知测试网络错误:', error);
+            });
     };
     
     console.log('[全面修复] 修复程序加载完成');

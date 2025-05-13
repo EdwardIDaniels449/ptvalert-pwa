@@ -291,8 +291,43 @@ async function handleCreateReport(request) {
       });
     }
     
+    // 创建请求的副本，以防止原始请求体已被使用
+    let requestClone;
+    try {
+      requestClone = request.clone();
+    } catch (error) {
+      // 如果无法克隆，提供明确错误信息
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Request Error',
+        message: 'Cannot clone the request: ' + error.message,
+        details: 'The request body may have already been consumed'
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      });
+    }
+    
     // 解析请求体
-    const data = await request.json();
+    let data;
+    try {
+      data = await requestClone.json();
+    } catch (error) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Invalid JSON',
+        message: 'Failed to parse request body: ' + error.message
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      });
+    }
     
     // 验证数据
     if (!data.id || !data.location) {
@@ -495,8 +530,43 @@ async function handleSendNotification(request) {
       });
     }
     
+    // 创建请求的副本，以防止原始请求体已被使用
+    let requestClone;
+    try {
+      requestClone = request.clone();
+    } catch (error) {
+      // 如果无法克隆，提供明确错误信息
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Request Error',
+        message: 'Cannot clone the request: ' + error.message,
+        details: 'The request body may have already been consumed'
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      });
+    }
+    
     // 解析请求体
-    const data = await request.json();
+    let data;
+    try {
+      data = await requestClone.json();
+    } catch (error) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Invalid JSON',
+        message: 'Failed to parse request body: ' + error.message
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      });
+    }
     
     if (!data.message) {
       return new Response(JSON.stringify({
@@ -586,8 +656,43 @@ async function handleSubscribe(request) {
       });
     }
     
+    // 创建请求的副本，以防止原始请求体已被使用
+    let requestClone;
+    try {
+      requestClone = request.clone();
+    } catch (error) {
+      // 如果无法克隆，提供明确错误信息
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Request Error',
+        message: 'Cannot clone the request: ' + error.message,
+        details: 'The request body may have already been consumed'
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      });
+    }
+    
     // 解析请求体
-    const data = await request.json();
+    let data;
+    try {
+      data = await requestClone.json();
+    } catch (error) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Invalid JSON',
+        message: 'Failed to parse request body: ' + error.message
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      });
+    }
     
     if (!data.subscription || !data.subscription.endpoint) {
       return new Response(JSON.stringify({
