@@ -30,6 +30,102 @@
     <!-- Firebase与Cloudflare同步脚本 -->
     <script src="./js/firebase-to-cloudflare-sync.js"></script>
     
+    <!-- 添加Google Maps API回调函数 -->
+    <script>
+        // 墨尔本中心坐标
+        const MELBOURNE_CENTER = {lat: -37.8136, lng: 144.9631};
+        
+        // 地图和标记变量
+        let map;
+        let markers = [];
+        let selectionMarker = null;
+        let selectionCircle = null;
+        let isSelectingLocation = false;
+        let selectedLocation = null;
+        
+        // Google Maps API加载完成的回调函数
+        function googleMapsLoadedCallback() {
+            console.log("Google Maps API已加载");
+            if (typeof initMap === 'function') {
+                initMap();
+            }
+        }
+        
+        // 初始化地图
+        function initMap() {
+            console.log("initMap被调用，初始化地图...");
+            
+            // 创建地图
+            try {
+                map = new google.maps.Map(document.getElementById("map"), {
+                    center: MELBOURNE_CENTER,
+                    zoom: 13,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP
+                });
+                
+                // 添加地图点击事件
+                map.addListener("click", (event) => {
+                    if (isSelectingLocation) {
+                        selectedLocation = {
+                            lat: event.latLng.lat(),
+                            lng: event.latLng.lng()
+                        };
+                        
+                        // 添加临时选点标记
+                        if (selectionMarker) {
+                            selectionMarker.setMap(null);
+                        }
+                        
+                        selectionMarker = new google.maps.Marker({
+                            position: selectedLocation,
+                            map: map,
+                            zIndex: 1000
+                        });
+                        
+                        // 开启报告表单
+                        openReportForm();
+                    }
+                });
+                
+                console.log("地图初始化完成!");
+            } catch (error) {
+                console.error("地图初始化失败:", error);
+            }
+        }
+        
+        // 打开报告表单
+        function openReportForm() {
+            isSelectingLocation = false;
+            document.getElementById('addReportTip').style.display = 'none';
+            document.getElementById('addReportBtn').textContent = '+ 添加报告';
+            document.body.style.cursor = 'default';
+            
+            const reportForm = document.getElementById('reportForm');
+            reportForm.style.transform = 'translateY(0)';
+        }
+        
+        // 关闭报告表单
+        function closeReportForm() {
+            const reportForm = document.getElementById('reportForm');
+            reportForm.style.transform = 'translateY(100%)';
+            
+            if (selectionMarker) {
+                selectionMarker.setMap(null);
+                selectionMarker = null;
+            }
+            
+            if (selectionCircle) {
+                selectionCircle.setMap(null);
+            }
+            
+            document.getElementById('descriptionInput').value = '';
+            document.getElementById('previewImg').style.display = 'none';
+            document.getElementById('imagePlaceholder').style.display = 'block';
+            
+            selectedLocation = null;
+        }
+    </script>
+    
     <!-- URL诊断和修复脚本 - 最先执行 -->
     <script>
         (function() {
@@ -976,4 +1072,6 @@
         </div>
     </div>
 </body>
+<!-- Google Maps API加载 -->
+<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places,visualization&v=weekly" onerror="console.error('Google Maps 加载失败')"></script>
 </html>
