@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#0071e3">
-    <meta name="description" content="墨尔本交通信息共享平台">
+    <meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="description" content="墨尔本交通信息共享平台">
     <meta name="apple-mobile-web-app-title" content="PtvAlert">
     
     <!-- 全局变量修复脚本 - 必须最先加载 -->
@@ -258,13 +257,13 @@
         }
     </script>
     
-    <title>PtvAlert网页版</title>
+    <title>PtvAlert - 地图标记系统</title>
     
     <!-- Manifest和图标 -->
     <link rel="manifest" href="./manifest.json">
     <!-- 内联基本favicon避免404错误 -->
-    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJiZmVuXlZOZlJaRyZeZmPOTl5P/lJaU/5qamv+YmJj/l5aW/5eXl5qYmJg7AAAAAAAAAAAAAAAAqamoEpaUktGNlIv/jJ+G/4eoev+ItHX/iL96/4m5ff+GuXz/iLh8/4u0fv+MqIH/kZyI/5qZmP+cm5rpq62uRJWXlpGMl4r/iLF4/4a7eP+DwHj/f8N5/3vBdf96wHT/e8J0/3/EeP+ExXz/ib6A/4y7g/+OqYP/lZeR/5ycm5uTmpKxhaV5/4C2cf95vXH/cL1t/2i7Zv9iumP/YLph/2a9Z/9twG7/ecV4/4DDe/+FwX//i7iD/5KikP+ampmrlaKS1YGwcf94u2z/bLxn/2DAY/9cwWL/Wr9h/1q+Yf9ewmL/ZcJm/27Ebv91xXX/fMZ9/4XCgf+OqYb/mpmXspiolt+Er3f/eMBx/23FaP9lyGb/X8dj/17HYv9ex2P/Y8hm/2nKaf9wzm//ds9z/3zOe/+CxoD/j6yJ/5qZmLWco5nfiLJ3/3nCcf9ux2n/ZMtm/17LY/9cy2L/Xctj/2LNZv9p0Gn/cNRw/3XUdf970Xv/g8eB/5Cvif+amZi1nKOZ34eyef95wnL/b8hp/2XMZv9fzWP/Xc1j/13NY/9jzmb/adFp/3DUcf921nf/e9R7/4PHgf+QrYn/mpmYtZijmdyHsHn/ecJy/2/Jaf9kzGb/X81j/13NY/9dzWP/Y85l/2jQaP9v1HD/ddV2/3rSev+CxYD/j6qH/5qZmLWWoZXYg693/3jAcP9sxmf/ZMpm/1/KZP9dylP/XcxR/2PNU/9pz1v/cNJt/3XSdf97z3r/gcJ//42mhP+amJizmJ2XyoOqdf94u27/bsFn/2TEZP9dxTj/W9IK/1vTCP9h1Az/Z9QS/3HSDv91zB//esRw/3+8ff+MoIT/l5eWtpaWlreBpHH/drdt/2y9Zf9hwV3/W9IA/1rVAP9a1QD/YNcA/2bYAP9w0QD/c8AA/3i4cP98tHn/iphq/52KecqVkpGldKBn/3S2a/9pumL/X79Z/1vRAP9a1QD/WtUA/2DXAP9m2AD/cNEA/3PAAP94tW7/erBz/4eSWf+bfFzMnYuCu3KeYP9ytGj/Z7Vf/16+Vv9b0QD/WtUA/1rVAP9g1wD/ZtgA/3DRAP9zwAD/drFr/3erav+GkFX/mHZT1KSEf9hql1T/b7Fj/2SyW/9au1P/W9IA/1rVAP9a1QD/YNcA/2bYAP9w0QD/c8IA/3Wvaf91p2f/hY1R/5VyTuajeXviYZBM/2uuX/9hsFj/WblR/1vSAP9a1QD/WtUA/2DXAP9m2AD/cNEA/3PCAP9zrWf/c6Rk/4OKUP+TbknwAAA=" />
-    <link rel="apple-touch-icon" href="./images/icon-192x192.png">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     
     <script>
         // 处理GitHub Pages环境下图标路径问题
@@ -1694,7 +1693,13 @@
                 });
                 
                 // 加载报告
-                loadReportsFromFirebase();
+                if (useCloudflare) {
+                    loadReportsFromCloudflare();
+                    console.log("从Cloudflare加载标记数据");
+                } else {
+                    loadReportsFromFirebase();
+                    console.log("从Firebase加载标记数据");
+                }
                 console.log("地图初始化完成!");
             } catch (error) {
                 console.error("地图初始化失败:", error);
@@ -1880,6 +1885,30 @@
             }
             
             return addReportMarkerToMap(report);
+        }
+        
+        // 格式化时间为"几分钟前"格式
+        function formatTimeAgo(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffSec = Math.floor(diffMs / 1000);
+            const diffMin = Math.floor(diffSec / 60);
+            const diffHour = Math.floor(diffMin / 60);
+            
+            if (diffMin < 1) {
+                return '刚刚';
+            } else if (diffMin < 60) {
+                return `${diffMin}分钟前`;
+            } else if (diffHour < 24) {
+                return `${diffHour}小时前`;
+            } else {
+                return date.toLocaleString('zh-CN', {
+                    month: 'numeric',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
         }
         
         // 快速报告函数修改
