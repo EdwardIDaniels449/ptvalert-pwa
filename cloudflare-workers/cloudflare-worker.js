@@ -1,15 +1,8 @@
 // Cloudflare Worker推送通知服务
 // 注意：不使用web-push库，使用原生实现
 
-// 环境变量将在Cloudflare Workers中设置
-const vapidDetails = {
-  subject: 'mailto:qingyangzhou85@gmail.com',
-  // 这两个值会通过Cloudflare环境变量注入
-  publicKey: VAPID_PUBLIC_KEY, 
-  privateKey: VAPID_PRIVATE_KEY
-};
-
-// KV命名空间将用于存储订阅信息
+// 环境变量将通过env参数传入，不能直接全局访问
+// 所以删除这里的初始化，改为在每个函数中从env参数获取
 
 export default {
   async fetch(request, env, ctx) {
@@ -252,7 +245,7 @@ async function sendPushNotification(subscription, payload, env) {
   const auth = subscription.keys.auth;
   
   try {
-    // 构建适当的Authorization头部
+    // 构建适当的Authorization头部，从env获取VAPID配置
     const vapidHeaders = await getVAPIDHeaders(endpoint, env);
     
     // 使用订阅信息加密有效负载
@@ -283,6 +276,11 @@ async function sendPushNotification(subscription, payload, env) {
 
 // 创建VAPID头部
 async function getVAPIDHeaders(endpoint, env) {
+  // 从env参数中获取VAPID信息，而不是全局变量
+  const vapidPublicKey = env.VAPID_PUBLIC_KEY;
+  const vapidPrivateKey = env.VAPID_PRIVATE_KEY;
+  const vapidSubject = 'mailto:qingyangzhou85@gmail.com';
+  
   // 在实际生产环境中，这里应该实现完整的VAPID签名
   // 下面是一个简化版，实际项目需要更完整的实现
   
@@ -291,6 +289,6 @@ async function getVAPIDHeaders(endpoint, env) {
   
   // 这部分实现通常需要JWT编码和签名，这里简化处理
   return {
-    'Authorization': `vapid t=${Date.now()}, k=${env.VAPID_PUBLIC_KEY}`
+    'Authorization': `vapid t=${Date.now()}, k=${vapidPublicKey}`
   };
 } 

@@ -4,7 +4,9 @@
 
 ## 重要注意事项
 
-Cloudflare Workers环境与Node.js不同，**不支持直接导入Node.js模块**（如web-push）。我们已经修改了代码，使其使用原生方法实现推送通知功能，无需依赖外部模块。
+1. Cloudflare Workers环境与Node.js不同，**不支持直接导入Node.js模块**（如web-push）。我们已经修改了代码，使其使用原生方法实现推送通知功能，无需依赖外部模块。
+
+2. Cloudflare Workers中的**环境变量只能通过`env`参数访问**，不能作为全局变量直接引用。例如，应该使用`env.VAPID_PUBLIC_KEY`而不是`VAPID_PUBLIC_KEY`。
 
 ## 第一步：创建Cloudflare账户
 
@@ -52,16 +54,18 @@ Cloudflare Workers环境与Node.js不同，**不支持直接导入Node.js模块*
 
 ## 第三步：配置VAPID密钥
 
-### 在控制面板配置
+### 在控制面板配置（重要！确保变量名正确）
 
 1. 在Worker详情页，点击 **设置** 标签
 2. 找到 **变量** 部分
-3. 添加两个加密变量（点击"加密"选项）:
+3. 点击 **环境变量** 按钮
+4. 添加两个环境变量（点击"加密"选项以保护敏感数据）:
    - 名称: `VAPID_PUBLIC_KEY`  
      值: `BFpa0WyDaUOEPw7iKaxLHjf1yReNiMXHdSh4t3PBXq962LCjQmpeFKs63PDhwd_F5kPqi7PsI6KGpIoXsaXMJ70`
    - 名称: `VAPID_PRIVATE_KEY`  
      值: `8J0ZKujkR48Rpgu9gIBkym7xsnH9yuZhuhhkw6XZ3fg`
-4. 点击 **保存并部署**
+5. 确保变量名称完全匹配，区分大小写
+6. 点击 **保存并部署**
 
 ### 使用CLI配置
 
@@ -81,7 +85,7 @@ wrangler secret put VAPID_PRIVATE_KEY
 1. 在Worker详情页，点击 **设置** 标签
 2. 找到 **KV命名空间绑定** 部分
 3. 点击 **添加绑定**
-4. 变量名填写 `SUBSCRIPTIONS`
+4. 变量名填写 `SUBSCRIPTIONS`（必须完全匹配，区分大小写）
 5. 选择一个已有的KV命名空间或创建新的
 6. 点击 **保存并部署**
 
@@ -104,26 +108,47 @@ wrangler secret put VAPID_PRIVATE_KEY
 ### 常见错误
 
 1. **No such module "web-push"**: 
-   - 这是因为Cloudflare Workers不支持Node.js模块
-   - 确保使用最新版本的cloudflare-worker.js，它不依赖web-push库
+   - 原因: Cloudflare Workers不支持Node.js模块
+   - 解决: 确保使用最新版本的cloudflare-worker.js，它不依赖web-push库
 
-2. **KV绑定错误**:
-   - 确保正确创建并绑定了SUBSCRIPTIONS命名空间
-   - 检查绑定名称是否正确拼写为SUBSCRIPTIONS（区分大小写）
+2. **VAPID_PUBLIC_KEY is not defined**:
+   - 原因: Worker脚本尝试直接访问全局环境变量
+   - 解决: 
+     - 确保使用最新版本的cloudflare-worker.js，它通过env参数访问变量
+     - 确保在Cloudflare控制面板中正确设置了环境变量（注意大小写）
 
-3. **CORS错误**:
-   - 如果前端无法访问Worker API，可能是跨域问题
-   - 我们已在代码中添加CORS头，但您可能需要限制为特定域名
+3. **KV绑定错误**:
+   - 原因: 找不到SUBSCRIPTIONS绑定
+   - 解决: 
+     - 确保正确创建并绑定了SUBSCRIPTIONS命名空间
+     - 检查绑定名称是否正确拼写为SUBSCRIPTIONS（区分大小写）
 
-4. **加密错误**:
-   - Web Push要求对有效负载进行加密，当前代码使用简化版本
-   - 为完整实现，可能需要添加完整的加密处理
+4. **CORS错误**:
+   - 原因: 前端无法访问Worker API
+   - 解决: 
+     - 我们已在代码中添加CORS头，但您可能需要限制为特定域名
+     - 如需更改，修改corsHeaders变量中的Origin值
 
-如果遇到问题，可以检查:
+### 验证配置
 
-1. Worker日志: Cloudflare控制面板中的实时日志
-2. 控制台错误: 浏览器开发者工具中的控制台错误
-3. 环境变量: 确认VAPID密钥已正确设置
+访问以下URL检查配置是否正确:
+```
+https://push-notification-service.您的用户名.workers.dev/api/test-config
+```
+
+如果一切正常，应该返回:
+```json
+{
+  "success": true,
+  "message": "推送通知配置正确",
+  "publicKeyConfigured": true
+}
+```
+
+如果遇到问题，可以查看Cloudflare Worker实时日志:
+1. 在Worker详情页点击 **日志**
+2. 选择 **开始流式传输** 查看实时日志
+3. 测试API时查看错误信息
 
 ## 安全注意事项
 
