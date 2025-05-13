@@ -7,36 +7,76 @@
     <script>
         // GitHub Pages重定向脚本
         (function() {
-            // 仓库名称
-            const repoName = 'ptvalert-pwa';
+            console.log('GitHub Pages 404重定向脚本启动');
             
-            // 重组URL，确保指向正确的仓库路径
-            const redirectPath = '/' + repoName + '/';
+            // 从URL中动态获取仓库路径
+            function getRepoPath() {
+                const pathSegments = window.location.pathname.split('/');
+                console.log('URL路径段:', pathSegments);
+                
+                // 检查是否有仓库名
+                if (pathSegments.length >= 2 && pathSegments[1]) {
+                    console.log('检测到仓库名:', pathSegments[1]);
+                    return '/' + pathSegments[1] + '/';
+                }
+                
+                // 没有仓库名，返回根路径
+                console.log('未检测到仓库名，使用根路径');
+                return '/';
+            }
+            
+            // 获取仓库路径
+            const redirectPath = getRepoPath();
+            console.log('重定向路径:', redirectPath);
             
             // 检测特殊资源并修复
             const path = window.location.pathname;
+            console.log('请求路径:', path);
             
-            // 如果是尝试直接访问service-worker.js，应该重定向到项目根目录
-            if (path.includes('service-worker.js') || path.includes('url-fix.js') || path.includes('github-pages-fix.js')) {
-                console.log('检测到对Service Worker或工具脚本的直接访问，重定向到项目首页');
-                window.location.href = redirectPath;
+            // 添加特殊URL处理
+            if (path.includes('service-worker.js')) {
+                console.log('检测到对Service Worker的请求，立即重定向到首页');
+                window.location.replace(redirectPath);
+            } else if (path.includes('.js') || path.includes('.css') || path.includes('.ico')) {
+                console.log('检测到静态资源请求失败，重定向到首页');
+                window.location.replace(redirectPath);
+            } else {
+                // 对于其他404错误，也重定向到首页
+                console.log('检测到404错误，立即重定向到首页');
+                window.location.replace(redirectPath);
             }
-            
-            // 对于其他404，重定向到项目根目录
-            window.location.replace(redirectPath);
         })();
     </script>
-</head>
-<body style="background-color: #1c1c1e; color: white; font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', sans-serif; text-align: center; padding-top: 100px;">
-    <h1>正在重定向...</h1>
-    <p>返回PtvAlert主页</p>
-    <div style="width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #0071e3; border-radius: 50%; margin: 30px auto; animation: spin 1s linear infinite;"></div>
-    
     <style>
+        body {
+            background-color: #1c1c1e; 
+            color: white; 
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            text-align: center; 
+            padding-top: 100px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .spinner {
+            width: 50px; 
+            height: 50px; 
+            border: 5px solid #f3f3f3; 
+            border-top: 5px solid #0071e3; 
+            border-radius: 50%; 
+            margin: 30px auto; 
+            animation: spin 1s linear infinite;
+        }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
     </style>
+</head>
+<body>
+    <h1>正在重定向...</h1>
+    <p>返回PtvAlert主页</p>
+    <div class="spinner"></div>
 </body>
 </html> 

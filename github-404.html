@@ -61,49 +61,165 @@
             margin-top: 20px;
             font-weight: bold;
         }
+        
+        #debug {
+            font-family: monospace;
+            font-size: 12px;
+            background-color: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 4px;
+            max-width: 100%;
+            overflow-x: auto;
+            margin-top: 20px;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .debug-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #aaa;
+        }
+        
+        .info {
+            color: #75bbfd;
+        }
+        
+        .error {
+            color: #ff8a8a;
+        }
     </style>
     <script>
-        // GitHub Pages SPA路由重定向脚本
+        // 自动跳过404页面，无需用户交互
         (function() {
+            console.log('GitHub Pages 404 处理程序初始化');
+            
+            // 调试日志
+            function log(message, type) {
+                console.log('[404 Handler] ' + message);
+                if (document.getElementById('debug-content')) {
+                    var logEntry = document.createElement('div');
+                    logEntry.className = type || 'info';
+                    logEntry.textContent = message;
+                    document.getElementById('debug-content').appendChild(logEntry);
+                }
+            }
+            
+            // 分析当前URL
+            var currentUrl = window.location.href;
+            var pathname = window.location.pathname;
+            log('当前URL: ' + currentUrl);
+            log('路径名: ' + pathname);
+            
+            // 检测是否为Service Worker请求
+            var isServiceWorkerRequest = pathname.includes('service-worker.js');
+            var isJsRequest = pathname.endsWith('.js');
+            var isCssRequest = pathname.endsWith('.css');
+            
+            // 确定仓库名称和重定向目标
             var redirectTarget = '/';
             var repo = '';
             
-            // 确定仓库名称
             var pathSegments = window.location.pathname.split('/');
+            log('路径段: ' + JSON.stringify(pathSegments));
+            
             if (pathSegments.length >= 2 && pathSegments[1]) {
                 repo = pathSegments[1];
                 redirectTarget = '/' + repo + '/';
+                log('检测到仓库: ' + repo);
             }
             
-            // 可能的404原因
-            var possibleReasons = [
-                "您尝试直接访问服务工作线程脚本",
-                "您尝试访问一个不存在的路由",
-                "您尝试访问GitHub Pages上的API端点"
-            ];
-            
-            // 显示可能的原因
-            window.addEventListener('DOMContentLoaded', function() {
-                // 更新原因列表
-                var reasonList = document.getElementById('reasonList');
-                possibleReasons.forEach(function(reason) {
-                    var li = document.createElement('li');
-                    li.textContent = reason;
-                    reasonList.appendChild(li);
-                });
+            // 如果是对Service Worker的请求，提供内容而不是重定向
+            if (isServiceWorkerRequest) {
+                log('检测到Service Worker请求，提供内联Service Worker');
                 
-                // 设置返回链接
-                var homeButton = document.getElementById('homeButton');
-                homeButton.href = redirectTarget;
+                // 创建一个最小的Service Worker
+                var inlineServiceWorker = `
+                    // 最小化内联Service Worker - 由404处理程序生成
+                    self.addEventListener('install', event => {
+                        console.log('[临时Service Worker] 安装');
+                        self.skipWaiting();
+                    });
+                    
+                    self.addEventListener('activate', event => {
+                        console.log('[临时Service Worker] 激活');
+                        event.waitUntil(clients.claim());
+                    });
+                    
+                    self.addEventListener('fetch', event => {
+                        // 基本fetch处理程序
+                        if (event.request.mode === 'navigate') {
+                            event.respondWith(fetch(event.request));
+                        }
+                    });
+                    
+                    // 消息处理程序，允许窗口强制更新
+                    self.addEventListener('message', event => {
+                        if (event.data && event.data.type === 'SKIP_WAITING') {
+                            self.skipWaiting();
+                        }
+                    });
+                    
+                    console.log('[临时Service Worker] 已加载'); 
+                `;
                 
-                // 添加自动重定向
+                // 使用Blob创建URL
+                var blob = new Blob([inlineServiceWorker], {type: 'application/javascript'});
+                var blobUrl = URL.createObjectURL(blob);
+                
+                // 自动下载Service Worker内容
+                var link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = 'service-worker.js';
+                document.body.appendChild(link);
+                
+                log('创建了临时Service Worker，现在开始下载');
+                link.click();
+                document.body.removeChild(link);
+                
+                // 设置元标记，指示这是内联内容而不是HTML
+                var meta = document.createElement('meta');
+                meta.httpEquiv = 'Content-Type';
+                meta.content = 'application/javascript';
+                document.head.appendChild(meta);
+                
+                // 5秒后重定向回主页
                 setTimeout(function() {
                     window.location.href = redirectTarget;
                 }, 5000);
+            } else {
+                // 不是Service Worker请求，直接重定向到首页
+                log('非Service Worker请求，正在重定向到: ' + redirectTarget);
                 
-                // 显示倒计时
-                var counter = 5;
+                // 3秒后重定向
+                setTimeout(function() {
+                    window.location.href = redirectTarget;
+                }, 3000);
+            }
+            
+            // DOM加载完成后更新UI
+            window.addEventListener('DOMContentLoaded', function() {
+                // 设置标题和消息
+                if (isServiceWorkerRequest) {
+                    document.getElementById('title').textContent = 'Service Worker 请求处理中';
+                    document.getElementById('message').textContent = '正在提供临时Service Worker，然后将返回首页...';
+                } else if (isJsRequest) {
+                    document.getElementById('title').textContent = 'JavaScript 文件未找到';
+                    document.getElementById('message').textContent = '尝试加载的脚本不存在，即将返回首页...';
+                } else {
+                    document.getElementById('title').textContent = '404 - 页面未找到';
+                    document.getElementById('message').textContent = '请求的页面不存在，即将返回首页...';
+                }
+                
+                // 设置返回链接
+                document.getElementById('homeButton').href = redirectTarget;
+                
+                // 更新倒计时
+                var counter = isServiceWorkerRequest ? 5 : 3;
                 var countdownElement = document.getElementById('countdown');
+                countdownElement.textContent = counter;
+                
                 var interval = setInterval(function() {
                     counter--;
                     countdownElement.textContent = counter;
@@ -117,25 +233,31 @@
 </head>
 <body>
     <div class="container">
-        <h1>404 - 页面未找到</h1>
-        <p>您尝试访问的页面在 GitHub Pages 上不可用</p>
+        <h1 id="title">404 - 页面未找到</h1>
+        <p id="message">您尝试访问的页面在 GitHub Pages 上不可用</p>
         <div class="loader"></div>
-        <p>可能的原因：</p>
-        <ul id="reasonList" style="text-align: left;"></ul>
-        <p>将在 <span id="countdown">5</span> 秒后自动返回首页</p>
+        <p>将在 <span id="countdown">3</span> 秒后自动返回首页</p>
         <a id="homeButton" href="/" class="button">立即返回首页</a>
+        
+        <!-- 调试信息 -->
+        <div id="debug">
+            <div class="debug-header">调试信息:</div>
+            <div id="debug-content"></div>
+        </div>
     </div>
     
-    <!-- 尝试自动修复Service Worker -->
+    <!-- 尝试主动注册Service Worker -->
     <script>
-        // 尝试注册Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
+        // 延迟1秒后尝试注册Service Worker
+        setTimeout(function() {
+            if ('serviceWorker' in navigator) {
                 var basePath = '/';
                 var pathSegments = window.location.pathname.split('/');
                 if (pathSegments.length >= 2 && pathSegments[1]) {
                     basePath = '/' + pathSegments[1] + '/';
                 }
+                
+                console.log('尝试注册Service Worker: ' + basePath + 'service-worker.js');
                 
                 navigator.serviceWorker.register(basePath + 'service-worker.js', {scope: basePath})
                     .then(function(reg) {
@@ -144,8 +266,8 @@
                     .catch(function(error) {
                         console.error('Service Worker注册失败:', error);
                     });
-            });
-        }
+            }
+        }, 1000);
     </script>
 </body>
 </html> 

@@ -6,8 +6,10 @@
 // Notification Handler Script for PtvAlert
 // Uses Web Push API with Cloudflare Workers
 
-// Base URL for the API - change to your Cloudflare Worker URL
-const API_BASE_URL = 'https://ptvalert.pages.dev';
+// Base URL for the API - dynamically set based on environment
+const API_BASE_URL = window.location.hostname.includes('github.io') 
+    ? 'https://edwardidaniels449.github.io' 
+    : window.location.origin;
 
 // 调试日志前缀
 const LOG_PREFIX = '[通知系统] ';
@@ -30,15 +32,22 @@ if (window.location.hostname.includes('github.io')) {
     SERVICE_WORKER_SCOPE = basePath;
     console.log(LOG_PREFIX + '使用GitHub Pages基础路径:', basePath);
   } else {
-    // 从URL中确定路径
+    // 从URL中确定路径，用于edwardidaniels449.github.io
     const pathSegments = window.location.pathname.split('/');
+    console.log(LOG_PREFIX + 'URL路径段:', pathSegments);
+    
+    // GitHub Pages路径
+    let repoPath = '';
+    
+    // 检查是否有特定路径段
     if (pathSegments.length >= 2 && pathSegments[1]) {
-      // GitHub Pages项目页面 (username.github.io/repo-name)
-      const repoName = pathSegments[1];
-      SERVICE_WORKER_PATH = '/' + repoName + '/service-worker.js';
-      SERVICE_WORKER_SCOPE = '/' + repoName + '/';
-      console.log(LOG_PREFIX + '基于URL确定GitHub Pages路径:', SERVICE_WORKER_PATH);
+      // 从URL中确定正确的仓库名
+      repoPath = '/' + pathSegments[1] + '/';
     }
+    
+    SERVICE_WORKER_PATH = repoPath + 'service-worker.js';
+    SERVICE_WORKER_SCOPE = repoPath || '/';
+    console.log(LOG_PREFIX + '基于URL确定GitHub Pages路径:', SERVICE_WORKER_PATH);
   }
 }
 

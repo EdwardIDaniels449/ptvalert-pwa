@@ -19,29 +19,46 @@
     function getBasePath() {
         // 从URL中提取仓库名称
         const pathSegments = window.location.pathname.split('/');
+        console.log('URL路径段:', pathSegments);
+        
         if (pathSegments.length >= 2 && pathSegments[1]) {
             // 这种情况是项目页面 (username.github.io/repo-name)
+            console.log('检测到仓库名:', pathSegments[1]);
             return '/' + pathSegments[1] + '/';
         }
+        
         // 这种情况是用户页面 (username.github.io)
+        console.log('未检测到仓库名，使用根路径');
         return '/';
     }
     
     const basePath = getBasePath();
     console.log('GitHub Pages 基础路径:', basePath);
     
+    // 全局存储基础路径供其他脚本使用
+    window.GITHUB_PAGES_BASE_PATH = basePath;
+    
     // 修复API路径
-    if (typeof API_BASE_URL !== 'undefined') {
-        console.log('原始API_BASE_URL:', API_BASE_URL);
+    if (typeof window.API_BASE_URL !== 'undefined') {
+        console.log('原始API_BASE_URL:', window.API_BASE_URL);
         
-        // 如果API路径指向本地，需要修复
-        if (API_BASE_URL.startsWith('/') || API_BASE_URL === 'https://ptvalert.pages.dev') {
-            // 针对GitHub Pages环境，使用Cloudflare Workers或其他外部API
-            API_BASE_URL = 'https://ptvalert.pages.dev';
-            console.log('已修复API_BASE_URL:', API_BASE_URL);
+        // 修复错误的API_BASE_URL
+        if (window.API_BASE_URL.includes('your-subdomain.workers.dev') || 
+            window.API_BASE_URL.includes('ptvalert.pages.dev')) {
+            // 使用当前GitHub Pages域名
+            window.API_BASE_URL = 'https://' + window.location.hostname;
+            console.log('已修复API_BASE_URL:', window.API_BASE_URL);
         }
     } else {
-        console.log('未找到API_BASE_URL变量');
+        // 如果API_BASE_URL未定义，创建一个
+        window.API_BASE_URL = 'https://' + window.location.hostname;
+        console.log('已创建API_BASE_URL:', window.API_BASE_URL);
+    }
+    
+    // 修复Push Config变量
+    if (typeof window.PUSH_CONFIG !== 'undefined') {
+        console.log('修复PUSH_CONFIG.SERVER_URL');
+        window.PUSH_CONFIG.SERVER_URL = window.API_BASE_URL;
     }
     
     // 修复Service Worker注册
@@ -78,10 +95,18 @@
             return originalRegister.call(this, fixedScriptURL, fixedOptions)
                 .catch(error => {
                     console.error('Service Worker注册失败:', error);
+                    
                     // 如果失败，尝试使用完整的绝对URL
                     const fullURL = new URL(scriptURL, window.location.origin).href;
                     console.log('尝试使用完整URL:', fullURL);
-                    return originalRegister.call(this, fullURL, fixedOptions);
+                    return originalRegister.call(this, fullURL, fixedOptions)
+                        .catch(secondError => {
+                            console.error('第二次尝试注册Service Worker失败:', secondError);
+                            
+                            // 增加除错信息
+                            alert('Service Worker注册失败。请检查控制台以获取详细信息。');
+                            return Promise.reject(secondError);
+                        });
                 });
         };
         
@@ -113,7 +138,6 @@
     
     // 添加GitHub Pages环境标记
     window.IS_GITHUB_PAGES = true;
-    window.GITHUB_PAGES_BASE_PATH = basePath;
     
     console.log('GitHub Pages 修复完成');
     

@@ -20,18 +20,29 @@ function getBasePath() {
   if (self.location.hostname.includes('github.io')) {
     console.log('[Service Worker] 检测到GitHub Pages环境');
     
-    // 从URL中提取仓库名称
+    // 从URL中提取路径部分
     const pathSegments = self.location.pathname.split('/');
     console.log('[Service Worker] URL路径段:', pathSegments);
     
-    if (pathSegments.length >= 2 && pathSegments[1] && pathSegments[1] !== 'service-worker.js') {
-      // GitHub Pages项目页面 (username.github.io/repo-name)
-      basePath = '/' + pathSegments[1] + '/';
-      console.log('[Service Worker] 从URL提取仓库名:', pathSegments[1]);
+    // 查找service-worker.js之前的路径部分
+    let repoPath = '';
+    
+    for (let i = 1; i < pathSegments.length; i++) {
+      if (pathSegments[i] === 'service-worker.js') {
+        break;
+      }
+      if (pathSegments[i]) {
+        repoPath += '/' + pathSegments[i];
+      }
+    }
+    
+    if (repoPath) {
+      basePath = repoPath + '/';
+      console.log('[Service Worker] 从URL提取路径:', basePath);
     } else {
-      // 硬编码的回退值
-      basePath = '/ptvalert-pwa/';
-      console.log('[Service Worker] 使用硬编码的仓库名: ptvalert-pwa');
+      // 如果未能从URL中提取，则使用当前位置的目录
+      basePath = new URL('./', currentLocation).pathname;
+      console.log('[Service Worker] 使用当前位置目录:', basePath);
     }
   }
   

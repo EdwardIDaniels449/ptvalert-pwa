@@ -6,6 +6,12 @@
 (function() {
     console.log('URL修复工具已加载，正在检查配置...');
     
+    // 设置适当的API服务器URL
+    function getCorrectApiUrl() {
+        // 使用当前主机名
+        return 'https://' + window.location.hostname;
+    }
+    
     // 尝试清除Service Worker和缓存
     async function clearServiceWorkerAndCache() {
         try {
@@ -61,9 +67,12 @@
             // 尝试ping API服务器
             console.log('正在检查API服务器连接...');
             
+            // 获取正确的API URL
+            const correctApiUrl = getCorrectApiUrl();
+            
             // 使用HEAD请求检查服务器是否可达
             // 使用随机参数防止缓存
-            const pingUrl = `https://ptvalert.pages.dev/favicon.ico?nocache=${Date.now()}`;
+            const pingUrl = `${correctApiUrl}/favicon.ico?nocache=${Date.now()}`;
             console.log(`Ping URL: ${pingUrl}`);
             
             try {
@@ -83,10 +92,12 @@
             } catch (error) {
                 console.error('API服务器连接失败:', error);
                 
-                // 显示错误通知
-                setTimeout(() => {
-                    alert(`连接到API服务器失败: ${error.message}\n\n请检查你的网络连接，或者API服务器可能暂时不可用。`);
-                }, 1000);
+                // 尝试使用当前域名作为API服务器
+                if (typeof window.API_BASE_URL !== 'undefined') {
+                    const originalUrl = window.API_BASE_URL;
+                    window.API_BASE_URL = correctApiUrl;
+                    console.log(`API服务器连接失败, 已切换到当前域名: ${window.API_BASE_URL}`);
+                }
                 
                 return false;
             }
@@ -100,29 +111,37 @@
     function fixApiBaseUrl() {
         try {
             // 检查全局变量API_BASE_URL是否存在
-            if (typeof API_BASE_URL !== 'undefined') {
+            if (typeof window.API_BASE_URL !== 'undefined') {
+                // 获取正确的API URL
+                const correctApiUrl = getCorrectApiUrl();
+                
                 // 如果使用了错误的域名，则修复它
-                if (API_BASE_URL.includes('your-subdomain.workers.dev')) {
-                    console.warn('发现错误的API_BASE_URL:', API_BASE_URL);
+                if (window.API_BASE_URL.includes('your-subdomain.workers.dev') || 
+                    window.API_BASE_URL.includes('ptvalert.pages.dev')) {
+                    console.warn('发现错误的API_BASE_URL:', window.API_BASE_URL);
                     // 保存原始URL以便报告
-                    const originalUrl = API_BASE_URL;
+                    const originalUrl = window.API_BASE_URL;
                     // 设置为正确的URL
-                    API_BASE_URL = 'https://ptvalert.pages.dev';
-                    console.warn('已修复为:', API_BASE_URL);
+                    window.API_BASE_URL = correctApiUrl;
+                    console.warn('已修复为:', window.API_BASE_URL);
                     
-                    // 显示修复消息
-                    setTimeout(() => {
-                        alert(`已修复错误的API URL:\n从: ${originalUrl}\n到: ${API_BASE_URL}\n\n请刷新页面以确保所有功能正常工作。`);
-                    }, 1000);
+                    // 更新推送配置
+                    if (typeof window.PUSH_CONFIG !== 'undefined') {
+                        window.PUSH_CONFIG.SERVER_URL = window.API_BASE_URL;
+                        console.log('已同步更新PUSH_CONFIG.SERVER_URL');
+                    }
                     
                     return true;
                 } else {
-                    console.log('API_BASE_URL配置正确:', API_BASE_URL);
+                    console.log('API_BASE_URL配置正确:', window.API_BASE_URL);
                     return false;
                 }
             } else {
-                console.log('未找到API_BASE_URL变量');
-                return false;
+                // 如果API_BASE_URL不存在，创建一个
+                const correctApiUrl = getCorrectApiUrl();
+                window.API_BASE_URL = correctApiUrl;
+                console.log('已创建API_BASE_URL:', window.API_BASE_URL);
+                return true;
             }
         } catch (e) {
             console.error('检查或修复API_BASE_URL失败:', e);
