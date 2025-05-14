@@ -28,13 +28,8 @@
         if (addReportBtn) {
             addReportBtn.addEventListener('click', function(e) {
                 e.preventDefault();
-                if (window.isSelectingLocation) {
-                    // Cancel location selection
-                    cancelLocationSelection();
-                } else {
-                    // Start location selection
-                    startLocationSelection();
-                }
+                // 只弹出完整表单
+                if (typeof openReportForm === 'function') openReportForm();
             });
         }
 
@@ -43,7 +38,9 @@
         if (quickAddBtn) {
             quickAddBtn.addEventListener('click', function(e) {
                 e.preventDefault();
-                openDirectDescriptionForm();
+                // 只弹出描述输入弹窗
+                var quickAddForm = document.getElementById('quickAddForm');
+                if (quickAddForm) quickAddForm.style.display = 'block';
             });
         }
 
