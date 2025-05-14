@@ -491,4 +491,8 @@
             console.log('[Function Recovery] All functionality verified and working');
         }
     }
+
+    function getFirebaseAuthSafe() {
+        return (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) ? firebase.auth() : null;
+    }
 })(); 

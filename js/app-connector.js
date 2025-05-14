@@ -283,4 +283,8 @@
             }
         }
     }, 1000);
+
+    function getFirebaseAuthSafe() {
+        return (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) ? firebase.auth() : null;
+    }
 })(); 

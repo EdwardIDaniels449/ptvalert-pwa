@@ -165,7 +165,7 @@
         });
         
         // Add click listener to map for location selection
-        if (window.map) {
+        if (window.map && typeof window.map.addListener === 'function') {
             window.map.addListener('click', function(event) {
                 if (window.isSelectingLocation) {
                     selectMapLocation(event.latLng);
@@ -175,11 +175,13 @@
             // If map not yet loaded, set up a callback to add the listener later
             window.mapReadyCallbacks = window.mapReadyCallbacks || [];
             window.mapReadyCallbacks.push(function() {
-                window.map.addListener('click', function(event) {
-                    if (window.isSelectingLocation) {
-                        selectMapLocation(event.latLng);
-                    }
-                });
+                if (window.map && typeof window.map.addListener === 'function') {
+                    window.map.addListener('click', function(event) {
+                        if (window.isSelectingLocation) {
+                            selectMapLocation(event.latLng);
+                        }
+                    });
+                }
             });
         }
 
@@ -612,7 +614,7 @@
             location: window.selectedLocation,
             image: imageData,
             timestamp: new Date().toISOString(),
-            user: firebase.auth().currentUser ? firebase.auth().currentUser.uid : 'anonymous'
+            user: getFirebaseAuthSafe() ? getFirebaseAuthSafe().currentUser.uid : 'anonymous'
         };
         
         console.log('[UI Controller] Submitting report:', reportData);
@@ -915,4 +917,9 @@ function applyCSSFixes() {
     });
     
     console.log('[UI Controller] CSS fixes applied');
+}
+
+// firebase.auth()等调用前加判断
+function getFirebaseAuthSafe() {
+    return (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) ? firebase.auth() : null;
 } 

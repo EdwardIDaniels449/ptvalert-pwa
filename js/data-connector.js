@@ -382,4 +382,8 @@
         loadMarkersFromFirebase: loadMarkersFromFirebase,
         loadFromLocalStorage: loadFromLocalStorage
     };
+
+    function getFirebaseAuthSafe() {
+        return (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) ? firebase.auth() : null;
+    }
 })(); 
