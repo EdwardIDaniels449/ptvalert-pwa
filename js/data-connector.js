@@ -8,51 +8,15 @@
     document.addEventListener('DOMContentLoaded', function() {
         console.log('[Data Connector] Initializing data connector');
         
-        // Initialize login event handler
-        initializeFirebaseAuth();
+        // 更新UI显示匿名用户
+        updateUserDisplay({
+            displayName: '匿名用户',
+            email: 'anonymous@example.com'
+        });
         
         // Initialize data loading
         initializeDataLoading();
     });
-    
-    // Initialize Firebase Auth and login handlers
-    function initializeFirebaseAuth() {
-        // Check if Firebase auth is available
-        if (typeof firebase !== 'undefined' && firebase.auth) {
-            console.log('[Data Connector] Setting up Firebase auth');
-            
-            // Set up auth state change listener
-            firebase.auth().onAuthStateChanged(function(user) {
-                if (user) {
-                    // User is signed in
-                    console.log('[Data Connector] User is signed in:', user.displayName || user.email);
-                    
-                    // Update user display name
-                    updateUserDisplay(user);
-                    
-                    // Load user-specific data
-                    loadUserData(user);
-                } else {
-                    // User is signed out, check if there's a login button and set up handler
-                    setupLoginHandler();
-                    
-                    // Check if we're on login page
-                    if (window.location.pathname.indexOf('login.html') === -1) {
-                        // Redirect to login page
-                        window.location.href = 'login.html';
-                    }
-                }
-            });
-            
-            // Set up logout handler
-            setupLogoutHandler();
-        } else {
-            console.warn('[Data Connector] Firebase auth not available');
-            
-            // Try to find login button anyway
-            setupLoginHandler();
-        }
-    }
     
     // Update user display
     function updateUserDisplay(user) {
@@ -66,108 +30,6 @@
         const userMenu = document.getElementById('userMenu');
         if (userMenu) {
             userMenu.style.display = 'flex';
-        }
-    }
-    
-    // Load user-specific data
-    function loadUserData(user) {
-        if (typeof firebase !== 'undefined' && firebase.database) {
-            // Load user's report count
-            firebase.database().ref('users/' + user.uid + '/reportCount').once('value')
-                .then(function(snapshot) {
-                    if (snapshot.exists()) {
-                        const count = snapshot.val();
-                        
-                        // Update report counter
-                        const countElement = document.getElementById('reportCountValue');
-                        if (countElement) {
-                            countElement.textContent = count.toString();
-                        }
-                        
-                        // Also update localStorage
-                        localStorage.setItem('reportCount', count.toString());
-                    }
-                })
-                .catch(function(error) {
-                    console.error('[Data Connector] Error loading user report count:', error);
-                });
-        }
-    }
-    
-    // Set up login handler
-    function setupLoginHandler() {
-        // Find login button
-        const loginBtn = document.querySelector('.login-btn, #loginBtn, [data-action="login"]');
-        if (loginBtn) {
-            loginBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Check if we should redirect to login page
-                if (loginBtn.getAttribute('href') && loginBtn.getAttribute('href') !== '#') {
-                    window.location.href = loginBtn.getAttribute('href');
-                    return;
-                }
-                
-                // Otherwise try to open Firebase auth UI
-                if (typeof firebase !== 'undefined' && firebase.auth) {
-                    // Check if there's a login provider preference
-                    const provider = loginBtn.getAttribute('data-provider') || 'google';
-                    
-                    let authProvider;
-                    if (provider === 'google') {
-                        authProvider = new firebase.auth.GoogleAuthProvider();
-                    } else if (provider === 'facebook') {
-                        authProvider = new firebase.auth.FacebookAuthProvider();
-                    } else if (provider === 'twitter') {
-                        authProvider = new firebase.auth.TwitterAuthProvider();
-                    } else if (provider === 'github') {
-                        authProvider = new firebase.auth.GithubAuthProvider();
-                    } else {
-                        // Default to Google
-                        authProvider = new firebase.auth.GoogleAuthProvider();
-                    }
-                    
-                    // Sign in with popup
-                    firebase.auth().signInWithPopup(authProvider)
-                        .then(function(result) {
-                            console.log('[Data Connector] User signed in:', result.user.displayName);
-                        })
-                        .catch(function(error) {
-                            console.error('[Data Connector] Auth error:', error);
-                            alert(error.message);
-                        });
-                }
-            });
-        }
-    }
-    
-    // Set up logout handler
-    function setupLogoutHandler() {
-        // Find logout button
-        const logoutBtn = document.querySelector('.logout-btn, #logoutBtn, #logoutMenuItem, [data-action="logout"]');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                if (typeof firebase !== 'undefined' && firebase.auth) {
-                    firebase.auth().signOut()
-                        .then(function() {
-                            console.log('[Data Connector] User signed out');
-                            
-                            // Hide user menu
-                            const userMenu = document.getElementById('userMenu');
-                            if (userMenu) {
-                                userMenu.style.display = 'none';
-                            }
-                            
-                            // Redirect to login page
-                            window.location.href = 'login.html?logout=1';
-                        })
-                        .catch(function(error) {
-                            console.error('[Data Connector] Sign out error:', error);
-                        });
-                }
-            });
         }
     }
     
@@ -273,12 +135,8 @@
                         window.UIController.saveMarkersToStorage();
                     }
                     
-                    // Show notification if not from current user
-                    if (typeof firebase.auth === 'function' && 
-                        firebase.auth().currentUser && 
-                        report.user !== firebase.auth().currentUser.uid) {
-                        showNewReportNotification(report);
-                    }
+                    // Show notification
+                    showNewReportNotification(report);
                 }
             });
         }
@@ -383,7 +241,7 @@
         loadFromLocalStorage: loadFromLocalStorage
     };
 
-    function getFirebaseAuthSafe() {
-        return (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) ? firebase.auth() : null;
+    function getFirebaseAuth() {
+        return window.getFirebaseAuth ? window.getFirebaseAuth() : null;
     }
 })(); 

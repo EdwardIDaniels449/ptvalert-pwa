@@ -587,6 +587,12 @@
         const dropdown = document.getElementById('userMenuDropdown');
         if (dropdown) {
             dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+            
+            // 隐藏登出按钮
+            const logoutMenuItem = document.getElementById('logoutMenuItem');
+            if (logoutMenuItem) {
+                logoutMenuItem.style.display = 'none';
+            }
         }
     }
 
@@ -605,8 +611,8 @@
         }
         
         // Get the image if available
-        const imageData = document.getElementById('previewImg').style.display !== 'none' ?
-            document.getElementById('previewImg').src : null;
+        const previewImg = document.getElementById('previewImg');
+        const imageData = previewImg && previewImg.style.display !== 'none' ? previewImg.src : null;
         
         // Create report data
         const reportData = {
@@ -614,7 +620,7 @@
             location: window.selectedLocation,
             image: imageData,
             timestamp: new Date().toISOString(),
-            user: getFirebaseAuthSafe() ? getFirebaseAuthSafe().currentUser.uid : 'anonymous'
+            user: 'anonymous-user' // 使用固定的匿名用户ID
         };
         
         console.log('[UI Controller] Submitting report:', reportData);
@@ -629,7 +635,8 @@
                         console.log('[UI Controller] Report saved to Firebase successfully');
                         
                         // Show success message
-                        document.getElementById('reportCounterPopup').style.display = 'block';
+                        const reportCounterPopup = document.getElementById('reportCounterPopup');
+                        if (reportCounterPopup) reportCounterPopup.style.display = 'block';
                         
                         // Update report counter
                         updateReportCounter();
@@ -650,7 +657,8 @@
                         saveReportToLocalStorage(reportData);
                         
                         // Show success and close form
-                        document.getElementById('reportCounterPopup').style.display = 'block';
+                        const reportCounterPopup = document.getElementById('reportCounterPopup');
+                        if (reportCounterPopup) reportCounterPopup.style.display = 'block';
                         closeReportForm();
                         
                         // Add marker
@@ -664,7 +672,8 @@
                 saveReportToLocalStorage(reportData);
                 
                 // Show success and close form
-                document.getElementById('reportCounterPopup').style.display = 'block';
+                const reportCounterPopup = document.getElementById('reportCounterPopup');
+                if (reportCounterPopup) reportCounterPopup.style.display = 'block';
                 closeReportForm();
                 
                 // Add marker
@@ -676,7 +685,8 @@
             saveReportToLocalStorage(reportData);
             
             // Show success message and close form
-            document.getElementById('reportCounterPopup').style.display = 'block';
+            const reportCounterPopup = document.getElementById('reportCounterPopup');
+            if (reportCounterPopup) reportCounterPopup.style.display = 'block';
             closeReportForm();
             
             // Add marker
@@ -920,6 +930,6 @@ function applyCSSFixes() {
 }
 
 // firebase.auth()等调用前加判断
-function getFirebaseAuthSafe() {
-    return (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) ? firebase.auth() : null;
+function getFirebaseAuth() {
+    return window.getFirebaseAuth ? window.getFirebaseAuth() : null;
 } 

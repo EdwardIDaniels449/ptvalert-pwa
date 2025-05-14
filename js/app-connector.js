@@ -16,75 +16,15 @@
     document.addEventListener('DOMContentLoaded', function() {
         console.log('[App Connector] Initializing application connectors');
         
-        // Restore login functionality
-        restoreLoginFunctionality();
-        
         // Connect UI controller with original app functions
         connectUIWithOriginalApp();
         
-        // Fix user menu visibility
+        // Fix user menu visibility - 显示匿名用户
         fixUserMenuVisibility();
         
         // Show UI elements that might be hidden
         showUIElements();
     });
-
-    // Restore login functionality
-    function restoreLoginFunctionality() {
-        // Check if Firebase auth is available
-        if (typeof firebase !== 'undefined' && firebase.auth) {
-            // Set up auth state change listener
-            firebase.auth().onAuthStateChanged(function(user) {
-                if (user) {
-                    // User is signed in
-                    console.log('[App Connector] User is signed in:', user.displayName || user.email);
-                    
-                    // Update user display name
-                    const userDisplayName = document.getElementById('userDisplayName');
-                    if (userDisplayName) {
-                        userDisplayName.textContent = user.displayName || user.email.split('@')[0];
-                    }
-                    
-                    // Show user menu
-                    const userMenu = document.getElementById('userMenu');
-                    if (userMenu) {
-                        userMenu.style.display = 'flex';
-                    }
-                    
-                    // Connect logout button
-                    const logoutMenuItem = document.getElementById('logoutMenuItem');
-                    if (logoutMenuItem) {
-                        logoutMenuItem.addEventListener('click', function() {
-                            firebase.auth().signOut().then(function() {
-                                console.log('[App Connector] User signed out');
-                                // Reload page or update UI as needed
-                                window.location.reload();
-                            }).catch(function(error) {
-                                console.error('[App Connector] Sign out error:', error);
-                            });
-                        });
-                    }
-                } else {
-                    // User is signed out
-                    console.log('[App Connector] No user is signed in');
-                    
-                    // Check if we're on login page
-                    if (window.location.pathname.indexOf('login.html') === -1) {
-                        // Redirect to login page
-                        window.location.href = 'login.html';
-                    }
-                    
-                    // Hide user menu
-                    const userMenu = document.getElementById('userMenu');
-                    if (userMenu) {
-                        userMenu.style.display = 'none';
-                    }
-                }
-            });
-        } else {
-            console.warn('[App Connector] Firebase auth not available');
-        }
-    }
 
     // Connect UI controller with original app functions
     function connectUIWithOriginalApp() {
@@ -191,13 +131,23 @@
         }
     }
 
-    // Fix user menu visibility
+    // Fix user menu visibility - 显示匿名用户
     function fixUserMenuVisibility() {
         const userMenu = document.getElementById('userMenu');
         if (userMenu) {
-            // Show the menu if user is logged in
-            if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
-                userMenu.style.display = 'flex';
+            // 总是显示用户菜单
+            userMenu.style.display = 'flex';
+            
+            // 更新用户显示名称
+            const userDisplayName = document.getElementById('userDisplayName');
+            if (userDisplayName) {
+                userDisplayName.textContent = '匿名用户';
+            }
+            
+            // 移除登出菜单项
+            const logoutMenuItem = document.getElementById('logoutMenuItem');
+            if (logoutMenuItem) {
+                logoutMenuItem.style.display = 'none';
             }
         }
     }
@@ -274,17 +224,9 @@
                 window.UIController.loadExistingMarkers();
             }
         }
-        
-        // Check for login status
-        if (typeof firebase !== 'undefined' && firebase.auth) {
-            if (!firebase.auth().currentUser && window.location.pathname.indexOf('login.html') === -1) {
-                // User not logged in and not on login page
-                window.location.href = 'login.html';
-            }
-        }
     }, 1000);
 
-    function getFirebaseAuthSafe() {
-        return (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) ? firebase.auth() : null;
+    function getFirebaseAuth() {
+        return window.getFirebaseAuth ? window.getFirebaseAuth() : null;
     }
 })(); 

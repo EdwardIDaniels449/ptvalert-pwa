@@ -407,9 +407,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     
     <!-- 添加Firebase SDK 脚本 -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     
     <!-- URL修复工具 - 处理推送通知URL问题 -->
     <script src="./js/url-fix.js?v=1.0.0"></script>
@@ -1017,10 +1016,10 @@
     <!-- 用户菜单 -->
     <div id="userMenu" class="user-menu">
       <span style="font-size:16px;">👤</span>
-      <span id="userDisplayName" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">用户</span>
+      <span id="userDisplayName" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">匿名用户</span>
       <div class="user-menu-dropdown" id="userMenuDropdown">
         <div class="user-menu-item" id="profileMenuItem">个人资料</div>
-        <div class="user-menu-item logout" id="logoutMenuItem">退出登录</div>
+        <div class="user-menu-item logout" id="logoutMenuItem" style="display:none;">退出登录</div>
       </div>
     </div>
     
@@ -1087,6 +1086,25 @@
             <button class="cancel-btn" id="cancelReport" style="flex:1;background-color:#3a3a3c;color:white;border:none;padding:14px;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;">取消</button>
         </div>
     </div>
+    
+    <!-- 快速描述弹窗 -->
+    <div class="quick-desc-popup" id="quickAddForm" style="display:none;">
+        <div class="form-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h2 class="form-title" id="quickFormTitle" style="font-size:20px;color:#fff;margin:0;">快速添加描述</h2>
+            <button class="form-close" id="quickAddClose" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;margin:0;padding:0;">&times;</button>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" id="quickDescLabel" style="display:block;margin-bottom:8px;color:#fff;">描述</label>
+            <textarea class="form-textarea" id="quickDescInput" placeholder="请简单描述您看到的情况..." style="width:100%;padding:12px;border-radius:8px;border:1px solid #444;background-color:#2c2c2e;color:#fff;font-size:16px;min-height:100px;resize:vertical;"></textarea>
+            <p style="font-size:12px;color:#999;margin-top:5px;">提示: 将使用地图中心作为位置</p>
+        </div>
+        
+        <div style="display:flex;gap:10px;margin-top:15px;">
+            <button class="submit-btn" id="submitQuickAdd" style="flex:1;background-color:#0071e3;color:white;border:none;padding:14px;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;">确定</button>
+            <button class="cancel-btn" id="cancelQuickAdd" style="flex:1;background-color:#3a3a3c;color:white;border:none;padding:14px;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;">取消</button>
+        </div>
+    </div>
 </body>
 
 <!-- 辅助脚本 -->
@@ -1133,14 +1151,14 @@
         const latLng = event.latLng;
         if (window.UIController && typeof window.UIController.selectMapLocation === 'function') {
           window.UIController.selectMapLocation(latLng);
-        }
-      }
-    });
+                }
+            }
+        });
     
     console.log('地图初始化完成');
   }
 </script>
-
+    
 <!-- 先加载辅助脚本，确保它们在Google Maps API之前初始化 -->
 <script src="js/map-loader.js"></script>
 <script src="js/ui-controller.js"></script>

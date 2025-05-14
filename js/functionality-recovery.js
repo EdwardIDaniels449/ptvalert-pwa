@@ -135,29 +135,26 @@
         const userMenuDropdown = document.getElementById('userMenuDropdown');
         
         if (userMenu && userMenuDropdown) {
-            // Make sure user menu is visible if user is logged in
-            if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
-                userMenu.style.display = 'flex';
+            // 显示用户菜单
+            userMenu.style.display = 'flex';
+            
+            // 更新用户显示名称
+            const displayNameEl = document.getElementById('userDisplayName');
+            if (displayNameEl) {
+                displayNameEl.textContent = '匿名用户';
+            }
+            
+            // 隐藏登出菜单项
+            const logoutMenuItem = document.getElementById('logoutMenuItem');
+            if (logoutMenuItem) {
+                logoutMenuItem.style.display = 'none';
             }
             
             // Ensure click handler for user menu
-            const userDisplayName = document.getElementById('userDisplayName');
-            if (userDisplayName) {
-                userDisplayName.addEventListener('click', function() {
+            if (displayNameEl) {
+                displayNameEl.addEventListener('click', function() {
                     userMenuDropdown.style.display = 
                         userMenuDropdown.style.display === 'block' ? 'none' : 'block';
-                });
-            }
-            
-            // Ensure logout handler
-            const logoutMenuItem = document.getElementById('logoutMenuItem');
-            if (logoutMenuItem) {
-                logoutMenuItem.addEventListener('click', function() {
-                    if (typeof firebase !== 'undefined' && firebase.auth) {
-                        firebase.auth().signOut().then(function() {
-                            window.location.href = 'login.html?logout=1';
-                        });
-                    }
                 });
             }
             
@@ -471,19 +468,6 @@
             issues++;
         }
         
-        // Check login status
-        if (typeof firebase !== 'undefined' && firebase.auth) {
-            const isOnLoginPage = window.location.pathname.indexOf('login.html') !== -1;
-            
-            if (!firebase.auth().currentUser && !isOnLoginPage) {
-                console.warn('[Function Recovery] User not logged in, redirecting to login page');
-                window.location.href = 'login.html';
-            } else if (firebase.auth().currentUser && isOnLoginPage) {
-                console.log('[Function Recovery] User already logged in, redirecting to main page');
-                window.location.href = 'index.html';
-            }
-        }
-        
         // Show final status
         if (issues > 0) {
             console.warn(`[Function Recovery] Completed with ${issues} unresolved issues`);
@@ -492,7 +476,7 @@
         }
     }
 
-    function getFirebaseAuthSafe() {
-        return (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) ? firebase.auth() : null;
+    function getFirebaseAuth() {
+        return window.getFirebaseAuth ? window.getFirebaseAuth() : null;
     }
 })(); 
