@@ -4,14 +4,45 @@
  */
 
 (function() {
+    // 保存全局引用
+    let markersToLoad = null;
+    
     // Wait for DOM to be fully loaded
     document.addEventListener('DOMContentLoaded', function() {
         console.log('[UI Controller] Initializing UI event handlers');
         initializeButtonHandlers();
         
-        // Load existing markers if available
-        loadExistingMarkers();
+        // 延迟加载标记，直到地图初始化
+        waitForMapsApi();
     });
+    
+    // 等待Google Maps API加载
+    function waitForMapsApi() {
+        try {
+            // 尝试从localStorage加载标记数据
+            const savedMarkers = localStorage.getItem('savedMarkers');
+            if (savedMarkers) {
+                markersToLoad = JSON.parse(savedMarkers);
+                console.log('[UI Controller] 已保存标记数据，等待地图加载');
+            }
+            
+            // 设置地图加载回调
+            window.mapReadyCallbacks = window.mapReadyCallbacks || [];
+            window.mapReadyCallbacks.push(function() {
+                console.log('[UI Controller] 地图已加载，添加标记');
+                if (markersToLoad && markersToLoad.length) {
+                    markersToLoad.forEach(function(marker) {
+                        addReportMarker(
+                            {lat: marker.lat, lng: marker.lng}, 
+                            marker.description
+                        );
+                    });
+                }
+            });
+        } catch (error) {
+            console.error('[UI Controller] 加载标记时出错:', error);
+        }
+    }
 
     // Initialize all button event handlers
     function initializeButtonHandlers() {
@@ -23,13 +54,13 @@
             });
         }
 
-        // Add report button
+        // Add report button - 修改为先选点后弹窗
         const addReportBtn = document.getElementById('addReportBtn');
         if (addReportBtn) {
             addReportBtn.addEventListener('click', function(e) {
                 e.preventDefault();
-                // 只弹出完整表单
-                if (typeof openReportForm === 'function') openReportForm();
+                // 启动位置选择模式
+                startLocationSelection();
             });
         }
 
@@ -96,14 +127,16 @@
         const quickAddClose = document.getElementById('quickAddClose');
         if (quickAddClose) {
             quickAddClose.addEventListener('click', function() {
-                document.getElementById('quickAddForm').style.display = 'none';
+                const quickAddForm = document.getElementById('quickAddForm');
+                if (quickAddForm) quickAddForm.style.display = 'none';
             });
         }
         
         const cancelQuickAdd = document.getElementById('cancelQuickAdd');
         if (cancelQuickAdd) {
             cancelQuickAdd.addEventListener('click', function() {
-                document.getElementById('quickAddForm').style.display = 'none';
+                const quickAddForm = document.getElementById('quickAddForm');
+                if (quickAddForm) quickAddForm.style.display = 'none';
             });
         }
         
@@ -139,9 +172,9 @@
                         const previewImg = document.getElementById('previewImg');
                         const imagePlaceholder = document.getElementById('imagePlaceholder');
                         
-                        previewImg.src = e.target.result;
-                        previewImg.style.display = 'block';
-                        imagePlaceholder.style.display = 'none';
+                        if (previewImg) previewImg.src = e.target.result;
+                        if (previewImg) previewImg.style.display = 'block';
+                        if (imagePlaceholder) imagePlaceholder.style.display = 'none';
                     };
                     
                     reader.readAsDataURL(file);
@@ -151,7 +184,8 @@
 
         // Add keyboard shortcut for quick description form
         document.addEventListener('keydown', function(e) {
-            if (document.getElementById('quickAddForm').style.display === 'block') {
+            const quickAddForm = document.getElementById('quickAddForm');
+            if (quickAddForm && quickAddForm.style.display === 'block') {
                 // Ctrl+Enter or Cmd+Enter to submit
                 if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                     submitQuickDescription();
@@ -159,33 +193,161 @@
                 
                 // Escape to cancel
                 if (e.key === 'Escape') {
-                    document.getElementById('quickAddForm').style.display = 'none';
+                    quickAddForm.style.display = 'none';
                 }
             }
         });
         
-        // Add click listener to map for location selection
-        if (window.map && typeof window.map.addListener === 'function') {
-            window.map.addListener('click', function(event) {
-                if (window.isSelectingLocation) {
-                    selectMapLocation(event.latLng);
-                }
-            });
-        } else {
-            // If map not yet loaded, set up a callback to add the listener later
-            window.mapReadyCallbacks = window.mapReadyCallbacks || [];
-            window.mapReadyCallbacks.push(function() {
-                if (window.map && typeof window.map.addListener === 'function') {
-                    window.map.addListener('click', function(event) {
-                        if (window.isSelectingLocation) {
-                            selectMapLocation(event.latLng);
-                        }
-                    });
-                }
+        // 关闭报告计数器弹窗
+        const closeCounterPopup = document.getElementById('closeCounterPopup');
+        if (closeCounterPopup) {
+            closeCounterPopup.addEventListener('click', function() {
+                const reportCounterPopup = document.getElementById('reportCounterPopup');
+                if (reportCounterPopup) reportCounterPopup.style.display = 'none';
             });
         }
 
         console.log('[UI Controller] All button handlers initialized');
+    }
+    
+    // 实现正确的submitQuickDescription函数
+    function submitQuickDescription() {
+        console.log('[UI Controller] 提交快速描述');
+        
+        const quickDescInput = document.getElementById('quickDescInput');
+        if (!quickDescInput) {
+            console.error('[UI Controller] Quick description input not found');
+            return;
+        }
+        
+        const description = quickDescInput.value;
+        
+        if (!description) {
+            alert(window.currentLang === 'zh' ? '请输入描述' : 'Please enter a description');
+            return;
+        }
+        
+        // 使用当前地图中心作为位置
+        let location = null;
+        
+        if (window.map && typeof window.map.getCenter === 'function') {
+            const center = window.map.getCenter();
+            location = {
+                lat: center.lat(),
+                lng: center.lng()
+            };
+        } else {
+            // 如果地图还未加载，使用默认位置（墨尔本中心）
+            location = window.MELBOURNE_CENTER || { lat: -37.8136, lng: 144.9631 };
+        }
+        
+        // 创建报告数据
+        const reportData = {
+            description: description,
+            location: location,
+            timestamp: new Date().toISOString(),
+            user: 'anonymous-user'
+        };
+        
+        console.log('[UI Controller] 提交快速报告:', reportData);
+        
+        // 尝试发送数据到Firebase
+        if (typeof firebase !== 'undefined' && firebase.database) {
+            try {
+                // 保存到Firebase
+                const reportRef = firebase.database().ref('reports').push();
+                reportRef.set(reportData)
+                    .then(function() {
+                        console.log('[UI Controller] 快速报告已保存到Firebase');
+                        
+                        // 显示成功消息
+                        const reportCounterPopup = document.getElementById('reportCounterPopup');
+                        if (reportCounterPopup) reportCounterPopup.style.display = 'block';
+                        
+                        // 更新报告计数器
+                        updateReportCounter();
+                        
+                        // 关闭表单
+                        const quickAddForm = document.getElementById('quickAddForm');
+                        if (quickAddForm) quickAddForm.style.display = 'none';
+                        
+                        // 重置输入
+                        quickDescInput.value = '';
+                        
+                        // 添加标记到地图
+                        if (typeof google !== 'undefined' && google.maps) {
+                            addReportMarker(location, description);
+                        } else {
+                            console.warn('[UI Controller] Google Maps未加载，标记将在地图加载后添加');
+                            // 保存到临时数组，等待地图加载
+                            if (!window.pendingMarkers) window.pendingMarkers = [];
+                            window.pendingMarkers.push({
+                                location: location,
+                                description: description
+                            });
+                        }
+                        
+                        // 保存标记到localStorage
+                        saveMarkersToStorage();
+                    })
+                    .catch(function(error) {
+                        console.error('[UI Controller] 保存到Firebase失败:', error);
+                        handleSubmitError(reportData, quickAddForm, quickDescInput, location, description);
+                    });
+            } catch (error) {
+                console.error('[UI Controller] Firebase操作失败:', error);
+                handleSubmitError(reportData, quickAddForm, quickDescInput, location, description);
+            }
+        } else {
+            // Firebase不可用，使用localStorage
+            handleSubmitError(reportData, quickAddForm, quickDescInput, location, description);
+        }
+    }
+    
+    // 处理提交错误
+    function handleSubmitError(reportData, formElement, inputElement, location, description) {
+        // 保存到localStorage
+        saveReportToLocalStorage(reportData);
+        
+        // 显示成功消息并关闭表单
+        const reportCounterPopup = document.getElementById('reportCounterPopup');
+        if (reportCounterPopup) reportCounterPopup.style.display = 'block';
+        
+        if (formElement) formElement.style.display = 'none';
+        
+        // 重置输入
+        if (inputElement) inputElement.value = '';
+        
+        // 如果Google Maps已加载，添加标记
+        if (typeof google !== 'undefined' && google.maps) {
+            addReportMarker(location, description);
+        } else {
+            // 保存到临时数组，等待地图加载
+            if (!window.pendingMarkers) window.pendingMarkers = [];
+            window.pendingMarkers.push({
+                location: location,
+                description: description
+            });
+        }
+        
+        // 保存标记到localStorage
+        saveMarkersToStorage();
+    }
+
+    // Start location selection on map
+    function startLocationSelection() {
+        window.isSelectingLocation = true;
+        const addReportTip = document.getElementById('addReportTip');
+        if (addReportTip) {
+            addReportTip.style.display = 'block';
+        }
+        
+        const addReportBtn = document.getElementById('addReportBtn');
+        if (addReportBtn) {
+            addReportBtn.textContent = window.currentLang === 'zh' ? '× 取消选点' : '× Cancel Selection';
+        }
+        
+        document.body.style.cursor = 'crosshair';
     }
 
     // Open report form
@@ -249,21 +411,21 @@
         };
         
         // Show marker at the selected location
-        if (window.selectionMarker) {
+        if (window.selectionMarker && window.selectionMarker.setMap) {
             window.selectionMarker.setMap(null);
         }
         
-        window.selectionMarker = new google.maps.Marker({
-            position: window.selectedLocation,
-            map: window.map,
-            zIndex: 1000
-        });
+        if (typeof google !== 'undefined' && google.maps) {
+            window.selectionMarker = new google.maps.Marker({
+                position: window.selectedLocation,
+                map: window.map,
+                zIndex: 1000
+            });
+        }
         
-        // Open the report form
-        openReportForm();
-        
-        // Exit location selection mode
+        // 选点完成后，取消选点模式并打开表单
         cancelLocationSelection();
+        openReportForm();
     }
 
     // Load markers from localStorage or API
@@ -418,41 +580,6 @@
             imgPlaceholder.textContent = lang === 'zh' ? 
                 '点击添加照片' : 'Click to add photo';
         }
-    }
-
-    // Start location selection on map
-    function startLocationSelection() {
-        window.isSelectingLocation = true;
-        document.getElementById('addReportTip').style.display = 'block';
-        document.getElementById('addReportBtn').textContent = 
-            window.currentLang === 'zh' ? '× 取消选点' : '× Cancel Selection';
-        document.body.style.cursor = 'crosshair';
-    }
-
-    // Open direct description form without location selection
-    function openDirectDescriptionForm() {
-        // Use current map center as default location
-        if (window.map) {
-            const center = window.map.getCenter();
-            window.selectedLocation = {
-                lat: center.lat(),
-                lng: center.lng()
-            };
-            
-            // Add marker at center
-            if (window.selectionMarker) {
-                window.selectionMarker.setMap(null);
-            }
-            
-            window.selectionMarker = new google.maps.Marker({
-                position: window.selectedLocation,
-                map: window.map,
-                zIndex: 1000
-            });
-        }
-        
-        // Open the form
-        openReportForm();
     }
 
     // Reset location selection
@@ -739,46 +866,74 @@
 
     // Add a new marker for a submitted report
     function addReportMarker(location, description) {
-        if (window.map && location) {
-            const marker = new google.maps.Marker({
-                position: location,
-                map: window.map,
-                animation: google.maps.Animation.DROP,
-                title: description.substring(0, 30) + (description.length > 30 ? '...' : '')
+        if (!location) {
+            console.error('[UI Controller] 无法添加标记，位置为空');
+            return;
+        }
+        
+        // 检查Google Maps是否已加载
+        if (typeof google === 'undefined' || !google.maps) {
+            console.warn('[UI Controller] Google Maps未加载，标记将稍后添加');
+            // 保存到临时数组，等待地图加载
+            if (!window.pendingMarkers) window.pendingMarkers = [];
+            window.pendingMarkers.push({
+                location: location,
+                description: description
             });
-            
-            // Store marker in global markers array
-            if (!window.markers) {
-                window.markers = [];
+            return;
+        }
+        
+        if (window.map) {
+            try {
+                const marker = new google.maps.Marker({
+                    position: location,
+                    map: window.map,
+                    animation: google.maps.Animation.DROP,
+                    title: description.substring(0, 30) + (description.length > 30 ? '...' : '')
+                });
+                
+                // Store marker in global markers array
+                if (!window.markers) {
+                    window.markers = [];
+                }
+                
+                window.markers.push(marker);
+                
+                // Add info window with description
+                const infoWindow = new google.maps.InfoWindow({
+                    content: '<div style="max-width:200px;">' + description + '</div>'
+                });
+                
+                marker.addListener('click', function() {
+                    infoWindow.open(window.map, marker);
+                });
+            } catch (error) {
+                console.error('[UI Controller] 添加标记失败:', error);
             }
-            
-            window.markers.push(marker);
-            
-            // Add info window with description
-            const infoWindow = new google.maps.InfoWindow({
-                content: '<div style="max-width:200px;">' + description + '</div>'
-            });
-            
-            marker.addListener('click', function() {
-                infoWindow.open(window.map, marker);
-            });
+        } else {
+            console.warn('[UI Controller] 地图未初始化，无法添加标记');
         }
     }
 
     // Make these functions available globally if needed
     window.UIController = {
-        switchLanguage: switchLanguage,
-        openReportForm: openReportForm,
-        closeReportForm: closeReportForm,
+        switchLanguage: window.switchLanguage || function() {},
+        openReportForm: openReportForm || function() {},
+        closeReportForm: closeReportForm || function() {},
         startLocationSelection: startLocationSelection,
-        resetLocationSelection: resetLocationSelection,
-        useCurrentLocation: useCurrentLocation,
-        geocodeFromDescription: geocodeFromDescription,
-        submitReportData: submitReportData,
+        resetLocationSelection: resetLocationSelection || function() {},
+        useCurrentLocation: useCurrentLocation || function() {},
+        geocodeFromDescription: geocodeFromDescription || function() {},
+        submitReportData: submitReportData || function() {},
+        submitQuickDescription: submitQuickDescription,
         addReportMarker: addReportMarker,
-        saveMarkersToStorage: saveMarkersToStorage,
+        saveMarkersToStorage: saveMarkersToStorage || function() {},
         selectMapLocation: selectMapLocation
     };
+
+    function getFirebaseAuth() {
+        return window.getFirebaseAuth ? window.getFirebaseAuth() : null;
+    }
 })();
 
 // Initialize photo upload functionality
@@ -927,9 +1082,4 @@ function applyCSSFixes() {
     });
     
     console.log('[UI Controller] CSS fixes applied');
-}
-
-// firebase.auth()等调用前加判断
-function getFirebaseAuth() {
-    return window.getFirebaseAuth ? window.getFirebaseAuth() : null;
 } 

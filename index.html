@@ -62,56 +62,96 @@
                     callback();
                 });
             }
+            
+            // 处理待处理的标记
+            if (window.pendingMarkers && window.pendingMarkers.length) {
+                console.log('添加待处理的标记:', window.pendingMarkers.length);
+                window.pendingMarkers.forEach(function(markerData) {
+                    if (window.UIController && typeof window.UIController.addReportMarker === 'function') {
+                        window.UIController.addReportMarker(
+                            markerData.location,
+                            markerData.description
+                        );
+                    }
+                });
+                // 清空待处理标记
+                window.pendingMarkers = [];
+            }
         }
         
         // 初始化地图
         function initMap() {
             console.log('初始化地图');
             
-            // 创建地图实例
-            window.map = new google.maps.Map(document.getElementById('map'), {
-                center: MELBOURNE_CENTER,
-                zoom: 13,
-                mapTypeId: google.maps.MapTypeId.ROADMAP,
-                fullscreenControl: false,
-                streetViewControl: false,
-                styles: [
-                    {
-                        featureType: "poi",
-                        elementType: "labels",
-                        stylers: [{ visibility: "off" }]
+            try {
+                // 创建地图实例
+                window.map = new google.maps.Map(document.getElementById('map'), {
+                    center: MELBOURNE_CENTER,
+                    zoom: 13,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP,
+                    fullscreenControl: false,
+                    streetViewControl: false,
+                    styles: [
+                        {
+                            featureType: "poi",
+                            elementType: "labels",
+                            stylers: [{ visibility: "off" }]
+                        }
+                    ]
+                });
+                
+                // 添加地图点击事件处理
+                window.map.addListener('click', function(event) {
+                    if (window.isSelectingLocation) {
+                        const latLng = event.latLng;
+                        if (window.UIController && typeof window.UIController.selectMapLocation === 'function') {
+                            window.UIController.selectMapLocation(latLng);
+                        }
                     }
-                ]
-            });
-            
-            // 添加地图点击事件处理
-            window.map.addListener('click', function(event) {
-                if (window.isSelectingLocation) {
-                    const latLng = event.latLng;
-                    if (window.UIController && typeof window.UIController.selectMapLocation === 'function') {
-                        window.UIController.selectMapLocation(latLng);
-                    }
-                }
-            });
-            
-            console.log('地图初始化完成');
+                });
+                
+                console.log('地图初始化完成');
+                
+                // 设置地图初始化标志
+                window.mapsInitialized = true;
+            } catch (error) {
+                console.error('初始化地图时出错:', error);
+            }
         }
         
         // 打开报告表单
         function openReportForm() {
             isSelectingLocation = false;
-            document.getElementById('addReportTip').style.display = 'none';
-            document.getElementById('addReportBtn').textContent = currentLang === 'zh' ? '+ 添加报告' : '+ Add Report';
+            const addReportTip = document.getElementById('addReportTip');
+            if (addReportTip) {
+                addReportTip.style.display = 'none';
+            }
+            
+            const addReportBtn = document.getElementById('addReportBtn');
+            if (addReportBtn) {
+                addReportBtn.textContent = currentLang === 'zh' ? '+ 添加报告' : '+ Add Report';
+            }
+            
             document.body.style.cursor = 'default';
             
             const reportForm = document.getElementById('reportForm');
-            reportForm.style.transform = 'translateY(0)';
+            if (reportForm) {
+                reportForm.style.display = 'block';
+                reportForm.style.transform = 'translateY(0)';
+            }
         }
         
         // 关闭报告表单
         function closeReportForm() {
             const reportForm = document.getElementById('reportForm');
-            reportForm.style.transform = 'translateY(100%)';
+            if (reportForm) {
+                reportForm.style.transform = 'translateY(100%)';
+                
+                // 等待动画完成后隐藏表单
+                setTimeout(function() {
+                    reportForm.style.display = 'none';
+                }, 300);
+            }
             
             if (selectionMarker) {
                 selectionMarker.setMap(null);
@@ -122,9 +162,20 @@
                 selectionCircle.setMap(null);
             }
             
-            document.getElementById('descriptionInput').value = '';
-            document.getElementById('previewImg').style.display = 'none';
-            document.getElementById('imagePlaceholder').style.display = 'block';
+            const descriptionInput = document.getElementById('descriptionInput');
+            if (descriptionInput) {
+                descriptionInput.value = '';
+            }
+            
+            const previewImg = document.getElementById('previewImg');
+            if (previewImg) {
+                previewImg.style.display = 'none';
+            }
+            
+            const imagePlaceholder = document.getElementById('imagePlaceholder');
+            if (imagePlaceholder) {
+                imagePlaceholder.style.display = 'block';
+            }
             
             selectedLocation = null;
         }
@@ -1129,33 +1180,40 @@
   function initMap() {
     console.log('初始化地图');
     
-    // 创建地图实例
-    window.map = new google.maps.Map(document.getElementById('map'), {
-      center: MELBOURNE_CENTER,
-      zoom: 13,
-      mapTypeId: google.maps.MapTypeId.ROADMAP,
-      fullscreenControl: false,
-      streetViewControl: false,
-      styles: [
-        {
-          featureType: "poi",
-          elementType: "labels",
-          stylers: [{ visibility: "off" }]
+    try {
+      // 创建地图实例
+      window.map = new google.maps.Map(document.getElementById('map'), {
+        center: MELBOURNE_CENTER,
+        zoom: 13,
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        fullscreenControl: false,
+        streetViewControl: false,
+        styles: [
+          {
+            featureType: "poi",
+            elementType: "labels",
+            stylers: [{ visibility: "off" }]
+          }
+        ]
+      });
+      
+      // 添加地图点击事件处理
+      window.map.addListener('click', function(event) {
+        if (window.isSelectingLocation) {
+          const latLng = event.latLng;
+          if (window.UIController && typeof window.UIController.selectMapLocation === 'function') {
+            window.UIController.selectMapLocation(latLng);
+          }
         }
-      ]
-    });
-    
-    // 添加地图点击事件处理
-    window.map.addListener('click', function(event) {
-      if (window.isSelectingLocation) {
-        const latLng = event.latLng;
-        if (window.UIController && typeof window.UIController.selectMapLocation === 'function') {
-          window.UIController.selectMapLocation(latLng);
-                }
-            }
-        });
-    
-    console.log('地图初始化完成');
+      });
+      
+      console.log('地图初始化完成');
+      
+      // 设置地图初始化标志
+      window.mapsInitialized = true;
+    } catch (error) {
+      console.error('初始化地图时出错:', error);
+    }
   }
 </script>
     
@@ -1168,7 +1226,7 @@
 
 <!-- Google Maps API 脚本 -->
 <script async defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places" async defer></script>
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places"></script>
 
 <!-- 添加Firebase初始化脚本 -->
 <script src="js/firebase-initializer.js"></script>
