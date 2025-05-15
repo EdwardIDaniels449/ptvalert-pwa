@@ -1064,15 +1064,8 @@
       <span id="langSwitchText">EN</span>
     </button>
     
-    <!-- 用户菜单 - 完全隐藏 -->
-    <div id="userMenu" class="user-menu" style="display:none;">
-      <span style="font-size:16px;">👤</span>
-      <span id="userDisplayName" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">匿名用户</span>
-      <div class="user-menu-dropdown" id="userMenuDropdown">
-        <div class="user-menu-item" id="profileMenuItem">个人资料</div>
-        <div class="user-menu-item logout" id="logoutMenuItem" style="display:none;">退出登录</div>
-      </div>
-    </div>
+    <!-- 用户菜单 - 完全隐藏，不显示任何内容 -->
+    <!-- 移除所有用户菜单相关代码 -->
     
     <!-- 添加弹幕容器 -->
     <div class="danmaku-container" id="danmakuContainer"></div>
@@ -1099,9 +1092,20 @@
     
     <!-- 报告计数器弹窗 - 默认隐藏，使用中央弹窗而非右侧蓝色弹窗 -->
     <div class="report-counter-popup" id="reportCounterPopup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background-color:rgba(50, 50, 54, 0.95); border-radius:16px; padding:20px; width:90%; max-width:350px; box-shadow:0 10px 30px rgba(0, 0, 0, 0.4); z-index:3000; text-align:center;">
-        <h3 id="reportSuccessTitle">报告提交成功!</h3>
-        <p id="reportCounterText">您已累计提交 <span class="counter-value" id="reportCountValue">1</span> 次报告</p>
-        <button class="close-counter-popup" id="closeCounterPopup">确定</button>
+      <h3 id="reportSuccessTitle">报告提交成功!</h3>
+      <div style="margin:15px 0;">
+        <div style="font-size:18px;margin-bottom:10px;">
+          <span id="reportCountText">今日已收到</span> 
+          <span id="reportCount" style="font-weight:bold;font-size:24px;color:#4CAF50;">0</span> 
+          <span id="reportCountSuffix">条报告</span>
+        </div>
+        <div style="font-size:14px;color:#aaa;" id="reportCounterThankYou">
+          感谢您的贡献!
+        </div>
+      </div>
+      <button onclick="document.getElementById('reportCounterPopup').style.display='none';" style="background:#0071e3;color:white;border:none;padding:8px 16px;border-radius:8px;font-weight:bold;margin-top:10px;">
+        <span id="reportCounterCloseBtn">关闭</span>
+      </button>
     </div>
     
     <!-- 报告表单 -->

@@ -56,11 +56,11 @@ window.submitQuickDescription = function() {
                 .then(function() {
                     console.log('[UI Controller] 快速报告已保存到Firebase');
                     
-                    // 显示成功消息
+                    // 显示成功消息 - 仅在这里显示一次
                     const reportCounterPopup = document.getElementById('reportCounterPopup');
                     if (reportCounterPopup) reportCounterPopup.style.display = 'block';
                     
-                    // 更新报告计数器
+                    // 更新报告计数器 - 仅在这里更新一次
                     if (window.UIController && window.UIController.updateReportCounter) {
                         window.UIController.updateReportCounter();
                     } else {
@@ -100,20 +100,20 @@ window.submitQuickDescription = function() {
                 })
                 .catch(function(error) {
                     console.error('[UI Controller] 保存到Firebase失败:', error);
-                    handleQuickSubmitError(reportData, quickAddForm, quickDescInput, location, description);
+                    handleQuickSubmitErrorNoCount(reportData, quickAddForm, quickDescInput, location, description);
                 });
         } catch (error) {
             console.error('[UI Controller] Firebase操作失败:', error);
-            handleQuickSubmitError(reportData, quickAddForm, quickDescInput, location, description);
+            handleQuickSubmitErrorNoCount(reportData, quickAddForm, quickDescInput, location, description);
         }
     } else {
         // Firebase不可用，使用localStorage
-        handleQuickSubmitError(reportData, quickAddForm, quickDescInput, location, description);
+        handleQuickSubmitErrorNoCount(reportData, quickAddForm, quickDescInput, location, description);
     }
 };
 
-// 创建辅助函数
-window.handleQuickSubmitError = function(reportData, formElement, inputElement, location, description) {
+// 创建不更新计数的辅助函数
+window.handleQuickSubmitErrorNoCount = function(reportData, formElement, inputElement, location, description) {
     // 保存到localStorage
     if (window.UIController && window.UIController.saveReportToLocalStorage) {
         window.UIController.saveReportToLocalStorage(reportData);
@@ -156,7 +156,9 @@ window.handleQuickSubmitError = function(reportData, formElement, inputElement, 
 
 // 创建全局选点函数
 window.startLocationSelection = function() {
+    console.log('[UI Controller] 开始位置选择');
     window.isSelectingLocation = true;
+    
     const addReportTip = document.getElementById('addReportTip');
     if (addReportTip) {
         addReportTip.style.display = 'block';
@@ -169,24 +171,125 @@ window.startLocationSelection = function() {
     
     document.body.style.cursor = 'crosshair';
     
-    console.log('[UI Controller] 进入选点模式');
+    console.log('[UI Controller] 进入选点模式，等待地图点击');
     
     // 确保地图监听器正常工作
     if (window.map) {
-        // 添加临时点击监听器
-        if (!window.mapClickListener && typeof google !== 'undefined' && google.maps) {
-            window.mapClickListener = window.map.addListener('click', function(event) {
+        // 移除任何现有的监听器
+        if (window.mapClickListener) {
+            console.log('[UI Controller] 移除现有地图点击监听器');
+            google.maps.event.removeListener(window.mapClickListener);
+            window.mapClickListener = null;
+        }
+        
+        // 添加新的监听器
+        if (typeof google !== 'undefined' && google.maps) {
+            console.log('[UI Controller] 添加新的地图点击监听器');
+            window.mapClickListener = google.maps.event.addListener(window.map, 'click', function(event) {
+                console.log('[UI Controller] 地图点击事件触发');
                 if (window.isSelectingLocation) {
                     const latLng = event.latLng;
-                    console.log('[UI Controller] 地图点击事件触发，位置:', latLng.lat(), latLng.lng());
+                    console.log('[UI Controller] 选择位置:', latLng.lat(), latLng.lng());
                     selectMapLocation(latLng);
+                } else {
+                    console.log('[UI Controller] 地图点击，但不在选点模式');
                 }
             });
-            console.log('[UI Controller] 已添加地图点击监听器');
+            
+            // 直接在地图上添加一个提示，指示用户点击
+            const mapCenter = window.map.getCenter();
+            if (mapCenter && typeof selectMapLocation === 'function') {
+                console.log('[UI Controller] 添加临时中心点标记作为提示');
+                const tempMarker = new google.maps.Marker({
+                    position: mapCenter,
+                    map: window.map,
+                    icon: {
+                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0071e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>'),
+                        scaledSize: new google.maps.Size(40, 40),
+                        anchor: new google.maps.Point(20, 20)
+                    },
+                    animation: google.maps.Animation.BOUNCE,
+                    optimized: false,
+                    zIndex: 1000
+                });
+                
+                // 3秒后移除临时标记
+                setTimeout(function() {
+                    tempMarker.setMap(null);
+                }, 3000);
+            }
+        } else {
+            console.error('[UI Controller] Google Maps API未加载，无法添加点击监听器');
         }
     } else {
         console.error('[UI Controller] 地图未初始化，无法添加点击监听器');
+        alert(window.currentLang === 'zh' ? '地图未加载完成，请稍后再试' : 'Map not loaded, please try again later');
     }
+};
+
+// 修改选择地图位置函数，确保正确处理点击事件
+window.selectMapLocation = function(latLng) {
+    console.log('[UI Controller] 选择地图位置:', latLng.lat(), latLng.lng());
+    
+    // 存储选择的位置
+    window.selectedLocation = {
+        lat: latLng.lat(),
+        lng: latLng.lng()
+    };
+    
+    // 移除现有的选择标记
+    if (window.selectionMarker) {
+        window.selectionMarker.setMap(null);
+    }
+    
+    if (window.selectionCircle) {
+        window.selectionCircle.setMap(null);
+    }
+    
+    // 添加新的选择标记
+    if (typeof google !== 'undefined' && google.maps) {
+        // 创建标记
+        window.selectionMarker = new google.maps.Marker({
+            position: latLng,
+            map: window.map,
+            animation: google.maps.Animation.DROP,
+            icon: {
+                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#0071e3" stroke="#ffffff" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>'),
+                scaledSize: new google.maps.Size(30, 30),
+                anchor: new google.maps.Point(15, 15)
+            }
+        });
+        
+        // 创建圆形
+        window.selectionCircle = new google.maps.Circle({
+            strokeColor: '#0071e3',
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: '#0071e3',
+            fillOpacity: 0.1,
+            map: window.map,
+            center: latLng,
+            radius: 200
+        });
+    }
+    
+    // 退出选点模式
+    window.isSelectingLocation = false;
+    
+    const addReportTip = document.getElementById('addReportTip');
+    if (addReportTip) {
+        addReportTip.style.display = 'none';
+    }
+    
+    const addReportBtn = document.getElementById('addReportBtn');
+    if (addReportBtn) {
+        addReportBtn.textContent = window.currentLang === 'zh' ? '+ 添加报告' : '+ Add Report';
+    }
+    
+    document.body.style.cursor = 'default';
+    
+    // 打开报告表单
+    openReportForm();
 };
 
 (function() {
@@ -464,32 +567,6 @@ window.startLocationSelection = function() {
             
             document.body.style.cursor = 'default';
         }
-    }
-
-    // Handle location selection on map
-    function selectMapLocation(latLng) {
-        console.log('[UI Controller] 选择位置:', latLng.lat(), latLng.lng());
-        window.selectedLocation = {
-            lat: latLng.lat(),
-            lng: latLng.lng()
-        };
-        
-        // Show marker at the selected location
-        if (window.selectionMarker && window.selectionMarker.setMap) {
-            window.selectionMarker.setMap(null);
-        }
-        
-        if (typeof google !== 'undefined' && google.maps) {
-            window.selectionMarker = new google.maps.Marker({
-                position: window.selectedLocation,
-                map: window.map,
-                zIndex: 1000
-            });
-        }
-        
-        // 选点完成后，取消选点模式并打开表单
-        cancelLocationSelection();
-        openReportForm();
     }
 
     // Load markers from localStorage or API
@@ -819,6 +896,9 @@ window.startLocationSelection = function() {
         
         console.log('[UI Controller] Submitting report:', reportData);
         
+        // 标记是否已更新计数，确保只更新一次
+        let countUpdated = false;
+        
         // Try to send data to Firebase if available
         if (typeof firebase !== 'undefined' && firebase.database) {
             try {
@@ -828,12 +908,15 @@ window.startLocationSelection = function() {
                     .then(function() {
                         console.log('[UI Controller] Report saved to Firebase successfully');
                         
+                        // 只有在成功保存到Firebase后才更新计数
+                        if (!countUpdated) {
+                            updateReportCounter();
+                            countUpdated = true;
+                        }
+                        
                         // Show success message
                         const reportCounterPopup = document.getElementById('reportCounterPopup');
                         if (reportCounterPopup) reportCounterPopup.style.display = 'block';
-                        
-                        // Update report counter
-                        updateReportCounter();
                         
                         // Close the form
                         closeReportForm();
@@ -858,6 +941,12 @@ window.startLocationSelection = function() {
                         // Add marker
                         addReportMarker(window.selectedLocation, description);
                         saveMarkersToStorage();
+                        
+                        // 只在这种情况下更新一次计数
+                        if (!countUpdated) {
+                            updateReportCounter();
+                            countUpdated = true;
+                        }
                     });
             } catch (error) {
                 console.error('[UI Controller] Error with Firebase:', error);
@@ -873,6 +962,12 @@ window.startLocationSelection = function() {
                 // Add marker
                 addReportMarker(window.selectedLocation, description);
                 saveMarkersToStorage();
+                
+                // 只在这种情况下更新一次计数
+                if (!countUpdated) {
+                    updateReportCounter();
+                    countUpdated = true;
+                }
             }
         } else {
             // Firebase not available, use localStorage
@@ -886,6 +981,12 @@ window.startLocationSelection = function() {
             // Add marker
             addReportMarker(window.selectedLocation, description);
             saveMarkersToStorage();
+            
+            // 只在这种情况下更新一次计数
+            if (!countUpdated) {
+                updateReportCounter();
+                countUpdated = true;
+            }
         }
     }
     
@@ -953,93 +1054,65 @@ window.startLocationSelection = function() {
         if (window.map) {
             try {
                 // 创建自定义标记 - 使用狗的Emoji (🐶)
-                const dogIcon = {
-                    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
-                        `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
-                            <text x="20" y="28" font-size="30" text-anchor="middle">🐶</text>
-                        </svg>`
-                    )}`,
-                    scaledSize: new google.maps.Size(40, 40),
-                    origin: new google.maps.Point(0, 0),
-                    anchor: new google.maps.Point(20, 20)
-                };
-                
                 const marker = new google.maps.Marker({
                     position: location,
                     map: window.map,
                     animation: google.maps.Animation.DROP,
-                    icon: dogIcon,
-                    title: description.substring(0, 30) + (description.length > 30 ? '...' : '')
+                    title: description,
+                    label: {
+                        text: '🐶',
+                        fontSize: '24px',
+                        className: 'marker-label'
+                    },
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 0,
+                    },
+                    optimized: false
                 });
                 
-                // Store marker in global markers array
-                if (!window.markers) {
-                    window.markers = [];
-                }
-                
+                // 保存标记
                 window.markers.push(marker);
                 
-                // 获取报告数据，包括图片（如果有）
-                let reportData = null;
-                try {
-                    // 尝试从localStorage获取报告数据
-                    const reports = JSON.parse(localStorage.getItem('reports') || '[]');
-                    // 查找匹配的报告（基于位置和描述）
-                    reportData = reports.find(r => 
-                        r.description === description && 
-                        r.location && 
-                        Math.abs(r.location.lat - location.lat) < 0.0001 && 
-                        Math.abs(r.location.lng - location.lng) < 0.0001
-                    );
-                } catch (e) {
-                    console.warn('[UI Controller] 无法获取报告详细信息:', e);
-                }
-                
-                // 创建直接显示的信息窗口内容 - 简化版本，没有蓝色标题栏
-                let infoContent = `<div style="max-width:300px; padding:10px; background-color:white; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.2);">
-                    <p style="margin:0 0 10px 0; font-size:14px; color:#333;">${description}</p>`;
-                
-                // 如果有图片，添加到信息窗口
-                if (reportData && reportData.image) {
-                    infoContent += `<div style="margin-top:5px;">
-                        <img src="${reportData.image}" style="max-width:100%; max-height:200px; border-radius:4px; display:block;">
-                    </div>`;
-                }
-                
-                // 添加时间戳（如果有）但使用更简洁的格式
-                if (reportData && reportData.timestamp) {
-                    const reportDate = new Date(reportData.timestamp);
-                    const formattedDate = reportDate.toLocaleString();
-                    infoContent += `<div style="margin-top:5px; font-size:11px; color:#999; text-align:right;">
-                        ${formattedDate}
-                    </div>`;
-                }
-                
-                infoContent += `</div>`;
-                
-                // 使用自定义信息窗口
-                const infoWindow = new google.maps.InfoWindow({
-                    content: infoContent,
-                    disableAutoPan: false,
-                    pixelOffset: new google.maps.Size(0, -5)
-                });
-                
+                // 为标记添加点击事件
                 marker.addListener('click', function() {
-                    // 关闭所有已打开的信息窗口
-                    if (window.openedInfoWindow) {
-                        window.openedInfoWindow.close();
-                    }
+                    // 直接在地图上显示信息窗口，而不是弹出蓝色窗口
+                    const infoWindow = new google.maps.InfoWindow({
+                        content: createInfoWindowContent(description),
+                        maxWidth: 300
+                    });
                     
-                    // 打开新的信息窗口
                     infoWindow.open(window.map, marker);
-                    window.openedInfoWindow = infoWindow;
                 });
+                
+                // 保存标记到localStorage
+                saveMarkersToStorage();
+                
+                return marker;
             } catch (error) {
-                console.error('[UI Controller] 添加标记失败:', error);
+                console.error('[UI Controller] 添加标记时出错:', error);
             }
         } else {
-            console.warn('[UI Controller] 地图未初始化，无法添加标记');
+            console.error('[UI Controller] 地图未初始化，无法添加标记');
         }
+    }
+
+    // 创建信息窗口内容
+    function createInfoWindowContent(description) {
+        let content = '<div style="padding: 10px; max-width: 300px;">';
+        
+        // 添加描述
+        content += `<div style="font-size: 14px; margin-bottom: 10px;">${description}</div>`;
+        
+        // 添加时间戳
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString();
+        const dateStr = now.toLocaleDateString();
+        content += `<div style="font-size: 12px; color: #666; margin-top: 5px;">${dateStr} ${timeStr}</div>`;
+        
+        content += '</div>';
+        
+        return content;
     }
 
     // Make these functions available globally if needed
