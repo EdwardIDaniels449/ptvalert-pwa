@@ -26,11 +26,28 @@
         return '';
     }
     
-    const repoName = getRepositoryName();
+    let repoName = getRepositoryName();
     if (!repoName) {
         console.warn('[GitHub Pages修复] 无法检测到仓库名称，可能导致修复不完全');
+        repoName = 'ptvalert-pwa';  // 默认使用正确的仓库名
+        console.log('[GitHub Pages修复] 使用默认仓库名:', repoName);
     } else {
         console.log('[GitHub Pages修复] 检测到仓库名称:', repoName);
+        
+        // 处理可能的仓库名称不匹配问题
+        if (repoName === 'ptvalert' && window.location.hostname.includes('edwardidaniels449.github.io')) {
+            console.log('[GitHub Pages修复] 检测到不正确的仓库名称，修正为 ptvalert-pwa');
+            repoName = 'ptvalert-pwa';
+            
+            // 重定向到正确的URL
+            const correctURL = window.location.protocol + '//' + window.location.host + '/ptvalert-pwa/';
+            console.log('[GitHub Pages修复] 重定向到正确URL:', correctURL);
+            
+            // 添加一个小延迟以确保日志输出
+            setTimeout(function() {
+                window.location.href = correctURL;
+            }, 500);
+        }
     }
     
     // 设置基础路径
