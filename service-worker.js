@@ -3,17 +3,6 @@ const CACHE_NAME = 'ptvalert-cache-v7';
 const APP_NAME = '网站地图标记';
 const APP_VERSION = '1.0.8';
 
-// 导入必要的脚本
-try {
-  importScripts('./vapid-keys.js');
-  console.log('[Service Worker] 成功加载VAPID密钥配置');
-} catch (error) {
-  console.error('[Service Worker] 加载VAPID密钥配置失败:', error);
-}
-
-// 调试输出
-console.log('[Service Worker] 启动，版本:', APP_VERSION);
-
 // 确定基础路径 - 使用简单稳定的方法
 function getBasePath() {
   console.log('[Service Worker] 检测运行环境...');
@@ -44,6 +33,33 @@ function getBasePath() {
 }
 
 const BASE_PATH = getBasePath();
+
+// 导入必要的脚本 - 使用绝对路径和相对路径都尝试
+try {
+  // 首先尝试使用基础路径
+  try {
+    importScripts(BASE_PATH + 'vapid-keys.js');
+    console.log('[Service Worker] 成功使用基础路径加载VAPID密钥配置');
+  } catch (e) {
+    // 如果失败，尝试使用相对路径
+    importScripts('./vapid-keys.js');
+    console.log('[Service Worker] 成功使用相对路径加载VAPID密钥配置');
+  }
+} catch (error) {
+  console.error('[Service Worker] 加载VAPID密钥配置失败:', error);
+  
+  // 为防止错误中断Service Worker加载，定义默认值
+  self.VAPID_KEYS = {
+    publicKey: 'BIi0aWM8sQdsY8SIriYSG551h2HAezVghr6sudVRqEQeQu-6tILY6pbuytfDshoO7As3128FE791I0boTeNQD-8'
+  };
+  
+  self.PUSH_CONFIG = {
+    VAPID_PUBLIC_KEY: 'BIi0aWM8sQdsY8SIriYSG551h2HAezVghr6sudVRqEQeQu-6tILY6pbuytfDshoO7As3128FE791I0boTeNQD-8'
+  };
+}
+
+// 调试输出
+console.log('[Service Worker] 启动，版本:', APP_VERSION);
 
 // 记录一些调试信息
 console.log('[Service Worker] 启动配置:');

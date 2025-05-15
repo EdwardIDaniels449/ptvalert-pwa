@@ -6,6 +6,22 @@
 // Notification Handler Script for PtvAlert
 // Uses Web Push API with Cloudflare Workers
 
+// 移动设备检测
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+console.log('[通知系统] 设备检测:', isMobile ? '移动设备' : '桌面设备');
+
+// iOS Safari 检测
+const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream && /Safari/i.test(navigator.userAgent);
+if (isIOSSafari) {
+  console.log('[通知系统] 检测到iOS Safari浏览器');
+}
+
+// Android Chrome 检测
+const isAndroidChrome = /Android/.test(navigator.userAgent) && /Chrome\/[.0-9]*/.test(navigator.userAgent);
+if (isAndroidChrome) {
+  console.log('[通知系统] 检测到Android Chrome浏览器');
+}
+
 // Base URL for the API - dynamically set based on environment
 const API_BASE_URL = window.location.hostname.includes('github.io') 
     ? 'https://ptvalert-push.edwardidaniels449.workers.dev' 
@@ -977,7 +993,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // 检查浏览器是否支持推送API
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
         console.log('浏览器不支持推送通知功能');
-        pushButton.style.display = 'none';
+        if (pushButton) {
+            if (isIOSSafari) {
+                pushButton.style.backgroundColor = '#ff9500';
+                pushBtnText.textContent = 'iOS不完全支持推送';
+            } else {
+                pushButton.style.display = 'none';
+            }
+        }
         return;
     }
     
@@ -1045,6 +1068,40 @@ async function subscribeToPush() {
             console.log('正在创建新的推送订阅...');
             
             try {
+                // 移动设备特殊处理
+                if (isMobile) {
+                    console.log('[通知系统] 移动设备订阅处理');
+                    try {
+                        // 确保Service Worker状态正常
+                        if (registration.active) {
+                            console.log('[通知系统] Service Worker已激活');
+                        } else {
+                            console.log('[通知系统] 等待Service Worker激活...');
+                            await new Promise(resolve => {
+                                if (registration.installing) {
+                                    registration.installing.addEventListener('statechange', function() {
+                                        if (this.state === 'activated') {
+                                            console.log('[通知系统] Service Worker现在已激活');
+                                            resolve();
+                                        }
+                                    });
+                                } else if (registration.waiting) {
+                                    registration.waiting.addEventListener('statechange', function() {
+                                        if (this.state === 'activated') {
+                                            console.log('[通知系统] Service Worker现在已激活');
+                                            resolve();
+                                        }
+                                    });
+                                } else {
+                                    resolve(); // 没有worker正在安装或等待
+                                }
+                            });
+                        }
+                    } catch (e) {
+                        console.warn('[通知系统] 等待激活过程出错:', e);
+                    }
+                }
+                
                 subscription = await registration.pushManager.subscribe({
                     userVisibleOnly: true,
                     applicationServerKey: convertedVapidKey
@@ -1059,6 +1116,52 @@ async function subscribeToPush() {
                 }
             } catch (error) {
                 console.error('创建推送订阅失败:', error);
+                
+                // 对于iOS设备的特殊错误处理
+                if (isIOSSafari && error.message && (
+                    error.message.includes('permission') || 
+                    error.message.includes('denied') ||
+                    error.message.includes('Load failed'))) {
+                    console.log('[通知系统] iOS Safari推送限制:', error.message);
+                    alert('iOS Safari有推送通知限制。请使用"添加到主屏幕"功能安装PWA应用获得更好体验。');
+                }
+                
+                // Android设备的特殊错误处理
+                if (isAndroidChrome && error.message && (
+                    error.message.includes('Load failed') ||
+                    error.message.includes('Permission'))) {
+                    console.log('[通知系统] Android Chrome推送问题:', error.message);
+                    
+                    // 尝试使用备用Service Worker
+                    try {
+                        console.log('[通知系统] 尝试使用备用Service Worker');
+                        const backupReg = await navigator.serviceWorker.register('./fallback-service-worker.js', {
+                            scope: './'
+                        });
+                        
+                        // 等待激活
+                        await new Promise(resolve => {
+                            if (backupReg.installing) {
+                                backupReg.installing.addEventListener('statechange', e => {
+                                    if (e.target.state === 'activated') resolve();
+                                });
+                            } else {
+                                resolve();
+                            }
+                        });
+                        
+                        subscription = await backupReg.pushManager.subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: convertedVapidKey
+                        });
+                        
+                        console.log('[通知系统] 使用备用Service Worker订阅成功');
+                        pushSubscription = subscription;
+                    } catch (backupError) {
+                        console.error('[通知系统] 备用订阅也失败:', backupError);
+                    }
+                }
+                
                 // 订阅失败时仍然设置标记观察器
                 setupMarkerObserver();
                 return;

@@ -2,12 +2,28 @@
  * 简易的服务工作线程用于推送通知测试
  */
 
-// 导入VAPID密钥配置
+// 导入VAPID密钥配置 - 使用多种方式尝试
 try {
-  importScripts('./vapid-keys.js');
-  console.log('[测试 Service Worker] 成功加载VAPID密钥配置');
+  // 尝试使用相对路径
+  try {
+    importScripts('./vapid-keys.js');
+    console.log('[测试 Service Worker] 成功使用相对路径加载VAPID密钥配置');
+  } catch (e) {
+    // 尝试使用绝对路径
+    importScripts('/vapid-keys.js');
+    console.log('[测试 Service Worker] 成功使用绝对路径加载VAPID密钥配置');
+  }
 } catch (error) {
   console.error('[测试 Service Worker] 加载VAPID密钥配置失败:', error);
+  
+  // 为防止错误中断Service Worker加载，定义默认值
+  self.VAPID_KEYS = {
+    publicKey: 'BIi0aWM8sQdsY8SIriYSG551h2HAezVghr6sudVRqEQeQu-6tILY6pbuytfDshoO7As3128FE791I0boTeNQD-8'
+  };
+  
+  self.PUSH_CONFIG = {
+    VAPID_PUBLIC_KEY: 'BIi0aWM8sQdsY8SIriYSG551h2HAezVghr6sudVRqEQeQu-6tILY6pbuytfDshoO7As3128FE791I0boTeNQD-8'
+  };
 }
 
 // 安装事件
