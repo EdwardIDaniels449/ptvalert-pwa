@@ -308,6 +308,12 @@ window.selectMapLocation = function(latLng) {
     // 等待Google Maps API加载
     function waitForMapsApi() {
         try {
+            // 确保全局markers数组初始化
+            window.markers = window.markers || [];
+            
+            // 确保初始时不在选点模式
+            window.isSelectingLocation = false;
+            
             // 尝试从localStorage加载标记数据
             const savedMarkers = localStorage.getItem('savedMarkers');
             if (savedMarkers) {
@@ -343,7 +349,7 @@ window.selectMapLocation = function(latLng) {
             });
         }
 
-        // Add report button - 修改为先选点后弹窗
+        // Add report button - 修改为只有点击时才进入选点模式
         const addReportBtn = document.getElementById('addReportBtn');
         if (addReportBtn) {
             addReportBtn.addEventListener('click', function(e) {
@@ -351,8 +357,9 @@ window.selectMapLocation = function(latLng) {
                 
                 // 如果已经在选点模式，则取消选点
                 if (window.isSelectingLocation) {
-                    // 取消选点模式
+                    // 取消位置选择模式
                     window.isSelectingLocation = false;
+                    
                     const addReportTip = document.getElementById('addReportTip');
                     if (addReportTip) {
                         addReportTip.style.display = 'none';
@@ -1034,21 +1041,24 @@ window.selectMapLocation = function(latLng) {
 
     // Add a new marker for a submitted report
     function addReportMarker(location, description) {
-        if (!location) {
-            console.error('[UI Controller] 无法添加标记，位置为空');
-            return;
+        console.log('[UI Controller] 添加报告标记:', location, description);
+        
+        // 如果描述为空，则不添加标记
+        if (!description || typeof description !== 'string' || description.trim() === '') {
+            console.warn('[UI Controller] 描述为空，不添加标记');
+            return null;
         }
         
-        // 检查Google Maps是否已加载
-        if (typeof google === 'undefined' || !google.maps) {
-            console.warn('[UI Controller] Google Maps未加载，标记将稍后添加');
-            // 保存到临时数组，等待地图加载
-            if (!window.pendingMarkers) window.pendingMarkers = [];
-            window.pendingMarkers.push({
-                location: location,
-                description: description
-            });
-            return;
+        // 如果location无效，则不添加标记
+        if (!location || typeof location !== 'object' || typeof location.lat !== 'number' || typeof location.lng !== 'number') {
+            console.warn('[UI Controller] 位置无效，不添加标记:', location);
+            return null;
+        }
+        
+        // 确保markers数组已初始化
+        if (!window.markers) {
+            console.log('[UI Controller] 初始化markers数组');
+            window.markers = [];
         }
         
         if (window.map) {
@@ -1076,13 +1086,35 @@ window.selectMapLocation = function(latLng) {
                 
                 // 为标记添加点击事件
                 marker.addListener('click', function() {
-                    // 直接在地图上显示信息窗口，而不是弹出蓝色窗口
-                    const infoWindow = new google.maps.InfoWindow({
-                        content: createInfoWindowContent(description),
-                        maxWidth: 300
-                    });
-                    
-                    infoWindow.open(window.map, marker);
+                    // 如果存在showReportDetails函数，则使用它
+                    if (typeof window.showReportDetails === 'function') {
+                        const reportData = {
+                            id: 'marker-' + Date.now(),
+                            location: location,
+                            description: description,
+                            time: new Date().toISOString(),
+                            image: '',
+                            emoji: '🐶'
+                        };
+                        window.showReportDetails(reportData);
+                    } else {
+                        // 否则，使用InfoWindow显示
+                        // 关闭任何已打开的信息窗口
+                        if (window.openedInfoWindow) {
+                            window.openedInfoWindow.close();
+                        }
+                        
+                        // 直接在地图上显示信息窗口，而不是弹出蓝色窗口
+                        const infoWindow = new google.maps.InfoWindow({
+                            content: createInfoWindowContent(description),
+                            maxWidth: 300
+                        });
+                        
+                        infoWindow.open(window.map, marker);
+                        
+                        // 保存当前打开的信息窗口引用
+                        window.openedInfoWindow = infoWindow;
+                    }
                 });
                 
                 // 保存标记到localStorage
