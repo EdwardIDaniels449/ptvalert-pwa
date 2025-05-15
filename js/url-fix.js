@@ -61,18 +61,24 @@
         }
     }
     
-    // 检查API域名是否可访问
+    // 检查API服务器是否可用
     async function checkApiServer() {
         try {
-            // 尝试ping API服务器
-            console.log('正在检查API服务器连接...');
+            // 检查是否在GitHub Pages环境中
+            const isGitHubPages = window.location.hostname.includes('github.io');
+            
+            // 如果在GitHub Pages环境中，跳过API服务器检查
+            if (isGitHubPages) {
+                console.log('检测到GitHub Pages环境，跳过API服务器检查');
+                return true;
+            }
             
             // 获取正确的API URL
             const correctApiUrl = getCorrectApiUrl();
             
             // 使用HEAD请求检查服务器是否可达
             // 使用随机参数防止缓存
-            const pingUrl = `${correctApiUrl}/favicon.ico?nocache=${Date.now()}`;
+            const pingUrl = `${correctApiUrl}/ping?nocache=${Date.now()}`;
             console.log(`Ping URL: ${pingUrl}`);
             
             try {

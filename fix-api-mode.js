@@ -215,6 +215,15 @@
             return;
         }
         
+        // 检查是否在GitHub Pages环境中
+        const isGitHubPages = window.location.hostname.includes('github.io');
+        
+        // 如果在GitHub Pages环境中，避免请求favicon.ico
+        if (isGitHubPages) {
+            console.log('[全面修复] 检测到GitHub Pages环境，跳过API连接测试');
+            return;
+        }
+        
         // 测试ping端点
         fetch(`${apiUrl}/ping`)
             .then(response => {

@@ -1064,8 +1064,8 @@
       <span id="langSwitchText">EN</span>
     </button>
     
-    <!-- 用户菜单 -->
-    <div id="userMenu" class="user-menu">
+    <!-- 用户菜单 - 完全隐藏 -->
+    <div id="userMenu" class="user-menu" style="display:none;">
       <span style="font-size:16px;">👤</span>
       <span id="userDisplayName" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">匿名用户</span>
       <div class="user-menu-dropdown" id="userMenuDropdown">
@@ -1097,8 +1097,8 @@
         </button>
     </div>
     
-    <!-- 报告计数器弹窗 -->
-    <div class="report-counter-popup" id="reportCounterPopup">
+    <!-- 报告计数器弹窗 - 默认隐藏 -->
+    <div class="report-counter-popup" id="reportCounterPopup" style="display:none;">
         <h3 id="reportSuccessTitle">报告提交成功!</h3>
         <p id="reportCounterText">您已累计提交 <span class="counter-value" id="reportCountValue">1</span> 次报告</p>
         <button class="close-counter-popup" id="closeCounterPopup">确定</button>
