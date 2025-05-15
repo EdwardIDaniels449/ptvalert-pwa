@@ -8,7 +8,7 @@
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     // 移动设备参数
-    const MOBILE_MARKER_LIMIT = 20; // 移动设备显示标记的最大数量限制
+    const MOBILE_MARKER_LIMIT = 100; // 增加移动设备显示标记的最大数量限制
     let markerBatch = []; // 用于批量处理标记
     let isProcessingBatch = false; // 标记批处理锁
     
@@ -176,14 +176,28 @@
             // Add to markers array
             window.markers.push(marker);
             
-            // 移动设备: 限制显示的标记数量，以提高性能
+            // 移动设备: 在到达限制前尽量显示更多标记
             if (isMobile && window.markers.length > MOBILE_MARKER_LIMIT) {
-                // 保留所有标记数据，但从地图上移除较旧的标记
+                console.log('[Marker Handler] 移动设备上标记数量已达到限制:', MOBILE_MARKER_LIMIT);
+                // 保留所有标记数据，从地图上保留最新的标记
                 const markersToRemove = window.markers.length - MOBILE_MARKER_LIMIT;
-                for (let i = 0; i < markersToRemove; i++) {
-                    // 仅从地图上移除，但保留在数组中
-                    window.markers[i].setMap(null);
-                }
+                
+                // 创建一个副本以避免修改原数组索引
+                const markersToHide = window.markers.slice(0, markersToRemove);
+                
+                // 仅从地图上移除，但保留在数组中
+                markersToHide.forEach(function(marker) {
+                    if (marker && typeof marker.setMap === 'function') {
+                        marker.setMap(null);
+                    }
+                });
+            } else {
+                // 确保所有标记都显示
+                window.markers.forEach(function(marker, index) {
+                    if (marker && typeof marker.setMap === 'function' && marker.getMap() === null) {
+                        marker.setMap(window.map);
+                    }
+                });
             }
             
             // 桌面设备立即保存标记，移动设备批量保存以提升性能

@@ -15,7 +15,7 @@
     // 地图初始设置 - 统一移动端和桌面端
     const MAP_CONFIG = {
         center: {lat: -37.8136, lng: 144.9631}, // 墨尔本市中心
-        zoom: isMobile ? 13 : 14, // 移动端略微缩小初始缩放级别
+        zoom: 13, // 统一桌面端和移动端使用相同的缩放级别
         minZoom: 5,
         maxZoom: 19,
         gestureHandling: isMobile ? 'greedy' : 'auto', // 移动端使用贪婪手势处理
@@ -26,7 +26,14 @@
         zoomControl: true,       // 启用缩放控件
         zoomControlOptions: {
             position: google.maps.ControlPosition.RIGHT_BOTTOM
-        }
+        },
+        // 添加样式以移除POI标签，使移动端和桌面端地图外观一致
+        styles: [{
+            featureType: "poi",
+            elementType: "labels",
+            stylers: [{ visibility: "off" }]
+        }],
+        clickableIcons: false // 禁用默认POI点击，提高性能并统一体验
     };
     
     // 地图加载超时 - 移动设备使用更短的超时时间
@@ -250,12 +257,13 @@
         script.onerror = function() {
             console.error('[地图加载器] 加载Google Maps API失败');
             
-            // 移动设备直接使用备用方案，不再重试
-            if (isMobile) {
+            // 不论移动还是桌面设备，都先显示错误然后尝试备用方案
+            showMapLoadError();
+            
+            // 延迟一段时间后尝试备用方案
+            setTimeout(function() {
                 createFallbackMap();
-            } else {
-                showMapLoadError();
-            }
+            }, 3000);
         };
         
         // 添加加载超时处理
@@ -403,15 +411,51 @@
         
         // 创建模拟标记类
         window.google.maps.Marker = function(options) {
+            this.options = options || {};
+            this.map = options.map || null;
+            this.position = options.position || MELBOURNE_CENTER;
+            this.visible = options.visible !== false;
+            this.animation = options.animation || null;
+            this.title = options.title || '';
+            this.label = options.label || null;
+            this.icon = options.icon || null;
+            
+            // 构造函数调用时，如果有地图，则直接添加到地图上
+            if (this.map && typeof this.map === 'object') {
+                console.log('[地图加载器][模拟] 创建标记并添加到地图:', this.position);
+            }
+            
             return {
-                setMap: function() { return this; },
+                setMap: function(map) { 
+                    this.map = map; 
+                    console.log('[地图加载器][模拟] 设置标记地图:', map ? '添加到地图' : '从地图移除');
+                    return this; 
+                },
+                getMap: function() {
+                    return this.map;
+                },
                 getPosition: function() {
                     return {
                         lat: function() { return options.position.lat; },
                         lng: function() { return options.position.lng; }
                     };
                 },
-                setVisible: function() { return this; }
+                setVisible: function(visible) { 
+                    this.visible = visible; 
+                    return this; 
+                },
+                setAnimation: function(animation) {
+                    this.animation = animation;
+                    return this;
+                },
+                addListener: function(event, callback) {
+                    console.log('[地图加载器][模拟] 为标记添加事件监听:', event);
+                    if (event === 'click' && typeof callback === 'function') {
+                        // 立即调用一次回调以测试
+                        setTimeout(callback, 1000);
+                    }
+                    return { remove: function() {} };
+                }
             };
         };
         
@@ -435,6 +479,44 @@
         window.google.maps.Animation = {
             DROP: 'DROP',
             BOUNCE: 'BOUNCE'
+        };
+        
+        // 提供事件API
+        window.google.maps.event = window.google.maps.event || {
+            addListener: function(instance, eventName, handler) {
+                console.log('[地图加载器][模拟] 添加事件监听:', eventName);
+                // 存储处理程序，以便可以手动触发
+                if (!instance._eventListeners) {
+                    instance._eventListeners = {};
+                }
+                if (!instance._eventListeners[eventName]) {
+                    instance._eventListeners[eventName] = [];
+                }
+                instance._eventListeners[eventName].push(handler);
+                
+                return { 
+                    remove: function() {
+                        if (instance._eventListeners && instance._eventListeners[eventName]) {
+                            const index = instance._eventListeners[eventName].indexOf(handler);
+                            if (index !== -1) {
+                                instance._eventListeners[eventName].splice(index, 1);
+                            }
+                        }
+                    } 
+                };
+            },
+            removeListener: function(listener) {
+                if (listener && typeof listener.remove === 'function') {
+                    listener.remove();
+                }
+            },
+            trigger: function(instance, eventName, eventArgs) {
+                if (instance._eventListeners && instance._eventListeners[eventName]) {
+                    instance._eventListeners[eventName].forEach(function(handler) {
+                        handler(eventArgs);
+                    });
+                }
+            }
         };
         
         // 通知系统地图已"初始化"

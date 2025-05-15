@@ -1,501 +1,368 @@
 /**
- * 紧急地图修复
- * 这个脚本创建了地图API的模拟对象，当Google Maps API无法加载时提供备用功能
+ * 紧急地图修复脚本
+ * 处理移动端和桌面端地图界面差异，确保按钮响应和标记添加功能
  */
 
 (function() {
-    console.log('[地图修复] 开始加载紧急地图修复模块');
+    // 设备检测
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     
-    // 定义常量
-    const LOG_PREFIX = '[地图修复] ';
-    const MELBOURNE_CENTER = {lat: -37.8136, lng: 144.9631};
+    console.log('[紧急修复] 设备类型:', isMobile ? '移动设备' : '桌面设备');
+
+    // 在DOM加载完成后执行
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('[紧急修复] DOM已加载，准备应用紧急修复');
+        
+        // 确保按钮点击事件在移动设备上正常工作
+        fixButtonEvents();
+        
+        // 修复地图监听器
+        fixMapListeners();
+        
+        // 确保UI样式一致
+        unifyUIStyles();
+        
+        // 监听地图就绪事件
+        document.addEventListener('map_ready', function() {
+            console.log('[紧急修复] 地图已就绪，应用额外修复');
+            
+            // 短暂延迟确保地图完全初始化
+            setTimeout(function() {
+                // 修复地图点击事件
+                fixMapClickHandlers();
+                
+                // 同步标记数据
+                synchronizeMarkers();
+            }, 500);
+        });
+    });
     
-    // 检测地图加载状态的超时时间
-    const MAP_LOAD_TIMEOUT = 5000; // 5秒
-    
-    // 在特定的时间后检查Google Maps是否已成功加载
-    setTimeout(function() {
-        // 检查Google Maps API是否已正确加载
-        if (typeof google === 'undefined' || typeof google.maps === 'undefined' || !window.map) {
-            console.warn(LOG_PREFIX + 'Google Maps API未能在预期时间内加载，创建应急替代方案');
-            createMapsEmergencyFallback();
-        } else {
-            console.log(LOG_PREFIX + 'Google Maps已成功加载，无需应用修复');
+    // 修复按钮事件
+    function fixButtonEvents() {
+        console.log('[紧急修复] 修复按钮事件');
+        
+        // 添加报告按钮
+        const addReportBtn = document.getElementById('addReportBtn');
+        if (addReportBtn) {
+            // 移除现有事件监听器
+            const newAddReportBtn = addReportBtn.cloneNode(true);
+            addReportBtn.parentNode.replaceChild(newAddReportBtn, addReportBtn);
+            
+            // 添加新的事件监听器
+            newAddReportBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('[紧急修复] 添加报告按钮被点击');
+                
+                // 检查是否在选点模式
+                if (window.isSelectingLocation) {
+                    // 取消选点模式
+                    window.isSelectingLocation = false;
+                    const addReportTip = document.getElementById('addReportTip');
+                    if (addReportTip) {
+                        addReportTip.style.display = 'none';
+                    }
+                    
+                    newAddReportBtn.textContent = window.currentLang === 'zh' ? '+ 添加报告' : '+ Add Report';
+                    document.body.style.cursor = 'default';
+                } else {
+                    // 进入选点模式
+                    window.isSelectingLocation = true;
+                    const addReportTip = document.getElementById('addReportTip');
+                    if (addReportTip) {
+                        addReportTip.style.display = 'block';
+                    }
+                    
+                    newAddReportBtn.textContent = window.currentLang === 'zh' ? '× 取消选点' : '× Cancel Selection';
+                    document.body.style.cursor = 'crosshair';
+                    
+                    console.log('[紧急修复] 已进入选点模式');
+                }
+            }, { passive: false });
         }
-    }, MAP_LOAD_TIMEOUT);
+        
+        // 快速添加按钮
+        const quickAddBtn = document.getElementById('quickAddBtn');
+        if (quickAddBtn) {
+            // 移除现有事件监听器
+            const newQuickAddBtn = quickAddBtn.cloneNode(true);
+            quickAddBtn.parentNode.replaceChild(newQuickAddBtn, quickAddBtn);
+            
+            // 添加新的事件监听器
+            newQuickAddBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('[紧急修复] 快速添加按钮被点击');
+                
+                // 显示快速添加表单
+                const quickAddForm = document.getElementById('quickAddForm');
+                if (quickAddForm) {
+                    quickAddForm.style.display = 'block';
+                }
+            }, { passive: false });
+        }
+        
+        // 提交快速添加
+        const submitQuickAdd = document.getElementById('submitQuickAdd');
+        if (submitQuickAdd) {
+            submitQuickAdd.addEventListener('click', function() {
+                if (typeof window.submitQuickDescription === 'function') {
+                    window.submitQuickDescription();
+                }
+            }, { passive: false });
+        }
+        
+        // 关闭快速添加
+        const quickAddClose = document.getElementById('quickAddClose');
+        if (quickAddClose) {
+            quickAddClose.addEventListener('click', function() {
+                const quickAddForm = document.getElementById('quickAddForm');
+                if (quickAddForm) {
+                    quickAddForm.style.display = 'none';
+                }
+            }, { passive: false });
+        }
+        
+        // 取消快速添加
+        const cancelQuickAdd = document.getElementById('cancelQuickAdd');
+        if (cancelQuickAdd) {
+            cancelQuickAdd.addEventListener('click', function() {
+                const quickAddForm = document.getElementById('quickAddForm');
+                if (quickAddForm) {
+                    quickAddForm.style.display = 'none';
+                }
+            }, { passive: false });
+        }
+    }
     
-    // 创建地图API的紧急替代方法
-    function createMapsEmergencyFallback() {
-        console.log(LOG_PREFIX + '创建地图API模拟对象');
+    // 修复地图监听器
+    function fixMapListeners() {
+        console.log('[紧急修复] 修复地图监听器');
         
-        // 1. 为UI添加离线模式提示
-        showOfflineMapNotice();
+        // 确保全局变量已初始化
+        window.markers = window.markers || [];
+        window.pendingMarkers = window.pendingMarkers || [];
+        window.isSelectingLocation = window.isSelectingLocation || false;
         
-        // 2. 修改地图容器样式
+        // 等待地图API
+        const waitForMap = setInterval(function() {
+            if (window.map && typeof google !== 'undefined') {
+                clearInterval(waitForMap);
+                console.log('[紧急修复] 地图已加载，添加事件监听器');
+                
+                // 添加地图点击监听器
+                google.maps.event.addListener(window.map, 'click', function(event) {
+                    if (window.isSelectingLocation) {
+                        console.log('[紧急修复] 地图被点击，当前在选点模式');
+                        
+                        const latLng = event.latLng;
+                        
+                        // 使用UIController处理点击
+                        if (window.UIController && typeof window.UIController.selectMapLocation === 'function') {
+                            window.UIController.selectMapLocation(latLng);
+                        } else if (typeof window.selectMapLocation === 'function') {
+                            window.selectMapLocation(latLng);
+                        }
+                    }
+                });
+            }
+        }, 500);
+    }
+    
+    // 修复地图点击处理
+    function fixMapClickHandlers() {
+        if (!window.map || typeof google === 'undefined') {
+            return;
+        }
+        
+        console.log('[紧急修复] 修复地图点击处理');
+        
+        // 确保选择位置功能正常工作
+        if (typeof window.selectMapLocation !== 'function') {
+            window.selectMapLocation = function(latLng) {
+                console.log('[紧急修复] 选择地图位置:', latLng.lat(), latLng.lng());
+                
+                // 存储选择的位置
+                window.selectedLocation = {
+                    lat: latLng.lat(),
+                    lng: latLng.lng()
+                };
+                
+                // 移除现有的选择标记
+                if (window.selectionMarker) {
+                    window.selectionMarker.setMap(null);
+                }
+                
+                if (window.selectionCircle) {
+                    window.selectionCircle.setMap(null);
+                }
+                
+                // 添加新的选择标记
+                window.selectionMarker = new google.maps.Marker({
+                    position: latLng,
+                    map: window.map,
+                    animation: google.maps.Animation.DROP,
+                    icon: {
+                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#0071e3" stroke="#ffffff" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>'),
+                        scaledSize: new google.maps.Size(30, 30),
+                        anchor: new google.maps.Point(15, 15)
+                    }
+                });
+                
+                // 创建圆形
+                window.selectionCircle = new google.maps.Circle({
+                    strokeColor: '#0071e3',
+                    strokeOpacity: 0.8,
+                    strokeWeight: 2,
+                    fillColor: '#0071e3',
+                    fillOpacity: 0.1,
+                    map: window.map,
+                    center: latLng,
+                    radius: 200
+                });
+                
+                // 退出选点模式
+                window.isSelectingLocation = false;
+                
+                const addReportTip = document.getElementById('addReportTip');
+                if (addReportTip) {
+                    addReportTip.style.display = 'none';
+                }
+                
+                const addReportBtn = document.getElementById('addReportBtn');
+                if (addReportBtn) {
+                    addReportBtn.textContent = window.currentLang === 'zh' ? '+ 添加报告' : '+ Add Report';
+                }
+                
+                document.body.style.cursor = 'default';
+                
+                // 打开报告表单
+                const reportForm = document.getElementById('reportForm');
+                if (reportForm) {
+                    reportForm.style.display = 'block';
+                    reportForm.style.transform = 'translateY(0)';
+                }
+            };
+        }
+    }
+    
+    // 统一UI样式，确保移动端和桌面端一致
+    function unifyUIStyles() {
+        console.log('[紧急修复] 统一UI样式');
+        
+        // 确保地图容器样式一致
         const mapElement = document.getElementById('map');
         if (mapElement) {
-            mapElement.style.backgroundImage = 'url("images/map-placeholder.png")';
-            mapElement.style.backgroundSize = 'cover';
-            mapElement.style.backgroundPosition = 'center';
-            mapElement.style.opacity = '0.4';
-        }
-        
-        // 3. 创建模拟的Google Maps对象
-        window.google = window.google || {};
-        window.google.maps = window.google.maps || {};
-        
-        // 创建模拟的 Map 类
-        class MockMap {
-            constructor(container, options) {
-                this.container = container;
-                this.options = options || {};
-                this.center = options.center || MELBOURNE_CENTER;
-                this.zoom = options.zoom || 13;
-                this.markers = [];
-                this.listeners = {};
-                console.log(LOG_PREFIX + '创建模拟地图，中心点:', this.center);
-            }
+            mapElement.style.width = '100%';
+            mapElement.style.height = '100vh';
+            mapElement.style.position = isMobile ? 'fixed' : 'absolute';
+            mapElement.style.top = '0';
+            mapElement.style.left = '0';
+            mapElement.style.zIndex = '1';
             
-            // 模拟地图方法
-            setCenter(latLng) {
-                this.center = latLng;
-                return this;
-            }
-            
-            getCenter() {
-                return {
-                    lat: () => this.center.lat,
-                    lng: () => this.center.lng
-                };
-            }
-            
-            setZoom(zoom) {
-                this.zoom = zoom;
-                return this;
-            }
-            
-            getZoom() {
-                return this.zoom;
-            }
-            
-            // 模拟事件监听
-            addListener(event, callback) {
-                if (!this.listeners[event]) {
-                    this.listeners[event] = [];
-                }
-                this.listeners[event].push(callback);
+            if (isMobile) {
+                // 优化移动设备的触摸处理
+                mapElement.style.touchAction = 'pan-x pan-y';
+                mapElement.style.overflowX = 'hidden';
+                mapElement.style.overflowY = 'hidden';
                 
-                // 返回一个带有 remove 方法的对象
-                return {
-                    remove: () => {
-                        const index = this.listeners[event].indexOf(callback);
-                        if (index !== -1) {
-                            this.listeners[event].splice(index, 1);
-                        }
-                    }
-                };
-            }
-            
-            // 触发事件
-            triggerEvent(event, data) {
-                if (this.listeners[event]) {
-                    this.listeners[event].forEach(callback => {
-                        callback(data);
-                    });
-                }
-            }
-            
-            // Mock panTo
-            panTo(latLng) {
-                this.setCenter(latLng);
-                return this;
-            }
-            
-            // Mock fitBounds
-            fitBounds() {
-                return this;
-            }
-            
-            getBounds() {
-                // 模拟返回一个边界框
-                const ne = { lat: this.center.lat + 0.1, lng: this.center.lng + 0.1 };
-                const sw = { lat: this.center.lat - 0.1, lng: this.center.lng - 0.1 };
+                // 硬件加速
+                mapElement.style.transform = 'translateZ(0)';
+                mapElement.style.webkitTransform = 'translateZ(0)';
+                mapElement.style.backfaceVisibility = 'hidden';
+                mapElement.style.webkitBackfaceVisibility = 'hidden';
                 
-                return {
-                    getNorthEast: () => ({ lat: () => ne.lat, lng: () => ne.lng }),
-                    getSouthWest: () => ({ lat: () => sw.lat, lng: () => sw.lng }),
-                    contains: () => true
-                };
+                // iOS特定修复
+                if (isIOS) {
+                    mapElement.style.webkitOverflowScrolling = 'touch';
+                }
             }
         }
         
-        // 模拟 Marker 类
-        class MockMarker {
-            constructor(options) {
-                this.position = options.position;
-                this.map = options.map;
-                this.title = options.title || '';
-                this.icon = options.icon;
-                this.listeners = {};
+        // 确保UI控件样式一致
+        const mapControl = document.querySelector('.map-control');
+        if (mapControl) {
+            mapControl.style.position = 'fixed';
+            mapControl.style.zIndex = '1200';
+            
+            if (isMobile) {
+                mapControl.style.width = '90%';
+                mapControl.style.bottom = '20px';
                 
-                if (this.map && this.map.markers) {
-                    this.map.markers.push(this);
+                // 支持安全区域
+                if ('env' in window) {
+                    mapControl.style.bottom = 'max(20px, env(safe-area-inset-bottom))';
                 }
-                
-                console.log(LOG_PREFIX + '创建模拟标记:', this.title, this.position);
-            }
-            
-            setMap(map) {
-                if (this.map && this.map.markers) {
-                    const index = this.map.markers.indexOf(this);
-                    if (index !== -1) {
-                        this.map.markers.splice(index, 1);
-                    }
-                }
-                
-                this.map = map;
-                
-                if (map && map.markers) {
-                    map.markers.push(this);
-                }
-                
-                return this;
-            }
-            
-            getPosition() {
-                return {
-                    lat: () => this.position.lat,
-                    lng: () => this.position.lng
-                };
-            }
-            
-            setPosition(position) {
-                this.position = position;
-                return this;
-            }
-            
-            addListener(event, callback) {
-                if (!this.listeners[event]) {
-                    this.listeners[event] = [];
-                }
-                this.listeners[event].push(callback);
-                
-                return {
-                    remove: () => {
-                        const index = this.listeners[event].indexOf(callback);
-                        if (index !== -1) {
-                            this.listeners[event].splice(index, 1);
-                        }
-                    }
-                };
-            }
-            
-            triggerEvent(event, data) {
-                if (this.listeners[event]) {
-                    this.listeners[event].forEach(callback => {
-                        callback(data || {});
-                    });
-                }
-            }
-            
-            getTitle() {
-                return this.title;
-            }
-            
-            setTitle(title) {
-                this.title = title;
-                return this;
-            }
-            
-            setVisible(visible) {
-                this.visible = visible;
-                return this;
             }
         }
         
-        // 模拟 InfoWindow 类
-        class MockInfoWindow {
-            constructor(options) {
-                this.content = options && options.content || '';
-                this.position = options && options.position || null;
-                this.marker = null;
-                this.map = null;
-            }
-            
-            open(map, marker) {
-                this.map = map;
-                this.marker = marker;
-                
-                // 如果打开此信息窗口，模拟触发点击事件
-                if (marker && marker.triggerEvent) {
-                    marker.triggerEvent('click');
-                }
-                
-                console.log(LOG_PREFIX + '打开信息窗口:', this.content);
-                return this;
-            }
-            
-            close() {
-                this.map = null;
-                this.marker = null;
-                return this;
-            }
-            
-            setContent(content) {
-                this.content = content;
-                return this;
+        // 确保按钮样式一致
+        const addReportBtn = document.getElementById('addReportBtn');
+        if (addReportBtn) {
+            if (isMobile) {
+                addReportBtn.style.padding = '14px';
+                addReportBtn.style.fontSize = '16px';
+                addReportBtn.style.borderRadius = '10px';
+                addReportBtn.style.webkitTapHighlightColor = 'transparent';
             }
         }
         
-        // 创建模拟的经纬度类
-        class MockLatLng {
-            constructor(lat, lng) {
-                this.lat_ = lat;
-                this.lng_ = lng;
-            }
-            
-            lat() {
-                return this.lat_;
-            }
-            
-            lng() {
-                return this.lng_;
-            }
-            
-            toString() {
-                return `(${this.lat_}, ${this.lng_})`;
+        const quickAddBtn = document.getElementById('quickAddBtn');
+        if (quickAddBtn) {
+            if (isMobile) {
+                quickAddBtn.style.padding = '14px';
+                quickAddBtn.style.fontSize = '16px';
+                quickAddBtn.style.borderRadius = '10px';
+                quickAddBtn.style.webkitTapHighlightColor = 'transparent';
             }
         }
-        
-        // 创建一个模拟的地图对象
-        const mockMapInstance = new MockMap(document.getElementById('map'), {
-            center: MELBOURNE_CENTER,
-            zoom: 13
-        });
-        
-        // 设置全局变量
-        window.map = mockMapInstance;
-        window.google.maps.Map = MockMap;
-        window.google.maps.Marker = MockMarker;
-        window.google.maps.InfoWindow = MockInfoWindow;
-        window.google.maps.LatLng = MockLatLng;
-        window.google.maps.LatLngBounds = function() {
-            return {
-                extend: () => this,
-                getCenter: () => MELBOURNE_CENTER
-            };
-        };
-        window.google.maps.event = {
-            addListener: (instance, event, callback) => {
-                if (instance && instance.addListener) {
-                    return instance.addListener(event, callback);
-                }
-                return { remove: () => {} };
-            },
-            removeListener: (listener) => {
-                if (listener && listener.remove) {
-                    listener.remove();
-                }
-            }
-        };
-        window.google.maps.MapTypeId = {
-            ROADMAP: 'roadmap',
-            SATELLITE: 'satellite',
-            HYBRID: 'hybrid',
-            TERRAIN: 'terrain'
-        };
-        window.google.maps.Animation = {
-            DROP: 'drop',
-            BOUNCE: 'bounce'
-        };
-        window.google.maps.Circle = function() {
-            return {
-                setMap: () => {}
-            };
-        };
-        window.google.maps.Geocoder = function() {
-            return {
-                geocode: (request, callback) => {
-                    // 模拟地理编码结果
-                    setTimeout(() => {
-                        callback([{
-                            geometry: {
-                                location: new MockLatLng(MELBOURNE_CENTER.lat, MELBOURNE_CENTER.lng)
-                            }
-                        }], 'OK');
-                    }, 500);
-                }
-            };
-        };
-        window.google.maps.GeocoderStatus = {
-            OK: 'OK',
-            ERROR: 'ERROR'
-        };
-        window.google.maps.places = window.google.maps.places || {};
-        window.google.maps.places.PlacesService = function() {
-            return {
-                nearbySearch: (request, callback) => {
-                    // 空结果
-                    setTimeout(() => callback([], 'ZERO_RESULTS'), 500);
-                }
-            };
-        };
-        window.google.maps.SymbolPath = {
-            CIRCLE: 0
-        };
-        
-        // 初始化其他关键组件
-        initializeOtherComponents();
-        
-        console.log(LOG_PREFIX + '地图API模拟对象创建完成，应用现在应该可以正常运行');
-        
-        // 通知应用地图已"加载"
-        notifyMapReady();
     }
     
-    // 显示离线地图通知
-    function showOfflineMapNotice() {
-        const noticeContainer = document.createElement('div');
-        noticeContainer.id = 'offlineMapNotice';
-        noticeContainer.style.cssText = `
-            position: fixed;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0,0,0,0.7);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            z-index: 1000;
-            text-align: center;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-        `;
-        noticeContainer.textContent = '地图尚未加载，应用处于离线模式';
+    // 同步标记数据，确保移动端和桌面端显示相同数量的标记
+    function synchronizeMarkers() {
+        console.log('[紧急修复] 同步标记数据');
         
-        document.body.appendChild(noticeContainer);
-        
-        // 5秒后隐藏通知
-        setTimeout(() => {
-            noticeContainer.style.opacity = '0';
-            noticeContainer.style.transition = 'opacity 0.5s ease';
-            
-            // 完全移除元素
-            setTimeout(() => {
-                noticeContainer.remove();
-            }, 500);
-        }, 5000);
-    }
-    
-    // 初始化其他关键组件
-    function initializeOtherComponents() {
-        // 确保 MELBOURNE_CENTER 全局变量存在
-        if (typeof window.MELBOURNE_CENTER === 'undefined') {
-            window.MELBOURNE_CENTER = MELBOURNE_CENTER;
-            console.log(LOG_PREFIX + '设置 MELBOURNE_CENTER 全局变量');
-        }
-        
-        // 确保 addReportMarker 函数存在
-        if (typeof window.addReportMarker !== 'function') {
-            window.addReportMarker = function(location, description, id, imageUrl) {
-                console.log(LOG_PREFIX + '添加报告标记:', location, description);
+        // 加载保存的标记
+        const savedMarkers = localStorage.getItem('savedMarkers');
+        if (savedMarkers) {
+            try {
+                const markersData = JSON.parse(savedMarkers);
                 
-                // 创建一个模拟标记
-                const marker = new window.google.maps.Marker({
-                    position: location,
-                    map: window.map,
-                    title: description
-                });
-                
-                // 为标记添加点击事件
-                marker.addListener('click', function() {
-                    console.log(LOG_PREFIX + '点击标记:', description);
+                // 如果当前标记数量与保存的不一致，则重新加载
+                if (!window.markers || window.markers.length !== markersData.length) {
+                    console.log('[紧急修复] 标记数量不一致，重新加载标记');
                     
-                    // 如果存在showReportDetails函数，则调用它
-                    if (typeof window.showReportDetails === 'function') {
-                        window.showReportDetails({
-                            id: id || 'marker-' + Date.now(),
-                            location: location,
-                            description: description,
-                            time: new Date().toISOString(),
-                            image: imageUrl || '',
-                            emoji: '🐶'
+                    // 清除现有标记
+                    if (window.markers) {
+                        window.markers.forEach(function(marker) {
+                            if (marker && marker.setMap) {
+                                marker.setMap(null);
+                            }
                         });
                     }
-                });
-                
-                // 将标记添加到全局标记数组
-                if (!window.markers) window.markers = [];
-                window.markers.push(marker);
-                
-                return marker;
-            };
-            
-            console.log(LOG_PREFIX + '创建 addReportMarker 函数');
-        }
-        
-        // 确保 saveMarkersToStorage 函数存在
-        if (typeof window.saveMarkersToStorage !== 'function') {
-            window.saveMarkersToStorage = function() {
-                if (!window.markers || window.markers.length === 0) {
-                    return;
-                }
-                
-                try {
-                    const markerData = window.markers.map(function(marker) {
-                        return {
-                            lat: marker.position.lat || marker.position.lat(),
-                            lng: marker.position.lng || marker.position.lng(),
-                            description: marker.title || marker.getTitle() || ''
-                        };
+                    
+                    // 重置标记数组
+                    window.markers = [];
+                    
+                    // 加载保存的标记
+                    markersData.forEach(function(markerData) {
+                        if (window.addReportMarker) {
+                            window.addReportMarker(
+                                {lat: markerData.lat, lng: markerData.lng},
+                                markerData.description
+                            );
+                        } else if (window.UIController && window.UIController.addReportMarker) {
+                            window.UIController.addReportMarker(
+                                {lat: markerData.lat, lng: markerData.lng},
+                                markerData.description
+                            );
+                        }
                     });
                     
-                    localStorage.setItem('savedMarkers', JSON.stringify(markerData));
-                    console.log(LOG_PREFIX + '标记已保存到localStorage');
-                } catch (error) {
-                    console.error(LOG_PREFIX + '保存标记到localStorage失败:', error);
+                    console.log('[紧急修复] 已重新加载', markersData.length, '个标记');
                 }
-            };
-            
-            console.log(LOG_PREFIX + '创建 saveMarkersToStorage 函数');
-        }
-        
-        // 模拟地图初始化完成
-        window.mapsInitialized = true;
-    }
-    
-    // 通知应用地图已"加载"
-    function notifyMapReady() {
-        // 调用注册的回调函数
-        if (window.mapReadyCallbacks && window.mapReadyCallbacks.length) {
-            console.log(LOG_PREFIX + '执行地图就绪回调函数');
-            window.mapReadyCallbacks.forEach(function(callback) {
-                try {
-                    callback();
-                } catch (error) {
-                    console.error(LOG_PREFIX + '执行回调函数时出错:', error);
-                }
-            });
-        }
-        
-        // 触发自定义事件
-        const mapReadyEvent = new Event('map_ready');
-        document.dispatchEvent(mapReadyEvent);
-        
-        console.log(LOG_PREFIX + '应用已通知地图加载完成');
-    }
-    
-    // 如果页面已加载，立即执行检查
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        setTimeout(function() {
-            if (typeof google === 'undefined' || typeof google.maps === 'undefined' || !window.map) {
-                console.warn(LOG_PREFIX + '页面已加载但Google Maps仍未加载，立即创建应急替代方案');
-                createMapsEmergencyFallback();
+            } catch (error) {
+                console.error('[紧急修复] 加载标记数据出错:', error);
             }
-        }, 1000);
+        }
     }
-    
-    console.log(LOG_PREFIX + '紧急地图修复模块加载完成');
-})(); 
+})();

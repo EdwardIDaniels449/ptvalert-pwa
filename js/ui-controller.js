@@ -381,7 +381,7 @@ window.selectMapLocation = function(latLng) {
                             {lat: marker.lat, lng: marker.lng}, 
                             marker.description
                         );
-                    });
+    });
                 }
             });
         } catch (error) {
@@ -402,8 +402,17 @@ window.selectMapLocation = function(latLng) {
         // Add report button - 修改为只有点击时才进入选点模式
         const addReportBtn = document.getElementById('addReportBtn');
         if (addReportBtn) {
-            addReportBtn.addEventListener('click', function(e) {
+            // 检测是否为移动设备
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            // 移除现有监听器以防重复
+            const newAddReportBtn = addReportBtn.cloneNode(true);
+            addReportBtn.parentNode.replaceChild(newAddReportBtn, addReportBtn);
+            
+            // 添加新的事件监听器，确保在移动设备上也能正常工作
+            newAddReportBtn.addEventListener('click', function(e) {
                 e.preventDefault();
+                console.log('[UI Controller] 添加报告按钮被点击');
                 
                 // 如果已经在选点模式，则取消选点
                 if (window.isSelectingLocation) {
@@ -415,27 +424,49 @@ window.selectMapLocation = function(latLng) {
                         addReportTip.style.display = 'none';
                     }
                     
-                    if (addReportBtn) {
-                        addReportBtn.textContent = window.currentLang === 'zh' ? '+ 添加报告' : '+ Add Report';
-                    }
-                    
+                    newAddReportBtn.textContent = window.currentLang === 'zh' ? '+ 添加报告' : '+ Add Report';
                     document.body.style.cursor = 'default';
                 } else {
                     // 启动位置选择模式
-                    window.startLocationSelection();
+                    if (typeof window.startLocationSelection === 'function') {
+                        window.startLocationSelection();
+                    } else {
+                        // 备用方法，直接实现选点模式
+                        console.log('[UI Controller] 备用方法启动位置选择模式');
+                        window.isSelectingLocation = true;
+                        
+                        const addReportTip = document.getElementById('addReportTip');
+                        if (addReportTip) {
+                            addReportTip.style.display = 'block';
+                        }
+                        
+                        newAddReportBtn.textContent = window.currentLang === 'zh' ? '× 取消选点' : '× Cancel Selection';
+                        document.body.style.cursor = 'crosshair';
+                    }
                 }
-            });
+            }, { passive: false }); // 添加 passive: false 以确保在移动设备上事件不被忽略
         }
 
         // Quick add button
         const quickAddBtn = document.getElementById('quickAddBtn');
         if (quickAddBtn) {
-            quickAddBtn.addEventListener('click', function(e) {
+            // 移除现有监听器以防重复
+            const newQuickAddBtn = quickAddBtn.cloneNode(true);
+            quickAddBtn.parentNode.replaceChild(newQuickAddBtn, quickAddBtn);
+            
+            // 添加新的事件监听器
+            newQuickAddBtn.addEventListener('click', function(e) {
                 e.preventDefault();
+                console.log('[UI Controller] 快速添加按钮被点击');
+                
                 // 弹出描述输入弹窗
                 var quickAddForm = document.getElementById('quickAddForm');
-                if (quickAddForm) quickAddForm.style.display = 'block';
-            });
+                if (quickAddForm) {
+                    quickAddForm.style.display = 'block';
+                    // 确保在iOS设备上正确显示
+                    quickAddForm.style.opacity = '1';
+                }
+            }, { passive: false }); // 添加 passive: false 以确保在移动设备上事件不被忽略
         }
 
         // Form close button
@@ -572,7 +603,7 @@ window.selectMapLocation = function(latLng) {
 
         console.log('[UI Controller] All button handlers initialized');
     }
-    
+
     // Open report form
     function openReportForm() {
         const reportForm = document.getElementById('reportForm');
@@ -967,7 +998,7 @@ window.selectMapLocation = function(latLng) {
                         
                         // 只有在成功保存到Firebase后才更新计数
                         if (!countUpdated) {
-                            updateReportCounter();
+                        updateReportCounter();
                             countUpdated = true;
                         }
                         
@@ -1114,10 +1145,10 @@ window.selectMapLocation = function(latLng) {
         if (window.map) {
             try {
                 // 创建自定义标记 - 使用狗的Emoji (🐶)
-                const marker = new google.maps.Marker({
-                    position: location,
-                    map: window.map,
-                    animation: google.maps.Animation.DROP,
+            const marker = new google.maps.Marker({
+                position: location,
+                map: window.map,
+                animation: google.maps.Animation.DROP,
                     title: description,
                     label: {
                         text: '🐶',
@@ -1132,8 +1163,8 @@ window.selectMapLocation = function(latLng) {
                 });
                 
                 // 保存标记
-                window.markers.push(marker);
-                
+            window.markers.push(marker);
+            
                 // 为标记添加点击事件
                 marker.addListener('click', function() {
                     // 如果存在showReportDetails函数，则使用它
@@ -1155,12 +1186,12 @@ window.selectMapLocation = function(latLng) {
                         }
                         
                         // 直接在地图上显示信息窗口，而不是弹出蓝色窗口
-                        const infoWindow = new google.maps.InfoWindow({
+            const infoWindow = new google.maps.InfoWindow({
                             content: createInfoWindowContent(description),
                             maxWidth: 300
-                        });
-                        
-                        infoWindow.open(window.map, marker);
+            });
+            
+                infoWindow.open(window.map, marker);
                         
                         // 保存当前打开的信息窗口引用
                         window.openedInfoWindow = infoWindow;
