@@ -4,6 +4,9 @@
  */
 
 (function() {
+    // 墨尔本中心坐标 - 全局声明以避免引用错误
+    window.MELBOURNE_CENTER = {lat: -37.8136, lng: 144.9631};
+    
     // 检查Google Maps是否已加载的变量
     let checkCount = 0;
     const maxChecks = 6; // 减少最大尝试次数，避免移动设备上多次重试导致内存问题
@@ -12,29 +15,44 @@
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     
-    // 地图初始设置 - 统一移动端和桌面端
-    const MAP_CONFIG = {
-        center: {lat: -37.8136, lng: 144.9631}, // 墨尔本市中心
-        zoom: 13, // 统一桌面端和移动端使用相同的缩放级别
-        minZoom: 5,
-        maxZoom: 19,
-        gestureHandling: isMobile ? 'greedy' : 'auto', // 移动端使用贪婪手势处理
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        mapTypeControl: false,  // 禁用地图类型控件
-        streetViewControl: false, // 禁用街景
-        fullscreenControl: false, // 禁用全屏按钮
-        zoomControl: true,       // 启用缩放控件
-        zoomControlOptions: {
-            position: google.maps.ControlPosition.RIGHT_BOTTOM
-        },
-        // 添加样式以移除POI标签，使移动端和桌面端地图外观一致
-        styles: [{
-            featureType: "poi",
-            elementType: "labels",
-            stylers: [{ visibility: "off" }]
-        }],
-        clickableIcons: false // 禁用默认POI点击，提高性能并统一体验
-    };
+    // 地图初始设置 - 将在google.maps可用后定义
+    let MAP_CONFIG = null;
+
+    function defineMapConfig() {
+        // 检查 google 对象是否存在，如果不存在则不尝试定义
+        if (typeof google === 'undefined') {
+            console.log('[地图加载器] google 对象不可用，暂不定义 MAP_CONFIG');
+            return;
+        }
+        
+        if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+            MAP_CONFIG = {
+                center: window.MELBOURNE_CENTER, // 使用全局变量
+                zoom: 13, // 统一桌面端和移动端使用相同的缩放级别
+                minZoom: 5,
+                maxZoom: 19,
+                gestureHandling: isMobile ? 'greedy' : 'auto', // 移动端使用贪婪手势处理
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                mapTypeControl: false,  // 禁用地图类型控件
+                streetViewControl: false, // 禁用街景
+                fullscreenControl: false, // 禁用全屏按钮
+                zoomControl: true,       // 启用缩放控件
+                zoomControlOptions: {
+                    position: google.maps.ControlPosition.RIGHT_BOTTOM
+                },
+                // 添加样式以移除POI标签，使移动端和桌面端地图外观一致
+                styles: [{
+                    featureType: "poi",
+                    elementType: "labels",
+                    stylers: [{ visibility: "off" }]
+                }],
+                clickableIcons: false // 禁用默认POI点击，提高性能并统一体验
+            };
+            console.log('[地图加载器] MAP_CONFIG 已定义');
+        } else {
+            console.error('[地图加载器] 尝试定义 MAP_CONFIG 失败，google.maps 不可用。');
+        }
+    }
     
     // 地图加载超时 - 移动设备使用更短的超时时间
     const MAP_LOAD_TIMEOUT = isMobile ? 10000 : 15000; // 10秒 (移动) / 15秒 (桌面)
@@ -189,6 +207,11 @@
         } else {
             console.log('[地图加载器] Google Maps API已加载');
             
+            // 定义 MAP_CONFIG，因为它依赖 google.maps
+            if (!MAP_CONFIG) {
+                defineMapConfig();
+            }
+
             // 清除超时计时器
             if (mapLoadTimer) {
                 clearTimeout(mapLoadTimer);
@@ -199,25 +222,39 @@
             if (typeof window.map === 'undefined' || !window.map) {
                 console.log('[地图加载器] 地图未初始化，尝试初始化');
                 
+                // 确保 handleMapInitError 在全局可用
+                if (typeof window.handleMapInitError !== 'function') {
+                    // 创建备用的 handleMapInitError 函数
+                    window.handleMapInitError = function() {
+                        console.log('[地图加载器] 使用备用的 handleMapInitError 函数');
+                        createFallbackMap();
+                    };
+                }
+                
                 // 调用initMap
                 if (typeof window.initMap === 'function') {
                     try {
-                    window.initMap();
+                        window.initMap();
                         console.log('[地图加载器] 地图已成功初始化');
                     } catch (error) {
                         console.error('[地图加载器] 初始化地图时出错:', error);
                         
-                        // 移动设备: 减少重试次数
-                        if (isMobile && checkCount >= maxChecks / 2) {
-                            console.warn('[地图加载器] 移动设备上多次初始化失败，切换到备用地图');
-                            createFallbackMap();
-                            return;
+                        // 处理初始化错误
+                        if (typeof window.handleMapInitError === 'function') {
+                            window.handleMapInitError();
+                        } else {
+                            // 移动设备: 减少重试次数
+                            if (isMobile && checkCount >= maxChecks / 2) {
+                                console.warn('[地图加载器] 移动设备上多次初始化失败，切换到备用地图');
+                                createFallbackMap();
+                                return;
+                            }
+                            
+                            // 延迟再次尝试
+                            checkCount++;
+                            setTimeout(checkGoogleMapsAPI, 1000);
                         }
-                        
-                        // 延迟再次尝试
-                        checkCount++;
-                        setTimeout(checkGoogleMapsAPI, 1000);
-        }
+                    }
                 } else {
                     console.error('[地图加载器] initMap函数不存在');
                     // 尝试创建我们自己的地图初始化函数
@@ -370,16 +407,12 @@
         window.google = window.google || {};
         window.google.maps = window.google.maps || {};
         
-        // 定义墨尔本中心坐标
-        const MELBOURNE_CENTER = {lat: -37.8136, lng: 144.9631};
-        window.MELBOURNE_CENTER = MELBOURNE_CENTER;
-        
         // 创建基本的地图对象
         window.map = {
             getCenter: function() {
                 return {
-                    lat: function() { return MELBOURNE_CENTER.lat; },
-                    lng: function() { return MELBOURNE_CENTER.lng; }
+                    lat: function() { return window.MELBOURNE_CENTER.lat; },
+                    lng: function() { return window.MELBOURNE_CENTER.lng; }
                 };
             },
             setCenter: function() { return this; },
@@ -395,14 +428,14 @@
                 return {
                     getNorthEast: function() { 
                         return { 
-                            lat: function() { return MELBOURNE_CENTER.lat + 0.1; }, 
-                            lng: function() { return MELBOURNE_CENTER.lng + 0.1; } 
+                            lat: function() { return window.MELBOURNE_CENTER.lat + 0.1; }, 
+                            lng: function() { return window.MELBOURNE_CENTER.lng + 0.1; } 
                         }; 
                     },
                     getSouthWest: function() { 
                         return { 
-                            lat: function() { return MELBOURNE_CENTER.lat - 0.1; }, 
-                            lng: function() { return MELBOURNE_CENTER.lng - 0.1; } 
+                            lat: function() { return window.MELBOURNE_CENTER.lat - 0.1; }, 
+                            lng: function() { return window.MELBOURNE_CENTER.lng - 0.1; } 
                         }; 
             }
                 };
@@ -413,7 +446,7 @@
         window.google.maps.Marker = function(options) {
             this.options = options || {};
             this.map = options.map || null;
-            this.position = options.position || MELBOURNE_CENTER;
+            this.position = options.position || window.MELBOURNE_CENTER;
             this.visible = options.visible !== false;
             this.animation = options.animation || null;
             this.title = options.title || '';

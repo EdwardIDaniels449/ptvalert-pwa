@@ -4,17 +4,21 @@
  */
 
 // 设备检测
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-console.log('[UI Controller] 设备类型:', isMobile ? '移动设备' : '桌面设备');
+// const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+// console.log('[UI Controller] 设备类型:', isMobile ? '移动设备' : '桌面设备');
+
+// 确保全局isMobile可用
+const isMobileDevice = typeof window.isMobile !== 'undefined' ? window.isMobile : /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+console.log('[UI Controller] 设备类型:', isMobileDevice ? '移动设备' : '桌面设备');
 
 // 性能优化变量
 const PERFORMANCE_OPTIONS = {
     // 移动设备上避免频繁DOM操作
-    useDebounce: isMobile,
+    useDebounce: isMobileDevice,
     // 移动设备上延迟非关键操作的时间(ms)
-    deferTime: isMobile ? 500 : 0,
+    deferTime: isMobileDevice ? 500 : 0,
     // 事件节流间隔(ms)
-    throttleInterval: isMobile ? 300 : 100
+    throttleInterval: isMobileDevice ? 300 : 100
 };
 
 // 防抖函数
@@ -124,7 +128,7 @@ window.submitQuickDescription = function() {
                     quickDescInput.value = '';
                     
                     // 添加标记到地图 - 移动设备上延迟处理，避免主线程阻塞
-                    if (isMobile) {
+                    if (isMobileDevice) {
                         setTimeout(function() {
                             addMarkerAfterSubmit(location, description);
                         }, PERFORMANCE_OPTIONS.deferTime);
@@ -1385,7 +1389,7 @@ window.selectMapLocation = function(latLng) {
     // 在UI控制器初始化时调用的设备优化
     function applyMobileOptimizations() {
         // 只在移动设备上执行以下操作
-        if (!isMobile) return;
+        if (!isMobileDevice) return;
         
         console.log('[UI Controller] 应用移动设备优化');
         
