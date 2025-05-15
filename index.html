@@ -774,7 +774,7 @@
             width: 90%;
             max-width: 350px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-            z-index: 3000;
+            z-index: 5000;
             text-align: center;
             animation: popup-fade-in 0.3s ease-out;
             display: none;
@@ -861,7 +861,7 @@
             padding: 20px;
             border-radius: 20px 20px 0 0;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
-            z-index: 1001;
+            z-index: 2000;
             transform: translateY(100%);
             transition: transform 0.3s ease-in-out;
         }
@@ -1096,7 +1096,7 @@
                 padding-right: env(safe-area-inset-right);
             }
         }
-        
+
         /* 弹幕样式 */
         .danmaku-container {
             position: fixed;
@@ -1395,8 +1395,29 @@
             width: 90%;
             max-width: 400px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-            z-index: 2000;
+            z-index: 1800;
             animation: popup-fade-in 0.3s ease-out;
+        }
+
+        /* 弹窗层级关系 */
+        #reportCounterPopup {
+            z-index: 5000 !important;
+        }
+        
+        #reportForm {
+            z-index: 2000 !important;
+        }
+        
+        #quickAddForm {
+            z-index: 1800 !important;
+        }
+        
+        /* 确保所有按钮都在弹窗之上可以点击 */
+        #reportCounterCloseBtn, #addReportBtn, #quickAddBtn, #formClose, 
+        #quickAddClose, #submitReport, #submitQuickAdd, 
+        #cancelReport, #cancelQuickAdd {
+            position: relative !important;
+            z-index: 5 !important;
         }
     </style>
 </head>
@@ -1434,7 +1455,7 @@
     </div>
     
     <!-- 报告计数器弹窗 - 默认隐藏，使用中央弹窗而非右侧蓝色弹窗 -->
-    <div class="report-counter-popup" id="reportCounterPopup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background-color:rgba(50, 50, 54, 0.95); border-radius:16px; padding:20px; width:90%; max-width:350px; box-shadow:0 10px 30px rgba(0, 0, 0, 0.4); z-index:3000; text-align:center;">
+    <div class="report-counter-popup" id="reportCounterPopup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background-color:rgba(50, 50, 54, 0.95); border-radius:16px; padding:20px; width:90%; max-width:350px; box-shadow:0 10px 30px rgba(0, 0, 0, 0.4); z-index:5000; text-align:center;">
         <h3 id="reportSuccessTitle">报告提交成功!</h3>
       <div style="margin:15px 0;">
         <div style="font-size:18px;margin-bottom:10px;">
@@ -1446,13 +1467,13 @@
           感谢您的贡献!
         </div>
       </div>
-      <button onclick="document.getElementById('reportCounterPopup').style.display='none';" style="background:#0071e3;color:white;border:none;padding:8px 16px;border-radius:8px;font-weight:bold;margin-top:10px;">
+      <button onclick="document.getElementById('reportCounterPopup').style.display='none';" style="background:#0071e3;color:white;border:none;padding:8px 16px;border-radius:8px;font-weight:bold;margin-top:10px;cursor:pointer;position:relative;z-index:5001;">
         <span id="reportCounterCloseBtn">关闭</span>
       </button>
     </div>
     
     <!-- 报告表单 -->
-    <div class="report-form" id="reportForm">
+    <div class="report-form" id="reportForm" style="position:fixed; bottom:0; left:0; right:0; background-color:#1c1c1e; padding:20px; border-radius:20px 20px 0 0; box-shadow:0 -2px 10px rgba(0,0,0,0.5); z-index:2000; transform:translateY(100%); transition:transform 0.3s ease-in-out;">
         <div class="form-header">
             <h2 class="form-title" id="formTitle">新报告</h2>
             <button class="form-close" id="formClose" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;">&times;</button>
@@ -1486,7 +1507,7 @@
     </div>
 
     <!-- 快速描述弹窗 -->
-    <div class="quick-desc-popup" id="quickAddForm" style="display:none;">
+    <div class="quick-desc-popup" id="quickAddForm" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background-color:rgba(50, 50, 54, 0.95); border-radius:16px; padding:20px; width:90%; max-width:400px; box-shadow:0 10px 30px rgba(0, 0, 0, 0.4); z-index:1800;">
         <div class="form-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
             <h2 class="form-title" id="quickFormTitle" style="font-size:20px;color:#fff;margin:0;">快速添加描述</h2>
             <button class="form-close" id="quickAddClose" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;margin:0;padding:0;">&times;</button>
@@ -1581,7 +1602,7 @@
               if (window.isSelectingLocation) {
                 const latLng = event.latLng;
                 if (window.UIController && typeof window.UIController.selectMapLocation === 'function') {
-                  window.UIController.selectMapLocation(latLng);
+                    window.UIController.selectMapLocation(latLng);
                         }
                     }
                 });

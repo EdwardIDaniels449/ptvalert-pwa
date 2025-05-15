@@ -173,31 +173,69 @@ function addMarkerAfterSubmit(location, description) {
     }
 }
 
-// 创建不更新计数的辅助函数
+// 修改handleQuickSubmitErrorNoCount函数，确保它能正确添加标记
 window.handleQuickSubmitErrorNoCount = function(reportData, formElement, inputElement, location, description) {
-    // 保存到localStorage
-    if (window.UIController && window.UIController.saveReportToLocalStorage) {
-        window.UIController.saveReportToLocalStorage(reportData);
-    } else {
-        saveReportToLocalStorage(reportData);
-    }
+    console.log('[UI Controller] 处理快速提交按钮，位置:', location, '描述:', description);
     
-    // 显示成功消息并关闭表单
-    const reportCounterPopup = document.getElementById('reportCounterPopup');
-    if (reportCounterPopup) reportCounterPopup.style.display = 'block';
-    
-    if (formElement) formElement.style.display = 'none';
-    
-    // 重置输入
-    if (inputElement) inputElement.value = '';
-    
-    // 移动设备上延迟添加标记
-    if (isMobile) {
-        setTimeout(function() {
-            addMarkerAfterSubmit(location, description);
-        }, PERFORMANCE_OPTIONS.deferTime);
-    } else {
-        addMarkerAfterSubmit(location, description);
+    try {
+        // 先执行关键操作：添加标记到地图
+        if (window.UIController && typeof window.UIController.addReportMarker === 'function') {
+            console.log('[UI Controller] 使用UIController添加标记');
+            window.UIController.addReportMarker(location, description);
+        } else if (typeof addReportMarker === 'function') {
+            console.log('[UI Controller] 使用全局函数添加标记');
+            addReportMarker(location, description);
+        } else {
+            console.warn('[UI Controller] 找不到添加标记的函数，将创建pendingMarker');
+            // 如果找不到添加标记的函数，则保存到pendingMarkers
+            window.pendingMarkers = window.pendingMarkers || [];
+            window.pendingMarkers.push({
+                location: location,
+                description: description
+            });
+        }
+        
+        // 保存标记到localStorage
+        if (window.UIController && typeof window.UIController.saveMarkersToStorage === 'function') {
+            window.UIController.saveMarkersToStorage();
+        } else if (typeof saveMarkersToStorage === 'function') {
+            saveMarkersToStorage();
+        }
+        
+        // 保存报告到localStorage作为备份
+        if (window.UIController && typeof window.UIController.saveReportToLocalStorage === 'function') {
+            window.UIController.saveReportToLocalStorage(reportData);
+        } else if (typeof saveReportToLocalStorage === 'function') {
+            saveReportToLocalStorage(reportData);
+        }
+        
+        // 显示成功消息
+        const reportCounterPopup = document.getElementById('reportCounterPopup');
+        if (reportCounterPopup) {
+            reportCounterPopup.style.display = 'block';
+            reportCounterPopup.style.zIndex = '5000'; // 确保在最上层
+        }
+        
+        // 关闭表单
+        if (formElement) {
+            formElement.style.display = 'none';
+        }
+        
+        // 重置输入
+        if (inputElement) {
+            inputElement.value = '';
+        }
+        
+        // 更新报告计数
+        if (window.UIController && typeof window.UIController.updateReportCounter === 'function') {
+            window.UIController.updateReportCounter();
+        } else if (typeof updateReportCounter === 'function') {
+            updateReportCounter();
+        }
+        
+    } catch (error) {
+        console.error('[UI Controller] 快速添加标记时出错:', error);
+        alert(window.currentLang === 'zh' ? '添加标记失败，请重试' : 'Failed to add marker, please try again');
     }
 };
 
@@ -954,6 +992,8 @@ window.selectMapLocation = function(latLng) {
 
     // Submit report data
     function submitReportData() {
+        console.log('[UI Controller] 确认键被点击，准备提交报告数据');
+        
         const description = document.getElementById('descriptionInput').value;
         
         if (!description) {
@@ -982,99 +1022,56 @@ window.selectMapLocation = function(latLng) {
             user: 'anonymous-user' // 使用固定的匿名用户ID
         };
         
-        console.log('[UI Controller] Submitting report:', reportData);
+        console.log('[UI Controller] 提交报告:', reportData);
         
-        // 标记是否已更新计数，确保只更新一次
-        let countUpdated = false;
-        
-        // Try to send data to Firebase if available
-        if (typeof firebase !== 'undefined' && firebase.database) {
-            try {
-                // Save to Firebase
-                const reportRef = firebase.database().ref('reports').push();
-                reportRef.set(reportData)
-                    .then(function() {
-                        console.log('[UI Controller] Report saved to Firebase successfully');
-                        
-                        // 只有在成功保存到Firebase后才更新计数
-                        if (!countUpdated) {
-                        updateReportCounter();
-                            countUpdated = true;
-                        }
-                        
-                        // Show success message
-                        const reportCounterPopup = document.getElementById('reportCounterPopup');
-                        if (reportCounterPopup) reportCounterPopup.style.display = 'block';
-                        
-                        // Close the form
-                        closeReportForm();
-                        
-                        // Add marker to map
-                        addReportMarker(window.selectedLocation, description);
-                        
-                        // Save markers to localStorage
-                        saveMarkersToStorage();
-                    })
-                    .catch(function(error) {
-                        console.error('[UI Controller] Error saving to Firebase:', error);
-                        
-                        // Fallback to localStorage if Firebase fails
-                        saveReportToLocalStorage(reportData);
-                        
-                        // Show success and close form
-                        const reportCounterPopup = document.getElementById('reportCounterPopup');
-                        if (reportCounterPopup) reportCounterPopup.style.display = 'block';
-                        closeReportForm();
-                        
-                        // Add marker
-                        addReportMarker(window.selectedLocation, description);
-                        saveMarkersToStorage();
-                        
-                        // 只在这种情况下更新一次计数
-                        if (!countUpdated) {
-                            updateReportCounter();
-                            countUpdated = true;
-                        }
-                    });
-            } catch (error) {
-                console.error('[UI Controller] Error with Firebase:', error);
-                
-                // Fallback to localStorage
-                saveReportToLocalStorage(reportData);
-                
-                // Show success and close form
-                const reportCounterPopup = document.getElementById('reportCounterPopup');
-                if (reportCounterPopup) reportCounterPopup.style.display = 'block';
-                closeReportForm();
-                
-                // Add marker
-                addReportMarker(window.selectedLocation, description);
-                saveMarkersToStorage();
-                
-                // 只在这种情况下更新一次计数
-                if (!countUpdated) {
-                    updateReportCounter();
-                    countUpdated = true;
-                }
-            }
-        } else {
-            // Firebase not available, use localStorage
-            saveReportToLocalStorage(reportData);
-            
-            // Show success message and close form
-            const reportCounterPopup = document.getElementById('reportCounterPopup');
-            if (reportCounterPopup) reportCounterPopup.style.display = 'block';
-            closeReportForm();
-            
-            // Add marker
+        // 立即添加标记到地图，确保无论Firebase是否成功都能添加标记
+        try {
+            // 先添加标记到地图
+            console.log('[UI Controller] 添加标记到地图', window.selectedLocation, description);
             addReportMarker(window.selectedLocation, description);
+            
+            // 保存标记到localStorage
             saveMarkersToStorage();
             
-            // 只在这种情况下更新一次计数
-            if (!countUpdated) {
-                updateReportCounter();
-                countUpdated = true;
+            // 更新报告计数
+            updateReportCounter();
+            
+            // 关闭表单
+            closeReportForm();
+            
+            // 显示成功消息
+            const reportCounterPopup = document.getElementById('reportCounterPopup');
+            if (reportCounterPopup) {
+                reportCounterPopup.style.display = 'block';
+                // 确保弹窗在最上层
+                reportCounterPopup.style.zIndex = '2000';
             }
+            
+            // 然后再尝试保存到Firebase（如果可用）
+            if (typeof firebase !== 'undefined' && firebase.database) {
+                try {
+                    // 异步保存到Firebase
+                    const reportRef = firebase.database().ref('reports').push();
+                    reportRef.set(reportData)
+                        .then(function() {
+                            console.log('[UI Controller] 报告已成功保存到Firebase');
+                        })
+                        .catch(function(error) {
+                            console.error('[UI Controller] 保存到Firebase失败，但标记已添加到地图:', error);
+                            saveReportToLocalStorage(reportData); // 备份到本地存储
+                        });
+                } catch (error) {
+                    console.error('[UI Controller] Firebase操作失败，但标记已添加到地图:', error);
+                    saveReportToLocalStorage(reportData); // 备份到本地存储
+                }
+            } else {
+                // Firebase不可用，使用localStorage
+                saveReportToLocalStorage(reportData);
+                console.log('[UI Controller] 报告已保存到localStorage');
+            }
+        } catch (error) {
+            console.error('[UI Controller] 添加标记时出错:', error);
+            alert(window.currentLang === 'zh' ? '添加标记失败，请重试' : 'Failed to add marker, please try again');
         }
     }
     
