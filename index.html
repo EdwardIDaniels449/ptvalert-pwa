@@ -1399,25 +1399,54 @@
             animation: popup-fade-in 0.3s ease-out;
         }
 
-        /* 弹窗层级关系 */
+        /* 弹窗层级关系和样式的全局定义，确保z-index一致 */
+        .popup-base {
+            position: fixed;
+            background-color: rgba(50, 50, 54, 0.95);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            border-radius: 16px;
+            color: white;
+        }
+        
+        /* 报告成功弹窗 - 最顶层 */
         #reportCounterPopup {
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            width: 90% !important;
+            max-width: 350px !important;
+            padding: 25px !important;
+            text-align: center !important;
+            z-index: 10000 !important;
+        }
+        
+        /* 报告表单 - 第二层 */
+        #reportForm {
             z-index: 5000 !important;
         }
         
-        #reportForm {
-            z-index: 2000 !important;
-        }
-        
+        /* 快速描述弹窗 - 第三层 */
         #quickAddForm {
-            z-index: 1800 !important;
+            z-index: 3000 !important;
         }
         
-        /* 确保所有按钮都在弹窗之上可以点击 */
-        #reportCounterCloseBtn, #addReportBtn, #quickAddBtn, #formClose, 
-        #quickAddClose, #submitReport, #submitQuickAdd, 
-        #cancelReport, #cancelQuickAdd {
+        /* 确保按钮可点击性 */
+        .popup-btn {
             position: relative !important;
-            z-index: 5 !important;
+            z-index: 1 !important; /* 相对于父元素提升层级 */
+            cursor: pointer !important;
+            user-select: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+        
+        /* 设置动画 */
+        @keyframes fade-in-scale {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        
+        #reportCounterPopup {
+            animation: fade-in-scale 0.3s ease-out !important;
         }
     </style>
 </head>
@@ -1455,21 +1484,21 @@
     </div>
     
     <!-- 报告计数器弹窗 - 默认隐藏，使用中央弹窗而非右侧蓝色弹窗 -->
-    <div class="report-counter-popup" id="reportCounterPopup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background-color:rgba(50, 50, 54, 0.95); border-radius:16px; padding:20px; width:90%; max-width:350px; box-shadow:0 10px 30px rgba(0, 0, 0, 0.4); z-index:5000; text-align:center;">
-        <h3 id="reportSuccessTitle">报告提交成功!</h3>
-      <div style="margin:15px 0;">
-        <div style="font-size:18px;margin-bottom:10px;">
-          <span id="reportCountText">今日已收到</span> 
-          <span id="reportCount" style="font-weight:bold;font-size:24px;color:#4CAF50;">0</span> 
-          <span id="reportCountSuffix">条报告</span>
-    </div>
-        <div style="font-size:14px;color:#aaa;" id="reportCounterThankYou">
-          感谢您的贡献!
+    <div class="popup-base" id="reportCounterPopup" style="display:none;">
+        <h3 id="reportSuccessTitle" style="margin:0 0 15px 0;font-size:20px;font-weight:bold;">报告提交成功!</h3>
+        <div style="margin:15px 0;">
+            <div style="font-size:18px;margin-bottom:10px;">
+                <span id="reportCountText">今日已收到</span> 
+                <span id="reportCount" style="font-weight:bold;font-size:24px;color:#4CAF50;">0</span> 
+                <span id="reportCountSuffix">条报告</span>
+            </div>
+            <div style="font-size:14px;color:#aaa;" id="reportCounterThankYou">
+                感谢您的贡献!
+            </div>
         </div>
-      </div>
-      <button onclick="document.getElementById('reportCounterPopup').style.display='none';" style="background:#0071e3;color:white;border:none;padding:8px 16px;border-radius:8px;font-weight:bold;margin-top:10px;cursor:pointer;position:relative;z-index:5001;">
-        <span id="reportCounterCloseBtn">关闭</span>
-      </button>
+        <button onclick="document.getElementById('reportCounterPopup').style.display='none';document.body.style.pointerEvents='auto';" class="popup-btn" style="background:#0071e3;color:white;border:none;padding:12px 20px;border-radius:8px;font-weight:bold;margin-top:15px;width:100%;">
+            <span id="reportCounterCloseBtn">关闭</span>
+        </button>
     </div>
     
     <!-- 报告表单 -->
@@ -1507,21 +1536,21 @@
     </div>
 
     <!-- 快速描述弹窗 -->
-    <div class="quick-desc-popup" id="quickAddForm" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background-color:rgba(50, 50, 54, 0.95); border-radius:16px; padding:20px; width:90%; max-width:400px; box-shadow:0 10px 30px rgba(0, 0, 0, 0.4); z-index:1800;">
-        <div class="form-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h2 class="form-title" id="quickFormTitle" style="font-size:20px;color:#fff;margin:0;">快速添加描述</h2>
-            <button class="form-close" id="quickAddClose" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;margin:0;padding:0;">&times;</button>
+    <div class="popup-base" id="quickAddForm" style="display:none; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; max-width:400px; padding:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h2 id="quickFormTitle" style="font-size:20px;color:#fff;margin:0;">快速添加描述</h2>
+            <button id="quickAddClose" class="popup-btn" style="background:none;border:none;color:#fff;font-size:24px;margin:0;padding:0;">&times;</button>
         </div>
         
-        <div class="form-group">
-            <label class="form-label" id="quickDescLabel" style="display:block;margin-bottom:8px;color:#fff;">描述</label>
-            <textarea class="form-textarea" id="quickDescInput" placeholder="请简单描述您看到的情况..." style="width:100%;padding:12px;border-radius:8px;border:1px solid #444;background-color:#2c2c2e;color:#fff;font-size:16px;min-height:100px;resize:vertical;"></textarea>
+        <div>
+            <label id="quickDescLabel" style="display:block;margin-bottom:8px;color:#fff;">描述</label>
+            <textarea id="quickDescInput" placeholder="请简单描述您看到的情况..." style="width:100%;padding:12px;border-radius:8px;border:1px solid #444;background-color:#2c2c2e;color:#fff;font-size:16px;min-height:100px;resize:vertical;"></textarea>
             <p style="font-size:12px;color:#999;margin-top:5px;">提示: 将使用地图中心作为位置</p>
         </div>
         
         <div style="display:flex;gap:10px;margin-top:15px;">
-            <button class="submit-btn" id="submitQuickAdd" style="flex:1;background-color:#0071e3;color:white;border:none;padding:14px;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;">确定</button>
-            <button class="cancel-btn" id="cancelQuickAdd" style="flex:1;background-color:#3a3a3c;color:white;border:none;padding:14px;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;">取消</button>
+            <button id="submitQuickAdd" class="popup-btn" style="flex:1;background-color:#0071e3;color:white;border:none;padding:14px;border-radius:8px;font-size:16px;font-weight:bold;">确定</button>
+            <button id="cancelQuickAdd" class="popup-btn" style="flex:1;background-color:#3a3a3c;color:white;border:none;padding:14px;border-radius:8px;font-size:16px;font-weight:bold;">取消</button>
         </div>
     </div>
 </body>

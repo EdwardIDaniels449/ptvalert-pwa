@@ -661,18 +661,59 @@ window.selectMapLocation = function(latLng) {
     
     // Close report form
     function closeReportForm() {
-        const reportForm = document.getElementById('reportForm');
-        if (reportForm) {
-            reportForm.style.display = 'none';
+        try {
+            console.log('[UI Controller] 关闭报告表单');
+            const reportForm = document.getElementById('reportForm');
+            if (reportForm) {
+                // 首先把表单滑出屏幕
+                reportForm.style.transform = 'translateY(100%)';
+                
+                // 等待动画完成后隐藏表单
+                setTimeout(function() {
+                    reportForm.style.display = 'none';
+                    // 重置z-index为默认值，避免影响其他元素
+                    reportForm.style.zIndex = '2000';
+                }, 300);
+            }
             
-            // Remove selection marker if it exists
+            // 移除选择标记
             if (window.selectionMarker) {
                 window.selectionMarker.setMap(null);
                 window.selectionMarker = null;
             }
             
-            // Cancel location selection mode if active
+            // 移除选择圆圈
+            if (window.selectionCircle) {
+                window.selectionCircle.setMap(null);
+                window.selectionCircle = null;
+            }
+            
+            // 重置表单字段
+            const descInput = document.getElementById('descriptionInput');
+            if (descInput) {
+                descInput.value = '';
+            }
+            
+            const previewImg = document.getElementById('previewImg');
+            if (previewImg) {
+                previewImg.style.display = 'none';
+                previewImg.src = '';
+            }
+            
+            const imagePlaceholder = document.getElementById('imagePlaceholder');
+            if (imagePlaceholder) {
+                imagePlaceholder.style.display = 'block';
+            }
+            
+            // 取消位置选择模式
             cancelLocationSelection();
+            
+            // 重置选择位置
+            window.selectedLocation = null;
+            
+            console.log('[UI Controller] 报告表单已关闭并重置');
+        } catch (error) {
+            console.error('[UI Controller] 关闭报告表单时出错:', error);
         }
     }
     
@@ -992,43 +1033,122 @@ window.selectMapLocation = function(latLng) {
 
     // Submit report data
     function submitReportData() {
-        console.log('[UI Controller] 确认键被点击，准备提交报告数据');
-        
-        const description = document.getElementById('descriptionInput').value;
-        
-        if (!description) {
-            alert(window.currentLang === 'zh' ? '请输入描述' : 'Please enter a description');
-            return;
-        }
-        
-        if (!window.selectedLocation) {
-            alert(window.currentLang === 'zh' ? '请选择位置' : 'Please select a location');
-            return;
-        }
-        
-        // 关闭任何可能已经打开的弹窗
-        hideAllPopups();
-        
-        // Get the image if available
-        const previewImg = document.getElementById('previewImg');
-        const imageData = previewImg && previewImg.style.display !== 'none' ? previewImg.src : null;
-        
-        // Create report data
-        const reportData = {
-            description: description,
-            location: window.selectedLocation,
-            image: imageData,
-            timestamp: new Date().toISOString(),
-            user: 'anonymous-user' // 使用固定的匿名用户ID
-        };
-        
-        console.log('[UI Controller] 提交报告:', reportData);
-        
-        // 立即添加标记到地图，确保无论Firebase是否成功都能添加标记
         try {
-            // 先添加标记到地图
+            console.log('[UI Controller] 确认键被点击，准备提交报告数据');
+            
+            const description = document.getElementById('descriptionInput').value;
+            
+            if (!description) {
+                alert(window.currentLang === 'zh' ? '请输入描述' : 'Please enter a description');
+                return;
+            }
+            
+            if (!window.selectedLocation) {
+                alert(window.currentLang === 'zh' ? '请选择位置' : 'Please select a location');
+                return;
+            }
+            
+            // 关闭任何可能已经打开的弹窗
+            hideAllPopups();
+            
+            // Get the image if available
+            const previewImg = document.getElementById('previewImg');
+            const imageData = previewImg && previewImg.style.display !== 'none' ? previewImg.src : null;
+            
+            // Create report data
+            const reportData = {
+                description: description,
+                location: window.selectedLocation,
+                image: imageData,
+                timestamp: new Date().toISOString(),
+                user: 'anonymous-user' // 使用固定的匿名用户ID
+            };
+            
+            console.log('[UI Controller] 提交报告:', reportData);
+            
+            // 先关闭表单，避免表单覆盖后续操作
+            closeReportForm();
+            
+            // 先添加标记到地图，确保无论Firebase是否成功都能添加标记
             console.log('[UI Controller] 添加标记到地图', window.selectedLocation, description);
-            addReportMarker(window.selectedLocation, description);
+            if (window.map && typeof google === 'object' && google.maps) {
+                // 直接使用这里的逻辑添加标记，不通过其他函数调用
+                try {
+                    // 确保markers数组已初始化
+                    if (!window.markers) {
+                        window.markers = [];
+                    }
+                    
+                    // 创建自定义标记
+                    const marker = new google.maps.Marker({
+                        position: window.selectedLocation,
+                        map: window.map,
+                        animation: google.maps.Animation.DROP,
+                        title: description,
+                        label: {
+                            text: '🐶',
+                            fontSize: '24px',
+                            className: 'marker-label'
+                        },
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 0,
+                        },
+                        optimized: false
+                    });
+                    
+                    // 保存标记
+                    window.markers.push(marker);
+                    
+                    // 为标记添加点击事件
+                    marker.addListener('click', function() {
+                        if (typeof window.showReportDetails === 'function') {
+                            const reportData = {
+                                id: 'marker-' + Date.now(),
+                                location: window.selectedLocation,
+                                description: description,
+                                time: new Date().toISOString(),
+                                image: '',
+                                emoji: '🐶'
+                            };
+                            window.showReportDetails(reportData);
+                        } else {
+                            // 关闭任何已打开的信息窗口
+                            if (window.openedInfoWindow) {
+                                window.openedInfoWindow.close();
+                            }
+                            
+                            // 创建信息窗口
+                            const content = '<div style="padding: 10px; max-width: 300px;">' +
+                                '<div style="font-size: 14px; margin-bottom: 10px;">' + description + '</div>' +
+                                '<div style="font-size: 12px; color: #666; margin-top: 5px;">' + 
+                                    new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString() + 
+                                '</div>' +
+                            '</div>';
+                            
+                            const infoWindow = new google.maps.InfoWindow({
+                                content: content,
+                                maxWidth: 300
+                            });
+                            
+                            infoWindow.open(window.map, marker);
+                            window.openedInfoWindow = infoWindow;
+                        }
+                    });
+                    
+                    console.log('[UI Controller] 标记已成功添加到地图');
+                } catch (mapError) {
+                    console.error('[UI Controller] 添加标记到地图时出错:', mapError);
+                }
+            } else {
+                // 如果地图API不可用，则将标记添加到待处理队列
+                console.log('[UI Controller] 地图API未加载，添加到待处理队列');
+                window.pendingMarkers = window.pendingMarkers || [];
+                window.pendingMarkers.push({
+                    location: window.selectedLocation,
+                    description: description
+                });
+            }
             
             // 保存标记到localStorage
             saveMarkersToStorage();
@@ -1036,42 +1156,56 @@ window.selectMapLocation = function(latLng) {
             // 更新报告计数
             updateReportCounter();
             
-            // 关闭表单
-            closeReportForm();
-            
-            // 显示成功消息
-            const reportCounterPopup = document.getElementById('reportCounterPopup');
-            if (reportCounterPopup) {
-                reportCounterPopup.style.display = 'block';
-                // 确保弹窗在最上层
-                reportCounterPopup.style.zIndex = '2000';
-            }
-            
-            // 然后再尝试保存到Firebase（如果可用）
-            if (typeof firebase !== 'undefined' && firebase.database) {
-                try {
-                    // 异步保存到Firebase
-                    const reportRef = firebase.database().ref('reports').push();
-                    reportRef.set(reportData)
-                        .then(function() {
-                            console.log('[UI Controller] 报告已成功保存到Firebase');
-                        })
-                        .catch(function(error) {
-                            console.error('[UI Controller] 保存到Firebase失败，但标记已添加到地图:', error);
-                            saveReportToLocalStorage(reportData); // 备份到本地存储
-                        });
-                } catch (error) {
-                    console.error('[UI Controller] Firebase操作失败，但标记已添加到地图:', error);
-                    saveReportToLocalStorage(reportData); // 备份到本地存储
+            // 显示成功消息 - 确保这是最后执行的步骤
+            setTimeout(function() {
+                const reportCounterPopup = document.getElementById('reportCounterPopup');
+                if (reportCounterPopup) {
+                    // 设置为最高层级
+                    reportCounterPopup.style.zIndex = '10000';
+                    reportCounterPopup.style.display = 'block';
+                    // 避免可能的点击穿透
+                    document.body.style.pointerEvents = 'none';
+                    reportCounterPopup.style.pointerEvents = 'auto';
+                    
+                    // 为弹窗中的按钮设置正确的z-index
+                    const closeBtn = reportCounterPopup.querySelector('button');
+                    if (closeBtn) {
+                        closeBtn.style.zIndex = '10001';
+                        closeBtn.style.position = 'relative';
+                    }
+                    
+                    // 延时自动关闭弹窗
+                    setTimeout(function() {
+                        reportCounterPopup.style.display = 'none';
+                        document.body.style.pointerEvents = 'auto';
+                    }, 3000);
                 }
-            } else {
-                // Firebase不可用，使用localStorage
-                saveReportToLocalStorage(reportData);
-                console.log('[UI Controller] 报告已保存到localStorage');
-            }
+                
+                // 尝试保存到Firebase（如果可用）
+                if (typeof firebase !== 'undefined' && firebase.database) {
+                    try {
+                        const reportRef = firebase.database().ref('reports').push();
+                        reportRef.set(reportData)
+                            .then(function() {
+                                console.log('[UI Controller] 报告已成功保存到Firebase');
+                            })
+                            .catch(function(error) {
+                                console.error('[UI Controller] 保存到Firebase失败，但标记已添加到地图:', error);
+                                saveReportToLocalStorage(reportData); // 备份到本地存储
+                            });
+                    } catch (error) {
+                        console.error('[UI Controller] Firebase操作失败，但标记已添加到地图:', error);
+                        saveReportToLocalStorage(reportData); // 备份到本地存储
+                    }
+                } else {
+                    // Firebase不可用，使用localStorage
+                    saveReportToLocalStorage(reportData);
+                    console.log('[UI Controller] 报告已保存到localStorage');
+                }
+            }, 100);  // 给前面操作一些时间来完成
         } catch (error) {
-            console.error('[UI Controller] 添加标记时出错:', error);
-            alert(window.currentLang === 'zh' ? '添加标记失败，请重试' : 'Failed to add marker, please try again');
+            console.error('[UI Controller] 提交报告时出错:', error);
+            alert(window.currentLang === 'zh' ? '操作失败，请重试' : 'Operation failed, please try again');
         }
     }
     
