@@ -208,11 +208,16 @@ window.googleMapsLoadedCallback = function() {
     
     // 确保基本初始化完成
     function ensureBasicInitialization() {
-        // 检查地图是否已初始化
-        if (!window.mapsInitialized) {
-            console.log('[回调修复] 尝试加载应急地图模块');
-            
-            // 直接使用内联备用方案
+        try {
+            // 检查地图是否已初始化
+            if (!window.mapsInitialized) {
+                console.log('[回调修复] 尝试加载应急地图模块');
+                
+                // 直接使用内联备用方案
+                createInlineEmergencyFallback();
+            }
+        } catch (error) {
+            console.error('[回调修复] 确保基本初始化时出错:', error);
             createInlineEmergencyFallback();
         }
     }
@@ -221,111 +226,206 @@ window.googleMapsLoadedCallback = function() {
     function createInlineEmergencyFallback() {
         console.log('[回调修复] 创建内联应急备用方案');
         
-        // 创建基本的备用方案
-        window.google = window.google || {};
-        window.google.maps = window.google.maps || {};
-        
-        // 定义墨尔本中心坐标（如果尚未定义）
-        if (!window.MELBOURNE_CENTER) {
-            window.MELBOURNE_CENTER = {lat: -37.8136, lng: 144.9631};
-        }
-        
-        // 创建一个最小化的地图对象
-        window.map = {
-            getCenter: function() {
-                return {
-                    lat: function() { return window.MELBOURNE_CENTER.lat; },
-                    lng: function() { return window.MELBOURNE_CENTER.lng; }
+        try {
+            // 创建基本的备用方案
+            window.google = window.google || {};
+            window.google.maps = window.google.maps || {};
+            
+            // 定义墨尔本中心坐标（如果尚未定义）
+            if (!window.MELBOURNE_CENTER) {
+                window.MELBOURNE_CENTER = {lat: -37.8136, lng: 144.9631};
+            }
+            
+            // 创建一个最小化的地图对象
+            window.map = {
+                getCenter: function() {
+                    return {
+                        lat: function() { return window.MELBOURNE_CENTER.lat; },
+                        lng: function() { return window.MELBOURNE_CENTER.lng; }
+                    };
+                },
+                setCenter: function() { return this; },
+                addListener: function(event, callback) { 
+                    console.log('[回调修复] 添加地图事件监听器: ' + event);
+                    return { remove: function() {} }; 
+                },
+                getZoom: function() { return 13; },
+                setZoom: function() { return this; },
+                getBounds: function() {
+                    return {
+                        getNorthEast: function() { 
+                            return { 
+                                lat: function() { return window.MELBOURNE_CENTER.lat + 0.1; }, 
+                                lng: function() { return window.MELBOURNE_CENTER.lng + 0.1; } 
+                            }; 
+                        },
+                        getSouthWest: function() { 
+                            return { 
+                                lat: function() { return window.MELBOURNE_CENTER.lat - 0.1; }, 
+                                lng: function() { return window.MELBOURNE_CENTER.lng - 0.1; } 
+                            }; 
+                        }
+                    };
+                },
+                setOptions: function() { return this; }
+            };
+            
+            // 定义必要的地图API类和常量
+            if (!window.google.maps.Marker) {
+                window.google.maps.Marker = function(options) {
+                    return {
+                        setMap: function() { return this; },
+                        getPosition: function() {
+                            return {
+                                lat: function() { return options && options.position ? options.position.lat : window.MELBOURNE_CENTER.lat; },
+                                lng: function() { return options && options.position ? options.position.lng : window.MELBOURNE_CENTER.lng; }
+                            };
+                        },
+                        addListener: function() { return { remove: function() {} }; },
+                        getTitle: function() { return options && options.title ? options.title : ''; }
+                    };
                 };
-            },
-            setCenter: function() { return this; },
-            addListener: function() { return { remove: function() {} }; },
-            getZoom: function() { return 13; },
-            setZoom: function() { return this; }
-        };
-        
-        // 标记初始化完成
-        window.mapsInitialized = true;
-        
-        // 显示离线模式提示
-        const noticeDiv = document.createElement('div');
-        noticeDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;background-color:rgba(0,0,0,0.7);color:white;text-align:center;padding:10px;z-index:9999;';
-        noticeDiv.textContent = '地图加载失败，应用运行在受限模式';
-        document.body.appendChild(noticeDiv);
-        
-        // 10秒后隐藏提示
-        setTimeout(function() {
-            noticeDiv.style.opacity = '0';
-            noticeDiv.style.transition = 'opacity 1s ease';
+            }
+            
+            if (!window.google.maps.InfoWindow) {
+                window.google.maps.InfoWindow = function() {
+                    return {
+                        open: function() { return this; },
+                        close: function() { return this; }
+                    };
+                };
+            }
+            
+            if (!window.google.maps.event) {
+                window.google.maps.event = {
+                    addListener: function() { return { remove: function() {} }; },
+                    removeListener: function() {}
+                };
+            }
+            
+            if (!window.google.maps.MapTypeId) {
+                window.google.maps.MapTypeId = {
+                    ROADMAP: 'roadmap',
+                    SATELLITE: 'satellite',
+                    HYBRID: 'hybrid',
+                    TERRAIN: 'terrain'
+                };
+            }
+            
+            if (!window.google.maps.Animation) {
+                window.google.maps.Animation = {
+                    DROP: 'DROP',
+                    BOUNCE: 'BOUNCE'
+                };
+            }
+            
+            if (!window.google.maps.ControlPosition) {
+                window.google.maps.ControlPosition = {
+                    TOP_CENTER: 'top-center',
+                    RIGHT_BOTTOM: 'right-bottom'
+                };
+            }
+            
+            if (!window.google.maps.SymbolPath) {
+                window.google.maps.SymbolPath = {
+                    CIRCLE: 0
+                };
+            }
+            
+            // 标记初始化完成
+            window.mapsInitialized = true;
+            
+            // 显示离线模式提示
+            const noticeDiv = document.createElement('div');
+            noticeDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;background-color:rgba(0,0,0,0.7);color:white;text-align:center;padding:10px;z-index:9999;';
+            noticeDiv.textContent = '地图加载失败，应用运行在受限模式';
+            document.body.appendChild(noticeDiv);
+            
+            // 10秒后隐藏提示
             setTimeout(function() {
-                noticeDiv.remove();
-            }, 1000);
-        }, 10000);
-        
-        // 调用回调函数
-        if (window.mapReadyCallbacks && window.mapReadyCallbacks.length) {
-            console.log('[回调修复] 执行地图就绪回调函数');
-            window.mapReadyCallbacks.forEach(function(callback) {
-                try {
-                    callback();
-                } catch (error) {
-                    console.error('[回调修复] 执行回调函数时出错:', error);
-                }
-            });
+                noticeDiv.style.opacity = '0';
+                noticeDiv.style.transition = 'opacity 1s ease';
+                setTimeout(function() {
+                    if (noticeDiv.parentNode) {
+                        noticeDiv.parentNode.removeChild(noticeDiv);
+                    }
+                }, 1000);
+            }, 10000);
+            
+            // 如果有回调数组，执行它们
+            if (window.mapReadyCallbacks && window.mapReadyCallbacks.length) {
+                console.log('[回调修复] 执行地图就绪回调函数');
+                window.mapReadyCallbacks.forEach(function(callback) {
+                    try {
+                        callback();
+                    } catch (error) {
+                        console.error('[回调修复] 执行回调函数时出错:', error);
+                    }
+                });
+            }
+            
+            // 触发地图就绪事件
+            const mapReadyEvent = new CustomEvent('map_ready');
+            document.dispatchEvent(mapReadyEvent);
+            
+            console.log('[回调修复] 内联应急备用方案设置完成');
+        } catch (error) {
+            console.error('[回调修复] 创建内联应急备用方案时出错:', error);
+            // 最后的备用方案
+            window.map = window.map || {};
+            window.mapsInitialized = true;
         }
-        
-        console.log('[回调修复] 内联应急备用方案设置完成');
     }
     
-    // 定义 handleMapInitError 函数，避免引用错误
-    window.handleMapInitError = function() {
-        // 如果已经有离线模式处理，不再显示额外的错误
-        if (window.mapsInitialized || document.getElementById('offlineMapNotice')) {
-            return;
-        }
-        
-        // 创建一个简单的地图替代元素
-        const mapElement = document.getElementById('map');
-        if (mapElement) {
-            mapElement.style.backgroundImage = 'linear-gradient(to bottom, #cfd9df 0%, #e2ebf0 100%)';
-            mapElement.style.backgroundSize = 'cover';
-        }
-        
-        // 创建一个模拟的地图对象
-        window.map = window.map || {
-            getCenter: function() {
-                return {
-                    lat: function() { return window.MELBOURNE_CENTER.lat; },
-                    lng: function() { return window.MELBOURNE_CENTER.lng; }
-                };
-            },
-            setCenter: function() { return this; },
-            addListener: function() { return { remove: function() {} }; }
-        };
-        
-        // 提示用户
-        const notice = document.createElement('div');
-        notice.id = 'offlineMapNotice';
-        notice.style.cssText = 'position:fixed;top:50px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:10px 20px;border-radius:20px;z-index:1000;font-size:14px;text-align:center;';
-        notice.textContent = '地图加载受限，但您仍可添加报告';
-        document.body.appendChild(notice);
-        
-        // 5秒后移除通知
-        setTimeout(function() {
-            if (notice.parentNode) {
-                notice.style.opacity = '0';
-                notice.style.transition = 'opacity 0.5s';
-                setTimeout(function() {
-                    if (notice.parentNode) {
-                        notice.parentNode.removeChild(notice);
-                    }
-                }, 500);
-            }
-        }, 5000);
-        
-        // 标记地图已初始化（避免重复显示错误）
-        window.mapsInitialized = true;
+    console.log('[回调修复] Google Maps回调修复模块加载完成');
+})();
+
+// 定义 handleMapInitError 函数，避免引用错误
+window.handleMapInitError = function() {
+    // 如果已经有离线模式处理，不再显示额外的错误
+    if (window.mapsInitialized || document.getElementById('offlineMapNotice')) {
+        return;
+    }
+    
+    // 创建一个简单的地图替代元素
+    const mapElement = document.getElementById('map');
+    if (mapElement) {
+        mapElement.style.backgroundImage = 'linear-gradient(to bottom, #cfd9df 0%, #e2ebf0 100%)';
+        mapElement.style.backgroundSize = 'cover';
+    }
+    
+    // 创建一个模拟的地图对象
+    window.map = window.map || {
+        getCenter: function() {
+            return {
+                lat: function() { return window.MELBOURNE_CENTER.lat; },
+                lng: function() { return window.MELBOURNE_CENTER.lng; }
+            };
+        },
+        setCenter: function() { return this; },
+        addListener: function() { return { remove: function() {} }; }
     };
     
-    console.log('[回调修复] Google Maps回调修复模块加载完成');
-})(); 
+    // 提示用户
+    const notice = document.createElement('div');
+    notice.id = 'offlineMapNotice';
+    notice.style.cssText = 'position:fixed;top:50px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:10px 20px;border-radius:20px;z-index:1000;font-size:14px;text-align:center;';
+    notice.textContent = '地图加载受限，但您仍可添加报告';
+    document.body.appendChild(notice);
+    
+    // 5秒后移除通知
+    setTimeout(function() {
+        if (notice.parentNode) {
+            notice.style.opacity = '0';
+            notice.style.transition = 'opacity 0.5s';
+            setTimeout(function() {
+                if (notice.parentNode) {
+                    notice.parentNode.removeChild(notice);
+                }
+            }, 500);
+        }
+    }, 5000);
+    
+    // 标记地图已初始化（避免重复显示错误）
+    window.mapsInitialized = true;
+}; 

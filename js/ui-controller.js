@@ -3,7 +3,7 @@
  * Handles all UI button interactions and events
  */
 
-// 设备检测
+// 设备检测 - 使用全局isMobile变量
 // const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 // console.log('[UI Controller] 设备类型:', isMobile ? '移动设备' : '桌面设备');
 
