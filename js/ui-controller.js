@@ -170,6 +170,23 @@ window.startLocationSelection = function() {
     document.body.style.cursor = 'crosshair';
     
     console.log('[UI Controller] 进入选点模式');
+    
+    // 确保地图监听器正常工作
+    if (window.map) {
+        // 添加临时点击监听器
+        if (!window.mapClickListener && typeof google !== 'undefined' && google.maps) {
+            window.mapClickListener = window.map.addListener('click', function(event) {
+                if (window.isSelectingLocation) {
+                    const latLng = event.latLng;
+                    console.log('[UI Controller] 地图点击事件触发，位置:', latLng.lat(), latLng.lng());
+                    selectMapLocation(latLng);
+                }
+            });
+            console.log('[UI Controller] 已添加地图点击监听器');
+        }
+    } else {
+        console.error('[UI Controller] 地图未初始化，无法添加点击监听器');
+    }
 };
 
 (function() {
@@ -451,6 +468,7 @@ window.startLocationSelection = function() {
 
     // Handle location selection on map
     function selectMapLocation(latLng) {
+        console.log('[UI Controller] 选择位置:', latLng.lat(), latLng.lng());
         window.selectedLocation = {
             lat: latLng.lat(),
             lng: latLng.lng()
@@ -934,11 +952,11 @@ window.startLocationSelection = function() {
         
         if (window.map) {
             try {
-                // 创建自定义标记 - 使用狗的Emoji (🐕)
+                // 创建自定义标记 - 使用狗的Emoji (🐶)
                 const dogIcon = {
                     url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
                         `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
-                            <text x="20" y="28" font-size="30" text-anchor="middle">🐕</text>
+                            <text x="20" y="28" font-size="30" text-anchor="middle">🐶</text>
                         </svg>`
                     )}`,
                     scaledSize: new google.maps.Size(40, 40),
@@ -977,36 +995,44 @@ window.startLocationSelection = function() {
                     console.warn('[UI Controller] 无法获取报告详细信息:', e);
                 }
                 
-                // 创建增强的信息窗口内容
-                let infoContent = `<div style="max-width:300px; padding:10px;">
-                    <h3 style="margin-top:0; color:#0071e3; font-size:16px;">报告详情</h3>
-                    <p style="margin:10px 0; font-size:14px;">${description}</p>`;
+                // 创建直接显示的信息窗口内容 - 简化版本，没有蓝色标题栏
+                let infoContent = `<div style="max-width:300px; padding:10px; background-color:white; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.2);">
+                    <p style="margin:0 0 10px 0; font-size:14px; color:#333;">${description}</p>`;
                 
                 // 如果有图片，添加到信息窗口
                 if (reportData && reportData.image) {
-                    infoContent += `<div style="margin-top:10px;">
-                        <img src="${reportData.image}" style="max-width:100%; max-height:200px; border-radius:8px;">
+                    infoContent += `<div style="margin-top:5px;">
+                        <img src="${reportData.image}" style="max-width:100%; max-height:200px; border-radius:4px; display:block;">
                     </div>`;
                 }
                 
-                // 添加时间戳（如果有）
+                // 添加时间戳（如果有）但使用更简洁的格式
                 if (reportData && reportData.timestamp) {
                     const reportDate = new Date(reportData.timestamp);
                     const formattedDate = reportDate.toLocaleString();
-                    infoContent += `<div style="margin-top:10px; font-size:12px; color:#666;">
-                        提交时间: ${formattedDate}
+                    infoContent += `<div style="margin-top:5px; font-size:11px; color:#999; text-align:right;">
+                        ${formattedDate}
                     </div>`;
                 }
                 
                 infoContent += `</div>`;
                 
-                // Add info window with enhanced content
+                // 使用自定义信息窗口
                 const infoWindow = new google.maps.InfoWindow({
-                    content: infoContent
+                    content: infoContent,
+                    disableAutoPan: false,
+                    pixelOffset: new google.maps.Size(0, -5)
                 });
                 
                 marker.addListener('click', function() {
+                    // 关闭所有已打开的信息窗口
+                    if (window.openedInfoWindow) {
+                        window.openedInfoWindow.close();
+                    }
+                    
+                    // 打开新的信息窗口
                     infoWindow.open(window.map, marker);
+                    window.openedInfoWindow = infoWindow;
                 });
             } catch (error) {
                 console.error('[UI Controller] 添加标记失败:', error);
@@ -1201,4 +1227,10 @@ function hideAllPopups() {
     // 隐藏报告表单
     const reportForm = document.getElementById('reportForm');
     if (reportForm) reportForm.style.display = 'none';
+    
+    // 隐藏右侧的蓝色弹窗
+    const bluePopups = document.querySelectorAll('.report-counter-popup');
+    bluePopups.forEach(popup => {
+        popup.style.display = 'none';
+    });
 } 

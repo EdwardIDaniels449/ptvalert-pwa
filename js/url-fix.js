@@ -301,6 +301,9 @@
     
     // 初始化
     async function initialize() {
+        // 检查是否在GitHub Pages环境中
+        const isGitHubPages = window.location.hostname.includes('github.io');
+        
         // 立即执行GitHub Pages路径修复
         fixServiceWorkerPath();
         
@@ -309,7 +312,14 @@
             console.log('页面已完全加载，开始URL修复');
             await clearServiceWorkerAndCache();
             fixApiBaseUrl();
-            await checkApiServer();
+            
+            // 只在非GitHub Pages环境下检查API服务器
+            if (!isGitHubPages) {
+                await checkApiServer();
+            } else {
+                console.log('检测到GitHub Pages环境，跳过API服务器检查');
+            }
+            
             setupErrorListener();
         } else {
             console.log('等待页面加载完成...');
@@ -317,7 +327,14 @@
                 console.log('页面已加载，开始URL修复');
                 await clearServiceWorkerAndCache();
                 fixApiBaseUrl();
-                await checkApiServer();
+                
+                // 只在非GitHub Pages环境下检查API服务器
+                if (!isGitHubPages) {
+                    await checkApiServer();
+                } else {
+                    console.log('检测到GitHub Pages环境，跳过API服务器检查');
+                }
+                
                 setupErrorListener();
             });
         }

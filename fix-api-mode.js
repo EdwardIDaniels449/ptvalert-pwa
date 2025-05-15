@@ -202,8 +202,15 @@
         console.log('[全面修复] DOMContentLoaded事件触发，再次应用修复');
         setupPropertyProtection();
         
-        // 测试API连接
-        setTimeout(testApiConnection, 1000);
+        // 检查是否在GitHub Pages环境中
+        const isGitHubPages = window.location.hostname.includes('github.io');
+        
+        // 只在非GitHub Pages环境下测试API连接
+        if (!isGitHubPages) {
+            setTimeout(testApiConnection, 1000);
+        } else {
+            console.log('[全面修复] 检测到GitHub Pages环境，跳过API连接测试');
+        }
     });
     
     // 测试API连接
