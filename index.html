@@ -1529,7 +1529,7 @@
         </div>
         
         <div style="display:flex;gap:10px;margin-top:15px;">
-            <button class="submit-btn" id="submitReport" style="flex:1;background-color:#0071e3;color:white;border:none;padding:14px;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;">确定</button>
+            <button class="submit-btn" id="submitReport" onclick="handleEmergencySubmit(event)" style="flex:1;background-color:#0071e3;color:white;border:none;padding:14px;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;position:relative;z-index:10000;">确定</button>
             <button class="reset-location-btn" id="resetLocationBtn" style="flex:1;background-color:#ffc107;color:#000;border:none;padding:14px;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;">重新选点</button>
             <button class="cancel-btn" id="cancelReport" style="flex:1;background-color:#3a3a3c;color:white;border:none;padding:14px;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;">取消</button>
         </div>
@@ -1553,6 +1553,150 @@
             <button id="cancelQuickAdd" class="popup-btn" style="flex:1;background-color:#3a3a3c;color:white;border:none;padding:14px;border-radius:8px;font-size:16px;font-weight:bold;">取消</button>
         </div>
     </div>
+
+    <!-- 添加紧急提交处理脚本 -->
+    <script>
+    function handleEmergencySubmit(event) {
+        event.preventDefault();
+        console.log('紧急提交按钮被点击');
+        
+        try {
+            const description = document.getElementById('descriptionInput').value;
+            
+            if (!description) {
+                alert('请输入描述');
+                return;
+            }
+            
+            if (!window.selectedLocation) {
+                alert('请选择位置');
+                return;
+            }
+            
+            // 关闭表单
+            const reportForm = document.getElementById('reportForm');
+            if (reportForm) {
+                reportForm.style.transform = 'translateY(100%)';
+                setTimeout(function() {
+                    reportForm.style.display = 'none';
+                }, 300);
+            }
+            
+            // 获取图片数据
+            const previewImg = document.getElementById('previewImg');
+            const imageData = previewImg && previewImg.style.display !== 'none' ? previewImg.src : null;
+            
+            // 创建报告数据
+            const reportData = {
+                description: description,
+                location: window.selectedLocation,
+                image: imageData,
+                timestamp: new Date().toISOString(),
+                user: 'anonymous-user'
+            };
+            
+            // 直接添加标记到地图
+            if (window.map && typeof google === 'object' && google.maps) {
+                // 确保markers数组已初始化
+                if (!window.markers) {
+                    window.markers = [];
+                }
+                
+                // 创建标记
+                const marker = new google.maps.Marker({
+                    position: window.selectedLocation,
+                    map: window.map,
+                    animation: google.maps.Animation.DROP,
+                    title: description,
+                    label: {
+                        text: '🐶',
+                        fontSize: '24px'
+                    },
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 0
+                    },
+                    optimized: false
+                });
+                
+                // 保存标记
+                window.markers.push(marker);
+                
+                // 为标记添加点击事件
+                marker.addListener('click', function() {
+                    // 关闭任何已打开的信息窗口
+                    if (window.openedInfoWindow) {
+                        window.openedInfoWindow.close();
+                    }
+                    
+                    // 创建信息窗口内容，包括描述和可能的图片
+                    let content = '<div style="padding:10px;max-width:300px;">';
+                    
+                    // 如果有图片，添加图片
+                    if (imageData) {
+                        content += `<div style="margin-bottom:10px;"><img src="${imageData}" style="max-width:100%;max-height:150px;border-radius:4px;"></div>`;
+                    }
+                    
+                    // 添加描述
+                    content += `<div style="font-size:14px;margin-bottom:10px;">${description}</div>`;
+                    
+                    // 添加时间戳
+                    const now = new Date();
+                    content += `<div style="font-size:12px;color:#666;">${now.toLocaleDateString()} ${now.toLocaleTimeString()}</div>`;
+                    
+                    content += '</div>';
+                    
+                    // 创建并打开信息窗口
+                    const infoWindow = new google.maps.InfoWindow({
+                        content: content,
+                        maxWidth: 300
+                    });
+                    
+                    infoWindow.open(window.map, marker);
+                    
+                    // 保存当前打开的信息窗口
+                    window.openedInfoWindow = infoWindow;
+                });
+                
+                // 尝试保存标记到localStorage
+                try {
+                    const markerData = window.markers.map(function(m) {
+                        return {
+                            lat: m.getPosition().lat(),
+                            lng: m.getPosition().lng(),
+                            description: m.getTitle() || '',
+                            image: m === marker ? imageData : null
+                        };
+                    });
+                    
+                    localStorage.setItem('savedMarkers', JSON.stringify(markerData));
+                    console.log('标记已保存到localStorage');
+                } catch (error) {
+                    console.error('保存标记到localStorage失败:', error);
+                }
+            } else {
+                console.error('地图未初始化，无法添加标记');
+            }
+            
+            // 显示成功弹窗
+            const reportCounterPopup = document.getElementById('reportCounterPopup');
+            if (reportCounterPopup) {
+                reportCounterPopup.style.zIndex = '15000';
+                reportCounterPopup.style.display = 'block';
+                
+                // 3秒后自动关闭
+                setTimeout(function() {
+                    reportCounterPopup.style.display = 'none';
+                }, 3000);
+            }
+            
+            console.log('紧急提交成功');
+        } catch (error) {
+            console.error('紧急提交失败:', error);
+            alert('提交失败，请重试');
+        }
+    }
+    </script>
 </body>
 
 <!-- 辅助脚本 -->
