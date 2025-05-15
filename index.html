@@ -126,14 +126,14 @@
                         // 性能优化: 限制事件监听器
                         if (isMobile) {
                             // 移动设备仅添加必要的事件监听
-                            window.map.addListener('click', function(event) {
-                                if (window.isSelectingLocation) {
-                                    const latLng = event.latLng;
-                                    if (window.UIController && typeof window.UIController.selectMapLocation === 'function') {
-                                        window.UIController.selectMapLocation(latLng);
-                                    }
-                                }
-                            });
+                window.map.addListener('click', function(event) {
+                    if (window.isSelectingLocation) {
+                        const latLng = event.latLng;
+                        if (window.UIController && typeof window.UIController.selectMapLocation === 'function') {
+                            window.UIController.selectMapLocation(latLng);
+                        }
+                    }
+                });
                         } else {
                             // 桌面设备可以添加更多监听器
                             window.map.addListener('click', function(event) {
@@ -149,8 +149,8 @@
                         console.log('地图初始化完成');
                         
                         // 设置地图初始化标志
-                        window.mapsInitialized = true;
-                        
+                window.mapsInitialized = true;
+                
                         // 触发地图就绪事件
                         const mapReadyEvent = new CustomEvent('map_ready');
                         document.dispatchEvent(mapReadyEvent);
@@ -975,22 +975,128 @@
         
         /* 移动设备适配 */
         @media (max-width: 768px) {
+            #map {
+                width: 100%;
+                height: 100vh;
+                position: fixed !important; /* 使用fixed而不是absolute以防止iOS滚动问题 */
+                top: 0;
+                left: 0;
+                overflow: hidden; /* 防止iOS上的滚动溢出 */
+                touch-action: pan-x pan-y; /* 优化触摸操作体验 */
+                -webkit-overflow-scrolling: touch; /* iOS上平滑滚动 */
+            }
+            
             .map-control {
                 width: 90%;
                 bottom: 20px;
+                position: fixed; /* 确保控制元素在移动设备上固定定位 */
+                z-index: 1200; /* 增加z-index确保显示在其他元素上方 */
             }
             
             .add-report-btn {
                 padding: 14px;
                 font-size: 18px;
+                border-radius: 10px; /* 略微减小圆角以适应较小的按钮 */
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); /* 增强阴影可见度 */
+                -webkit-tap-highlight-color: transparent; /* 移除iOS点击高亮 */
             }
             
             .report-counter-popup {
                 width: 95%;
                 padding: 15px;
             }
+            
+            .report-form {
+                max-height: 85vh; /* 限制在移动设备上的最大高度 */
+                overflow-y: auto; /* 允许滚动 */
+                padding: 20px 15px 30px 15px; /* 增加底部内边距，考虑安全区域 */
+                z-index: 1500; /* 确保显示在所有元素之上 */
+            }
+            
+            /* 考虑iOS安全区域的内边距 */
+            @supports(padding: max(0px)) {
+                .report-form {
+                    padding-bottom: max(30px, env(safe-area-inset-bottom) + 15px);
+                    padding-left: max(15px, env(safe-area-inset-left) + 15px);
+                    padding-right: max(15px, env(safe-area-inset-right) + 15px);
+                }
+            }
+            
+            /* 移动设备上用户菜单 */
+            .user-menu {
+                top: 15px; /* 移动至顶部 */
+                right: 15px;
+                padding: 8px 12px; /* 减小尺寸 */
+                font-size: 14px;
+                border-width: 1px;
+                z-index: 1200; /* 确保在移动设备上正确显示 */
+            }
+            
+            /* 处理侧边栏和弹出菜单 */
+            .sidebar, .popup-menu {
+                width: 85%; /* 移动端侧边栏宽度更宽 */
+                max-width: 320px;
+            }
+            
+            /* 改进表单元素点击区域 */
+            .form-textarea, .submit-btn, .close-btn, .add-report-btn {
+                font-size: 16px; /* iOS上最小字体，避免缩放 */
+            }
+            
+            .submit-btn, .close-btn {
+                padding: 12px; /* 增加按钮点击区域 */
+                min-height: 44px; /* iOS推荐的最小触摸目标高度 */
+            }
         }
-
+        
+        /* 针对特小屏幕优化 */
+        @media (max-width: 320px) {
+            .user-menu {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+            
+            .map-control {
+                width: 95%;
+                bottom: 10px;
+            }
+            
+            .form-title {
+                font-size: 18px;
+            }
+        }
+        
+        /* 额外的移动设备优化 */
+        @media (max-width: 480px) {
+            #map {
+                /* 移动端性能优化 */
+                transform: translateZ(0);
+                -webkit-transform: translateZ(0);
+                backface-visibility: hidden;
+                -webkit-backface-visibility: hidden;
+                will-change: transform; /* 通知浏览器该元素会经常变换 */
+            }
+            
+            .map-control {
+                width: 92%;
+                bottom: 16px;
+            }
+            
+            .add-report-btn {
+                padding: 12px;
+                font-size: 16px;
+            }
+        }
+        
+        /* 处理刘海屏/安全区域 */
+        @supports(padding: max(0px)) {
+            .map-control {
+                bottom: max(20px, env(safe-area-inset-bottom));
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+            }
+        }
+        
         /* 弹幕样式 */
         .danmaku-container {
             position: fixed;
@@ -1468,19 +1574,19 @@
                   window.UIController.selectMapLocation(latLng);
                 }
               }
-            });
-          } else {
+                            });
+                        } else {
             // 桌面设备可以添加更多监听器
             window.map.addListener('click', function(event) {
               if (window.isSelectingLocation) {
                 const latLng = event.latLng;
                 if (window.UIController && typeof window.UIController.selectMapLocation === 'function') {
                   window.UIController.selectMapLocation(latLng);
-                }
-              }
-            });
-          }
-          
+                        }
+                    }
+                });
+            }
+            
           console.log('地图初始化完成');
           
           // 设置地图初始化标志
@@ -1513,7 +1619,7 @@
                   setTimeout(() => {
                     addBatchMarkers(endIndex);
                   }, 300);
-                } else {
+            } else {
                   // 清空待处理标记
                   window.pendingMarkers = [];
                 }
