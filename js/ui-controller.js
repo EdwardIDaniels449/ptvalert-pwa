@@ -66,22 +66,44 @@ window.submitQuickDescription = function() {
         return;
     }
     
-    const description = quickDescInput.value;
+    // 获取描述并去除前后空格
+    const description = quickDescInput.value.trim();
     
     if (!description) {
+        // 高亮输入框使其更明显
+        quickDescInput.style.borderColor = 'red';
+        quickDescInput.focus();
         alert(window.currentLang === 'zh' ? '请输入描述' : 'Please enter a description');
+        
+        // 3秒后恢复正常边框颜色
+        setTimeout(function() {
+            quickDescInput.style.borderColor = '';
+        }, 3000);
         return;
     }
+    
+    // 恢复正常边框颜色
+    quickDescInput.style.borderColor = '';
     
     // 使用当前地图中心作为位置
     let location = null;
     
     if (window.map && typeof window.map.getCenter === 'function') {
-        const center = window.map.getCenter();
-        location = {
-            lat: center.lat(),
-            lng: center.lng()
-        };
+        try {
+            const center = window.map.getCenter();
+            if (center && typeof center.lat === 'function' && typeof center.lng === 'function') {
+                location = {
+                    lat: center.lat(),
+                    lng: center.lng()
+                };
+            } else {
+                console.warn('[UI Controller] 无法获取地图中心位置，使用默认位置');
+                location = window.MELBOURNE_CENTER || { lat: -37.8136, lng: 144.9631 };
+            }
+        } catch (error) {
+            console.error('[UI Controller] 获取地图中心位置时出错:', error);
+            location = window.MELBOURNE_CENTER || { lat: -37.8136, lng: 144.9631 };
+        }
     } else {
         // 如果地图还未加载，使用默认位置（墨尔本中心）
         location = window.MELBOURNE_CENTER || { lat: -37.8136, lng: 144.9631 };
@@ -813,16 +835,31 @@ window.selectMapLocation = function(latLng) {
         }
         
         try {
-            const markerData = window.markers.map(function(marker) {
-                return {
-                    lat: marker.getPosition().lat(),
-                    lng: marker.getPosition().lng(),
-                    description: marker.getTitle() || ''
-                };
-            });
+            const markerData = window.markers.filter(function(marker) {
+                // 过滤掉无效的标记
+                return marker && marker.getPosition && typeof marker.getPosition === 'function';
+            }).map(function(marker) {
+                try {
+                    const position = marker.getPosition();
+                    // 确保位置有效
+                    if (!position || typeof position.lat !== 'function' || typeof position.lng !== 'function') {
+                        console.warn('[UI Controller] 跳过无效位置的标记');
+                        return null;
+                    }
+                    
+                    return {
+                        lat: position.lat(),
+                        lng: position.lng(),
+                        description: marker.getTitle() || ''
+                    };
+                } catch (markerError) {
+                    console.warn('[UI Controller] 处理标记时出错，跳过此标记:', markerError);
+                    return null;
+                }
+            }).filter(Boolean); // 过滤掉null值
             
             localStorage.setItem('savedMarkers', JSON.stringify(markerData));
-            console.log('[UI Controller] Markers saved to localStorage');
+            console.log('[UI Controller] Markers saved to localStorage:', markerData.length);
         } catch (error) {
             console.error('[UI Controller] Error saving markers to localStorage:', error);
         }
@@ -1040,12 +1077,32 @@ window.selectMapLocation = function(latLng) {
         try {
             console.log('[UI Controller] 确认键被点击，准备提交报告数据');
             
-            const description = document.getElementById('descriptionInput').value;
-            
-            if (!description) {
-                alert(window.currentLang === 'zh' ? '请输入描述' : 'Please enter a description');
+            const descriptionInput = document.getElementById('descriptionInput');
+            if (!descriptionInput) {
+                console.error('[UI Controller] 找不到描述输入元素');
+                alert(window.currentLang === 'zh' ? '系统错误，请刷新页面重试' : 'System error, please refresh and try again');
                 return;
             }
+            
+            // 获取描述并去除前后空格
+            const description = descriptionInput.value.trim();
+            
+            // 检查描述是否为空
+            if (!description) {
+                // 更新输入框提示颜色，使其更明显
+                descriptionInput.style.borderColor = 'red';
+                descriptionInput.focus();
+                alert(window.currentLang === 'zh' ? '请输入描述' : 'Please enter a description');
+                
+                // 3秒后恢复正常边框颜色
+                setTimeout(function() {
+                    descriptionInput.style.borderColor = '';
+                }, 3000);
+                return;
+            }
+            
+            // 恢复正常边框颜色
+            descriptionInput.style.borderColor = '';
             
             if (!window.selectedLocation) {
                 alert(window.currentLang === 'zh' ? '请选择位置' : 'Please select a location');
@@ -1265,9 +1322,19 @@ window.selectMapLocation = function(latLng) {
             return null;
         }
         
+        // 使用trim确保描述不全是空格
+        description = description.trim();
+        
         // 如果location无效，则不添加标记
-        if (!location || typeof location !== 'object' || typeof location.lat !== 'number' || typeof location.lng !== 'number') {
-            console.warn('[UI Controller] 位置无效，不添加标记:', location);
+        if (!location || typeof location !== 'object') {
+            console.warn('[UI Controller] 位置对象无效，不添加标记:', location);
+            return null;
+        }
+        
+        // 检查位置坐标是否有效
+        if (typeof location.lat !== 'number' || typeof location.lng !== 'number' || 
+            isNaN(location.lat) || isNaN(location.lng)) {
+            console.warn('[UI Controller] 位置坐标无效，不添加标记:', location);
             return null;
         }
         
@@ -1277,13 +1344,15 @@ window.selectMapLocation = function(latLng) {
             window.markers = [];
         }
         
-        if (window.map) {
+        let marker = null;
+        
+        if (window.map && typeof google !== 'undefined' && google.maps) {
             try {
                 // 创建自定义标记 - 使用狗的Emoji (🐶)
-            const marker = new google.maps.Marker({
-                position: location,
-                map: window.map,
-                animation: google.maps.Animation.DROP,
+                marker = new google.maps.Marker({
+                    position: location,
+                    map: window.map,
+                    animation: google.maps.Animation.DROP,
                     title: description,
                     label: {
                         text: '🐶',
@@ -1298,8 +1367,8 @@ window.selectMapLocation = function(latLng) {
                 });
                 
                 // 保存标记
-            window.markers.push(marker);
-            
+                window.markers.push(marker);
+                
                 // 为标记添加点击事件
                 marker.addListener('click', function() {
                     // 如果存在showReportDetails函数，则使用它
@@ -1321,27 +1390,42 @@ window.selectMapLocation = function(latLng) {
                         }
                         
                         // 直接在地图上显示信息窗口，而不是弹出蓝色窗口
-            const infoWindow = new google.maps.InfoWindow({
+                        const infoWindow = new google.maps.InfoWindow({
                             content: createInfoWindowContent(description),
                             maxWidth: 300
-            });
-            
-                infoWindow.open(window.map, marker);
+                        });
+                        
+                        infoWindow.open(window.map, marker);
                         
                         // 保存当前打开的信息窗口引用
                         window.openedInfoWindow = infoWindow;
                     }
                 });
                 
-                // 保存标记到localStorage
-                saveMarkersToStorage();
+                // 只有在成功创建标记后才保存到localStorage
+                if (marker) {
+                    try {
+                        saveMarkersToStorage();
+                    } catch (storageError) {
+                        console.error('[UI Controller] 保存标记到localStorage失败:', storageError);
+                    }
+                }
                 
+                console.log('[UI Controller] 成功添加标记');
                 return marker;
             } catch (error) {
                 console.error('[UI Controller] 添加标记时出错:', error);
+                return null;
             }
         } else {
-            console.error('[UI Controller] 地图未初始化，无法添加标记');
+            console.warn('[UI Controller] 地图未初始化，将添加到待处理队列');
+            // 添加到待处理队列
+            window.pendingMarkers = window.pendingMarkers || [];
+            window.pendingMarkers.push({
+                location: location,
+                description: description
+            });
+            return null;
         }
     }
 
