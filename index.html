@@ -87,39 +87,162 @@
             console.log('初始化地图');
             
             try {
-                // 创建地图实例
-                window.map = new google.maps.Map(document.getElementById('map'), {
+                // 检测是否为移动设备
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                
+                // 移动设备优化选项
+                const mapOptions = {
                     center: MELBOURNE_CENTER,
                     zoom: 13,
                     mapTypeId: google.maps.MapTypeId.ROADMAP,
                     fullscreenControl: false,
                     streetViewControl: false,
+                    zoomControl: !isMobile, // 移动设备禁用缩放控件
+                    mapTypeControl: false,  // 禁用地图类型控件
+                    gestureHandling: isMobile ? 'greedy' : 'auto', // 移动设备使用更简单的手势处理
                     styles: [
                         {
                             featureType: "poi",
                             elementType: "labels",
                             stylers: [{ visibility: "off" }]
                         }
-                    ]
-                });
+                    ],
+                    // 性能优化选项
+                    maxZoom: 18,
+                    minZoom: 10,
+                    clickableIcons: false, // 禁用默认POI点击
+                    disableDefaultUI: isMobile, // 移动设备禁用默认UI
+                    // 启用硬件加速
+                    backgroundColor: '#f5f5f5',
+                    tilt: 0 // 禁用倾斜以提高性能
+                };
                 
-                // 添加地图点击事件处理
-                window.map.addListener('click', function(event) {
-                    if (window.isSelectingLocation) {
-                        const latLng = event.latLng;
-                        if (window.UIController && typeof window.UIController.selectMapLocation === 'function') {
-                            window.UIController.selectMapLocation(latLng);
+                // 性能优化: 延迟创建地图实例
+                setTimeout(() => {
+                    try {
+                        // 创建地图实例
+                        window.map = new google.maps.Map(document.getElementById('map'), mapOptions);
+                        
+                        // 性能优化: 限制事件监听器
+                        if (isMobile) {
+                            // 移动设备仅添加必要的事件监听
+                            window.map.addListener('click', function(event) {
+                                if (window.isSelectingLocation) {
+                                    const latLng = event.latLng;
+                                    if (window.UIController && typeof window.UIController.selectMapLocation === 'function') {
+                                        window.UIController.selectMapLocation(latLng);
+                                    }
+                                }
+                            });
+                        } else {
+                            // 桌面设备可以添加更多监听器
+                            window.map.addListener('click', function(event) {
+                                if (window.isSelectingLocation) {
+                                    const latLng = event.latLng;
+                                    if (window.UIController && typeof window.UIController.selectMapLocation === 'function') {
+                                        window.UIController.selectMapLocation(latLng);
+                                    }
+                                }
+                            });
                         }
+                        
+                        console.log('地图初始化完成');
+                        
+                        // 设置地图初始化标志
+                        window.mapsInitialized = true;
+                        
+                        // 触发地图就绪事件
+                        const mapReadyEvent = new CustomEvent('map_ready');
+                        document.dispatchEvent(mapReadyEvent);
+                        
+                        // 优化: 延迟加载标记
+                        setTimeout(() => {
+                            // 处理待处理的标记
+                            if (window.pendingMarkers && window.pendingMarkers.length) {
+                                console.log('添加待处理的标记:', window.pendingMarkers.length);
+                                const maxMarkersToAdd = isMobile ? 5 : 20; // 移动设备限制同时添加的标记数
+                                
+                                // 批量添加标记，避免一次性添加过多导致卡顿
+                                const addBatchMarkers = (startIndex) => {
+                                    const endIndex = Math.min(startIndex + maxMarkersToAdd, window.pendingMarkers.length);
+                                    
+                                    for (let i = startIndex; i < endIndex; i++) {
+                                        const marker = window.pendingMarkers[i];
+                                        if (window.UIController && typeof window.UIController.addReportMarker === 'function') {
+                                            window.UIController.addReportMarker(marker.location, marker.description);
+                                        }
+                                    }
+                                    
+                                    // 如果还有更多标记需要添加，延迟添加
+                                    if (endIndex < window.pendingMarkers.length) {
+                                        setTimeout(() => {
+                                            addBatchMarkers(endIndex);
+                                        }, 300);
+                                    } else {
+                                        // 清空待处理标记
+                                        window.pendingMarkers = [];
+                                    }
+                                };
+                                
+                                // 开始批量添加标记
+                                addBatchMarkers(0);
+                            }
+                        }, isMobile ? 1000 : 500); // 移动设备延迟更长时间
+                    } catch (mapError) {
+                        console.error('创建地图实例时出错:', mapError);
+                        handleMapInitError();
                     }
-                });
-                
-                console.log('地图初始化完成');
-                
-                // 设置地图初始化标志
-                window.mapsInitialized = true;
+                }, isMobile ? 200 : 50); // 移动设备延迟更长时间
             } catch (error) {
                 console.error('初始化地图时出错:', error);
+                handleMapInitError();
             }
+        }
+        
+        // 处理地图初始化错误的函数
+        function handleMapInitError() {
+            // 如果已经有离线模式处理，不再显示额外的错误
+            if (window.mapsInitialized || document.getElementById('offlineMapNotice')) {
+                return;
+            }
+            
+            // 创建一个简单的地图替代元素
+            const mapElement = document.getElementById('map');
+            if (mapElement) {
+                mapElement.style.backgroundImage = 'linear-gradient(to bottom, #cfd9df 0%, #e2ebf0 100%)';
+                mapElement.style.backgroundSize = 'cover';
+            }
+            
+            // 创建一个模拟的地图对象
+            window.map = window.map || {
+                getCenter: function() {
+                    return {
+                        lat: function() { return MELBOURNE_CENTER.lat; },
+                        lng: function() { return MELBOURNE_CENTER.lng; }
+                    };
+                },
+                setCenter: function() { return this; },
+                addListener: function() { return { remove: function() {} }; }
+            };
+            
+            // 提示用户
+            const notice = document.createElement('div');
+            notice.id = 'offlineMapNotice';
+            notice.style.cssText = 'position:fixed;top:50px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:10px 20px;border-radius:20px;z-index:1000;font-size:14px;text-align:center;';
+            notice.textContent = '地图加载受限，但您仍可添加报告';
+            document.body.appendChild(notice);
+            
+            // 5秒后移除通知
+            setTimeout(function() {
+                notice.style.opacity = '0';
+                notice.style.transition = 'opacity 0.5s';
+                setTimeout(function() {
+                    notice.remove();
+                }, 500);
+            }, 5000);
+            
+            // 标记初始化完成，即使是降级版本
+            window.mapsInitialized = true;
         }
         
         // 打开报告表单
@@ -140,7 +263,7 @@
             const reportForm = document.getElementById('reportForm');
             if (reportForm) {
                 reportForm.style.display = 'block';
-                reportForm.style.transform = 'translateY(0)';
+            reportForm.style.transform = 'translateY(0)';
             }
         }
         
@@ -148,7 +271,7 @@
         function closeReportForm() {
             const reportForm = document.getElementById('reportForm');
             if (reportForm) {
-                reportForm.style.transform = 'translateY(100%)';
+            reportForm.style.transform = 'translateY(100%)';
                 
                 // 等待动画完成后隐藏表单
                 setTimeout(function() {
@@ -1206,13 +1329,13 @@
     
     <!-- 报告计数器弹窗 - 默认隐藏，使用中央弹窗而非右侧蓝色弹窗 -->
     <div class="report-counter-popup" id="reportCounterPopup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background-color:rgba(50, 50, 54, 0.95); border-radius:16px; padding:20px; width:90%; max-width:350px; box-shadow:0 10px 30px rgba(0, 0, 0, 0.4); z-index:3000; text-align:center;">
-      <h3 id="reportSuccessTitle">报告提交成功!</h3>
+        <h3 id="reportSuccessTitle">报告提交成功!</h3>
       <div style="margin:15px 0;">
         <div style="font-size:18px;margin-bottom:10px;">
           <span id="reportCountText">今日已收到</span> 
           <span id="reportCount" style="font-weight:bold;font-size:24px;color:#4CAF50;">0</span> 
           <span id="reportCountSuffix">条报告</span>
-        </div>
+    </div>
         <div style="font-size:14px;color:#aaa;" id="reportCounterThankYou">
           感谢您的贡献!
         </div>
@@ -1255,7 +1378,7 @@
             <button class="cancel-btn" id="cancelReport" style="flex:1;background-color:#3a3a3c;color:white;border:none;padding:14px;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;">取消</button>
         </div>
     </div>
-    
+
     <!-- 快速描述弹窗 -->
     <div class="quick-desc-popup" id="quickAddForm" style="display:none;">
         <div class="form-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
@@ -1277,7 +1400,7 @@
 </body>
 
 <!-- 辅助脚本 -->
-<script>
+    <script>
   // Maps API加载完毕的回调
   function googleMapsLoadedCallback() {
     console.log('Google Maps API已加载完成，准备初始化地图');
@@ -1299,40 +1422,118 @@
     console.log('初始化地图');
     
     try {
-      // 创建地图实例
-      window.map = new google.maps.Map(document.getElementById('map'), {
+      // 检测是否为移动设备
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      // 移动设备优化选项
+      const mapOptions = {
         center: MELBOURNE_CENTER,
         zoom: 13,
         mapTypeId: google.maps.MapTypeId.ROADMAP,
         fullscreenControl: false,
         streetViewControl: false,
+        zoomControl: !isMobile, // 移动设备禁用缩放控件
+        mapTypeControl: false,  // 禁用地图类型控件
+        gestureHandling: isMobile ? 'greedy' : 'auto', // 移动设备使用更简单的手势处理
         styles: [
           {
             featureType: "poi",
             elementType: "labels",
             stylers: [{ visibility: "off" }]
           }
-        ]
-      });
+        ],
+        // 性能优化选项
+        maxZoom: 18,
+        minZoom: 10,
+        clickableIcons: false, // 禁用默认POI点击
+        disableDefaultUI: isMobile, // 移动设备禁用默认UI
+        // 启用硬件加速
+        backgroundColor: '#f5f5f5',
+        tilt: 0 // 禁用倾斜以提高性能
+      };
       
-      // 添加地图点击事件处理
-      window.map.addListener('click', function(event) {
-        if (window.isSelectingLocation) {
-          const latLng = event.latLng;
-          if (window.UIController && typeof window.UIController.selectMapLocation === 'function') {
-            window.UIController.selectMapLocation(latLng);
+      // 性能优化: 延迟创建地图实例
+      setTimeout(() => {
+        try {
+          // 创建地图实例
+          window.map = new google.maps.Map(document.getElementById('map'), mapOptions);
+          
+          // 性能优化: 限制事件监听器
+          if (isMobile) {
+            // 移动设备仅添加必要的事件监听
+            window.map.addListener('click', function(event) {
+              if (window.isSelectingLocation) {
+                const latLng = event.latLng;
+                if (window.UIController && typeof window.UIController.selectMapLocation === 'function') {
+                  window.UIController.selectMapLocation(latLng);
+                }
+              }
+            });
+          } else {
+            // 桌面设备可以添加更多监听器
+            window.map.addListener('click', function(event) {
+              if (window.isSelectingLocation) {
+                const latLng = event.latLng;
+                if (window.UIController && typeof window.UIController.selectMapLocation === 'function') {
+                  window.UIController.selectMapLocation(latLng);
+                }
+              }
+            });
           }
+          
+          console.log('地图初始化完成');
+          
+          // 设置地图初始化标志
+          window.mapsInitialized = true;
+          
+          // 触发地图就绪事件
+          const mapReadyEvent = new CustomEvent('map_ready');
+          document.dispatchEvent(mapReadyEvent);
+          
+          // 优化: 延迟加载标记
+          setTimeout(() => {
+            // 处理待处理的标记
+            if (window.pendingMarkers && window.pendingMarkers.length) {
+              console.log('添加待处理的标记:', window.pendingMarkers.length);
+              const maxMarkersToAdd = isMobile ? 5 : 20; // 移动设备限制同时添加的标记数
+              
+              // 批量添加标记，避免一次性添加过多导致卡顿
+              const addBatchMarkers = (startIndex) => {
+                const endIndex = Math.min(startIndex + maxMarkersToAdd, window.pendingMarkers.length);
+                
+                for (let i = startIndex; i < endIndex; i++) {
+                  const marker = window.pendingMarkers[i];
+                  if (window.UIController && typeof window.UIController.addReportMarker === 'function') {
+                    window.UIController.addReportMarker(marker.location, marker.description);
+                  }
+                }
+                
+                // 如果还有更多标记需要添加，延迟添加
+                if (endIndex < window.pendingMarkers.length) {
+                  setTimeout(() => {
+                    addBatchMarkers(endIndex);
+                  }, 300);
+                } else {
+                  // 清空待处理标记
+                  window.pendingMarkers = [];
+                }
+              };
+              
+              // 开始批量添加标记
+              addBatchMarkers(0);
+            }
+          }, isMobile ? 1000 : 500); // 移动设备延迟更长时间
+        } catch (mapError) {
+          console.error('创建地图实例时出错:', mapError);
+          handleMapInitError();
         }
-      });
-      
-      console.log('地图初始化完成');
-      
-      // 设置地图初始化标志
-      window.mapsInitialized = true;
+      }, isMobile ? 200 : 50); // 移动设备延迟更长时间
     } catch (error) {
       console.error('初始化地图时出错:', error);
+      handleMapInitError();
     }
   }
-</script>
+    </script>
 
 </html>
+

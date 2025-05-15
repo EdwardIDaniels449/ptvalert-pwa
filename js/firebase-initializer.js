@@ -12,7 +12,7 @@
         messagingSenderId: "590126951854",
         appId: "1:590126951854:web:4cbc14144b0a395dc42c3f"
     };
-
+    
     // 检查Firebase是否已加载
     if (typeof firebase !== 'undefined') {
         // 检查是否已初始化
@@ -20,7 +20,7 @@
             try {
                 firebase.initializeApp(firebaseConfig);
                 console.log('[Firebase] 已初始化');
-            } catch (error) {
+        } catch (error) {
                 console.error('[Firebase] 初始化失败:', error);
             }
         } else {

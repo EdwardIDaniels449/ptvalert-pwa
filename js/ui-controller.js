@@ -3,6 +3,55 @@
  * Handles all UI button interactions and events
  */
 
+// 设备检测
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+console.log('[UI Controller] 设备类型:', isMobile ? '移动设备' : '桌面设备');
+
+// 性能优化变量
+const PERFORMANCE_OPTIONS = {
+    // 移动设备上避免频繁DOM操作
+    useDebounce: isMobile,
+    // 移动设备上延迟非关键操作的时间(ms)
+    deferTime: isMobile ? 500 : 0,
+    // 事件节流间隔(ms)
+    throttleInterval: isMobile ? 300 : 100
+};
+
+// 防抖函数
+function debounce(func, wait) {
+    let timeout;
+    return function() {
+        const context = this;
+        const args = arguments;
+        clearTimeout(timeout);
+        timeout = setTimeout(function() {
+            func.apply(context, args);
+        }, wait);
+    };
+}
+
+// 节流函数
+function throttle(func, limit) {
+    let lastFunc;
+    let lastRan;
+    return function() {
+        const context = this;
+        const args = arguments;
+        if (!lastRan) {
+            func.apply(context, args);
+            lastRan = Date.now();
+        } else {
+            clearTimeout(lastFunc);
+            lastFunc = setTimeout(function() {
+                if ((Date.now() - lastRan) >= limit) {
+                    func.apply(context, args);
+                    lastRan = Date.now();
+                }
+            }, limit - (Date.now() - lastRan));
+        }
+    };
+}
+
 // 定义全局函数以解决引用错误问题
 window.submitQuickDescription = function() {
     console.log('[UI Controller] 提交快速描述');
@@ -74,28 +123,13 @@ window.submitQuickDescription = function() {
                     // 重置输入
                     quickDescInput.value = '';
                     
-                    // 添加标记到地图
-                    if (typeof google !== 'undefined' && google.maps) {
-                        if (window.UIController && window.UIController.addReportMarker) {
-                            window.UIController.addReportMarker(location, description);
-                        } else {
-                            addReportMarker(location, description);
-                        }
+                    // 添加标记到地图 - 移动设备上延迟处理，避免主线程阻塞
+                    if (isMobile) {
+                        setTimeout(function() {
+                            addMarkerAfterSubmit(location, description);
+                        }, PERFORMANCE_OPTIONS.deferTime);
                     } else {
-                        console.warn('[UI Controller] Google Maps未加载，标记将在地图加载后添加');
-                        // 保存到临时数组，等待地图加载
-                        if (!window.pendingMarkers) window.pendingMarkers = [];
-                        window.pendingMarkers.push({
-                            location: location,
-                            description: description
-                        });
-                    }
-                    
-                    // 保存标记到localStorage
-                    if (window.UIController && window.UIController.saveMarkersToStorage) {
-                        window.UIController.saveMarkersToStorage();
-                    } else {
-                        saveMarkersToStorage();
+                        addMarkerAfterSubmit(location, description);
                     }
                 })
                 .catch(function(error) {
@@ -111,6 +145,33 @@ window.submitQuickDescription = function() {
         handleQuickSubmitErrorNoCount(reportData, quickAddForm, quickDescInput, location, description);
     }
 };
+
+// 提取添加标记的逻辑为独立函数，方便延迟处理
+function addMarkerAfterSubmit(location, description) {
+    // 添加标记到地图
+    if (typeof google !== 'undefined' && google.maps) {
+        if (window.UIController && window.UIController.addReportMarker) {
+            window.UIController.addReportMarker(location, description);
+        } else {
+            addReportMarker(location, description);
+        }
+    } else {
+        console.warn('[UI Controller] Google Maps未加载，标记将在地图加载后添加');
+        // 保存到临时数组，等待地图加载
+        if (!window.pendingMarkers) window.pendingMarkers = [];
+        window.pendingMarkers.push({
+            location: location,
+            description: description
+        });
+    }
+    
+    // 保存标记到localStorage
+    if (window.UIController && window.UIController.saveMarkersToStorage) {
+        window.UIController.saveMarkersToStorage();
+    } else {
+        saveMarkersToStorage();
+    }
+}
 
 // 创建不更新计数的辅助函数
 window.handleQuickSubmitErrorNoCount = function(reportData, formElement, inputElement, location, description) {
@@ -130,27 +191,13 @@ window.handleQuickSubmitErrorNoCount = function(reportData, formElement, inputEl
     // 重置输入
     if (inputElement) inputElement.value = '';
     
-    // 如果Google Maps已加载，添加标记
-    if (typeof google !== 'undefined' && google.maps) {
-        if (window.UIController && window.UIController.addReportMarker) {
-            window.UIController.addReportMarker(location, description);
-        } else {
-            addReportMarker(location, description);
-        }
+    // 移动设备上延迟添加标记
+    if (isMobile) {
+        setTimeout(function() {
+            addMarkerAfterSubmit(location, description);
+        }, PERFORMANCE_OPTIONS.deferTime);
     } else {
-        // 保存到临时数组，等待地图加载
-        if (!window.pendingMarkers) window.pendingMarkers = [];
-        window.pendingMarkers.push({
-            location: location,
-            description: description
-        });
-    }
-    
-    // 保存标记到localStorage
-    if (window.UIController && window.UIController.saveMarkersToStorage) {
-        window.UIController.saveMarkersToStorage();
-    } else {
-        saveMarkersToStorage();
+        addMarkerAfterSubmit(location, description);
     }
 };
 
@@ -303,6 +350,9 @@ window.selectMapLocation = function(latLng) {
         
         // 延迟加载标记，直到地图初始化
         waitForMapsApi();
+        
+        // 应用设备特定优化
+        applyMobileOptimizations();
     });
     
     // 等待Google Maps API加载
@@ -1168,6 +1218,57 @@ window.selectMapLocation = function(latLng) {
 
     function getFirebaseAuth() {
         return window.getFirebaseAuth ? window.getFirebaseAuth() : null;
+    }
+
+    // 在UI控制器初始化时调用的设备优化
+    function applyMobileOptimizations() {
+        // 只在移动设备上执行以下操作
+        if (!isMobile) return;
+        
+        console.log('[UI Controller] 应用移动设备优化');
+        
+        // 添加passive标志到常用事件监听，提高滚动性能
+        const passiveOption = {passive: true};
+        
+        // 全局触摸事件使用passive标志
+        document.addEventListener('touchstart', function(){}, passiveOption);
+        document.addEventListener('touchmove', function(){}, passiveOption);
+        
+        // 减少非关键UI元素的重绘频率
+        const nonCriticalElements = [
+            'reportCounterPopup',
+            'langSwitchBtn',
+            'quickAddBtn'
+        ];
+        
+        // 为非关键元素应用CSS优化
+        nonCriticalElements.forEach(function(id) {
+            const element = document.getElementById(id);
+            if (element) {
+                // 添加硬件加速
+                element.style.transform = 'translateZ(0)';
+                element.style.backfaceVisibility = 'hidden';
+            }
+        });
+        
+        // 移动设备使用节流版本的地图缩放
+        if (window.map && typeof google !== 'undefined') {
+            try {
+                // 替换地图上频繁触发的事件处理程序
+                const originalAddListener = window.map.addListener;
+                
+                window.map.addListener = function(eventName, callback) {
+                    if (['zoom_changed', 'center_changed', 'bounds_changed'].includes(eventName)) {
+                        // 使用节流版本的回调
+                        const throttledCallback = throttle(callback, PERFORMANCE_OPTIONS.throttleInterval);
+                        return originalAddListener.call(this, eventName, throttledCallback);
+                    }
+                    return originalAddListener.call(this, eventName, callback);
+                };
+            } catch (error) {
+                console.warn('[UI Controller] 无法覆盖地图事件处理程序:', error);
+            }
+        }
     }
 })();
 
