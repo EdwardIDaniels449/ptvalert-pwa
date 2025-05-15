@@ -492,14 +492,124 @@
         })();
     </script>
     
-    <!-- 辅助脚本 -->
+    <!-- 先加载辅助脚本，确保它们在Google Maps API之前初始化 -->
+    <!-- 地图加载修复脚本，必须最先加载 -->
+    <script src="js/fix-google-maps-callback.js"></script>
     <script src="js/map-loader.js"></script>
     <script src="js/ui-controller.js"></script>
     <script src="js/data-connector.js"></script>
     <script src="js/app-connector.js"></script>
     <script src="js/functionality-recovery.js"></script>
     <script src="js/marker-handler.js"></script>
+
+    <!-- Google Maps API 脚本，添加超时参数 -->
+    <script async defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places&v=weekly"></script>
+
+    <!-- 加载应急地图修复脚本 -->
+    <script src="js/emergency-map-fix.js" defer></script>
     
+    <!-- 添加Firebase初始化脚本 -->
+    <script src="js/firebase-initializer.js"></script>
+    
+    <!-- 报告详情弹窗函数 -->
+    <script>
+      // 报告详情弹窗
+      function showReportDetails(report) {
+        console.log('显示报告详情:', report);
+        
+        // 先检查是否已有详情弹窗，有则移除
+        let existingDetailPopup = document.getElementById('reportDetailPopup');
+        if (existingDetailPopup) {
+          existingDetailPopup.remove();
+        }
+        
+        // 创建详情弹窗
+        const detailPopup = document.createElement('div');
+        detailPopup.id = 'reportDetailPopup';
+        detailPopup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:400px;background-color:rgba(33,33,33,0.95);border-radius:16px;padding:20px;z-index:5002;box-shadow:0 4px 20px rgba(0,0,0,0.5);color:white;animation:popup-fade-in 0.3s ease-out;max-height:90vh;overflow-y:auto;';
+        
+        // 添加关闭按钮
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '&times;';
+        closeBtn.style.cssText = 'position:absolute;top:10px;right:15px;background:none;border:none;color:white;font-size:24px;cursor:pointer;';
+        closeBtn.onclick = function() {
+          detailPopup.remove();
+        };
+        detailPopup.appendChild(closeBtn);
+        
+        // 添加报告时间和用户信息
+        const headerDiv = document.createElement('div');
+        const reportTime = new Date(report.time || report.timestamp || Date.now());
+        headerDiv.style.cssText = 'display:flex;justify-content:space-between;align-items:center;';
+        headerDiv.innerHTML = `
+          <span style="color:#aaa;font-size:14px;">${reportTime.toLocaleString()}</span>
+          <span style="color:#aaa;font-size:14px;">👤 用户</span>
+        `;
+        detailPopup.appendChild(headerDiv);
+        
+        // 添加标题
+        const titleDiv = document.createElement('div');
+        titleDiv.innerHTML = `<h3 style="margin:10px 0 15px;font-size:20px;">${report.emoji || '🐶'} 报告详情</h3>`;
+        detailPopup.appendChild(titleDiv);
+        
+        // 添加图片（如果有）
+        if (report.image && report.image.length > 0) {
+          const imageDiv = document.createElement('div');
+          imageDiv.style.cssText = 'width:100%;height:200px;margin:15px 0;border-radius:8px;overflow:hidden;';
+          const img = document.createElement('img');
+          img.src = report.image;
+          img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+          imageDiv.appendChild(img);
+          detailPopup.appendChild(imageDiv);
+        }
+        
+        // 添加描述
+        const descDiv = document.createElement('div');
+        descDiv.style.cssText = 'margin:15px 0;padding:10px;background-color:rgba(255,255,255,0.1);border-radius:8px;';
+        descDiv.innerText = report.description || '无描述';
+        detailPopup.appendChild(descDiv);
+        
+        // 添加到文档
+        document.body.appendChild(detailPopup);
+        
+        // 将描述发送到弹幕
+        if (report.description && typeof sendDanmaku === 'function') {
+          sendDanmaku(report.description);
+        }
+      }
+    </script>
+
+    <!-- 测试标记脚本 -->
+    <script>
+      // 在地图加载完成后添加一个测试标记
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log('准备添加测试标记');
+        
+        // 等待地图加载完成
+        function waitForMap() {
+          if (window.map && window.addReportMarker) {
+            console.log('地图已加载，添加测试标记');
+            
+            // 添加测试标记
+            const testMarker = window.addReportMarker(
+              { lat: -37.8136, lng: 144.9631 }, // 墨尔本中心
+              '这是一个测试标记，点击查看详情',
+              'test-marker-' + Date.now(),
+              '' // 无图片
+            );
+            
+            console.log('测试标记已添加:', testMarker);
+          } else {
+            console.log('地图尚未加载，等待...');
+            setTimeout(waitForMap, 1000);
+          }
+        }
+        
+        waitForMap();
+      });
+    </script>
+
     <style>
         * {
             margin: 0;
@@ -1223,119 +1333,6 @@
       console.error('初始化地图时出错:', error);
     }
   }
-</script>
-    
-<!-- 先加载辅助脚本，确保它们在Google Maps API之前初始化 -->
-<script src="js/map-loader.js"></script>
-<script src="js/ui-controller.js"></script>
-<script src="js/data-connector.js"></script>
-<script src="js/app-connector.js"></script>
-<script src="js/functionality-recovery.js"></script>
-<script src="js/marker-handler.js"></script>
-
-<!-- Google Maps API 脚本 -->
-<script async defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places"></script>
-
-<!-- 添加Firebase初始化脚本 -->
-<script src="js/firebase-initializer.js"></script>
-
-<!-- 报告详情弹窗函数 -->
-<script>
-  // 报告详情弹窗
-  function showReportDetails(report) {
-    console.log('显示报告详情:', report);
-    
-    // 先检查是否已有详情弹窗，有则移除
-    let existingDetailPopup = document.getElementById('reportDetailPopup');
-    if (existingDetailPopup) {
-      existingDetailPopup.remove();
-    }
-    
-    // 创建详情弹窗
-    const detailPopup = document.createElement('div');
-    detailPopup.id = 'reportDetailPopup';
-    detailPopup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:400px;background-color:rgba(33,33,33,0.95);border-radius:16px;padding:20px;z-index:5002;box-shadow:0 4px 20px rgba(0,0,0,0.5);color:white;animation:popup-fade-in 0.3s ease-out;max-height:90vh;overflow-y:auto;';
-    
-    // 添加关闭按钮
-    const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '&times;';
-    closeBtn.style.cssText = 'position:absolute;top:10px;right:15px;background:none;border:none;color:white;font-size:24px;cursor:pointer;';
-    closeBtn.onclick = function() {
-      detailPopup.remove();
-    };
-    detailPopup.appendChild(closeBtn);
-    
-    // 添加报告时间和用户信息
-    const headerDiv = document.createElement('div');
-    const reportTime = new Date(report.time || report.timestamp || Date.now());
-    headerDiv.style.cssText = 'display:flex;justify-content:space-between;align-items:center;';
-    headerDiv.innerHTML = `
-      <span style="color:#aaa;font-size:14px;">${reportTime.toLocaleString()}</span>
-      <span style="color:#aaa;font-size:14px;">👤 用户</span>
-    `;
-    detailPopup.appendChild(headerDiv);
-    
-    // 添加标题
-    const titleDiv = document.createElement('div');
-    titleDiv.innerHTML = `<h3 style="margin:10px 0 15px;font-size:20px;">${report.emoji || '🐶'} 报告详情</h3>`;
-    detailPopup.appendChild(titleDiv);
-    
-    // 添加图片（如果有）
-    if (report.image && report.image.length > 0) {
-      const imageDiv = document.createElement('div');
-      imageDiv.style.cssText = 'width:100%;height:200px;margin:15px 0;border-radius:8px;overflow:hidden;';
-      const img = document.createElement('img');
-      img.src = report.image;
-      img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
-      imageDiv.appendChild(img);
-      detailPopup.appendChild(imageDiv);
-    }
-    
-    // 添加描述
-    const descDiv = document.createElement('div');
-    descDiv.style.cssText = 'margin:15px 0;padding:10px;background-color:rgba(255,255,255,0.1);border-radius:8px;';
-    descDiv.innerText = report.description || '无描述';
-    detailPopup.appendChild(descDiv);
-    
-    // 添加到文档
-    document.body.appendChild(detailPopup);
-    
-    // 将描述发送到弹幕
-    if (report.description && typeof sendDanmaku === 'function') {
-      sendDanmaku(report.description);
-    }
-  }
-</script>
-
-<!-- 测试标记脚本 -->
-<script>
-  // 在地图加载完成后添加一个测试标记
-  document.addEventListener('DOMContentLoaded', function() {
-    console.log('准备添加测试标记');
-    
-    // 等待地图加载完成
-    function waitForMap() {
-      if (window.map && window.addReportMarker) {
-        console.log('地图已加载，添加测试标记');
-        
-        // 添加测试标记
-        const testMarker = window.addReportMarker(
-          { lat: -37.8136, lng: 144.9631 }, // 墨尔本中心
-          '这是一个测试标记，点击查看详情',
-          'test-marker-' + Date.now(),
-          '' // 无图片
-        );
-        
-        console.log('测试标记已添加:', testMarker);
-      } else {
-        console.log('地图尚未加载，等待...');
-        setTimeout(waitForMap, 1000);
-      }
-    }
-    
-    waitForMap();
-  });
 </script>
 
 </html>
