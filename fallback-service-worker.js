@@ -3,6 +3,14 @@
  * 在主服务工作线程加载失败时提供基本功能
  */
 
+// 导入VAPID密钥配置
+try {
+  importScripts('./vapid-keys.js');
+  console.log('[备用SW] 成功加载VAPID密钥配置');
+} catch (error) {
+  console.error('[备用SW] 加载VAPID密钥配置失败:', error);
+}
+
 console.log('[备用SW] 备用服务工作线程已加载');
 
 // 基本配置

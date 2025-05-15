@@ -2,6 +2,14 @@
  * 简易的服务工作线程用于推送通知测试
  */
 
+// 导入VAPID密钥配置
+try {
+  importScripts('./vapid-keys.js');
+  console.log('[测试 Service Worker] 成功加载VAPID密钥配置');
+} catch (error) {
+  console.error('[测试 Service Worker] 加载VAPID密钥配置失败:', error);
+}
+
 // 安装事件
 self.addEventListener('install', event => {
   console.log('[测试 Service Worker] 安装中');

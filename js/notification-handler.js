@@ -295,8 +295,13 @@ async function subscribeUserToPush() {
       return subscription;
     }
     
-    // 使用Cloudflare Workers的VAPID公钥
-    const vapidPublicKey = 'BOz-QrPhJjxv5O_dVxL0Rt9-v_iTvpfSPVnOWc9Vob0zPKU8flcL2WUTe9UrVqLgLboeyOm4aUxp4pa1WJn-5Z4';
+    // 使用配置文件中的VAPID公钥
+    const vapidPublicKey = window.PUSH_CONFIG?.VAPID_PUBLIC_KEY || 
+      window.VAPID_KEYS?.publicKey;
+    
+    if (!vapidPublicKey) {
+      throw new Error('VAPID public key not configured');
+    }
     
     // Convert VAPID public key to Uint8Array
     const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
@@ -1025,8 +1030,16 @@ async function subscribeToPush() {
         let subscription = await registration.pushManager.getSubscription();
         
         if (!subscription) {
-            // 使用真实的VAPID公钥
-            const vapidPublicKey = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
+            // 使用配置文件中的VAPID公钥
+            const vapidPublicKey = window.PUSH_CONFIG?.VAPID_PUBLIC_KEY || 
+              window.VAPID_KEYS?.publicKey;
+            
+            if (!vapidPublicKey) {
+              console.error('VAPID公钥未配置');
+              setupMarkerObserver();
+              return;
+            }
+            
             const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
             
             console.log('正在创建新的推送订阅...');

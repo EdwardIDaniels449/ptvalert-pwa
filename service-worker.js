@@ -3,6 +3,14 @@ const CACHE_NAME = 'ptvalert-cache-v7';
 const APP_NAME = '网站地图标记';
 const APP_VERSION = '1.0.8';
 
+// 导入必要的脚本
+try {
+  importScripts('./vapid-keys.js');
+  console.log('[Service Worker] 成功加载VAPID密钥配置');
+} catch (error) {
+  console.error('[Service Worker] 加载VAPID密钥配置失败:', error);
+}
+
 // 调试输出
 console.log('[Service Worker] 启动，版本:', APP_VERSION);
 

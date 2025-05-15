@@ -11,7 +11,7 @@ const cloudflareConfig = {
   // 调试模式 (打印更多日志)
   debug: false,
   
-  // VAPID 公钥 (用于推送通知)
+  // VAPID 公钥 (用于推送通知) - 与vapid-keys.js中保持一致
   vapidPublicKey: 'BIi0aWM8sQdsY8SIriYSG551h2HAezVghr6sudVRqEQeQu-6tILY6pbuytfDshoO7As3128FE791I0boTeNQD-8'
 };
 
