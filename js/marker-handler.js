@@ -78,6 +78,13 @@
             return null;
         }
         
+        // 验证地图实例的有效性
+        if (typeof window.map.getCenter !== 'function' || 
+            typeof window.map.getBounds !== 'function') {
+            console.error('[Marker Handler] 地图实例不是一个有效的Google Maps对象');
+            return null;
+        }
+        
         // Create report data object
         const reportData = {
             id: reportId || 'marker-' + Date.now(),
@@ -263,64 +270,112 @@
         console.log('[Marker Handler] Loading existing markers');
         
         try {
+            // 确保地图已初始化
+            if (!window.map || typeof window.map.getCenter !== 'function') {
+                console.warn('[Marker Handler] 地图未完全初始化，延迟加载标记');
+                setTimeout(loadExistingMarkers, 2000);
+                return;
+            }
+            
             // Try to load from localStorage
             const savedMarkers = localStorage.getItem('savedMarkers');
-            if (savedMarkers) {
-                const markerData = JSON.parse(savedMarkers);
+            if (!savedMarkers) {
+                console.log('[Marker Handler] No saved markers found in storage');
+                return;
+            }
+            
+            let markerData;
+            try {
+                markerData = JSON.parse(savedMarkers);
+                if (!Array.isArray(markerData)) {
+                    console.warn('[Marker Handler] 标记数据格式不正确');
+                    return;
+                }
+            } catch (parseError) {
+                console.error('[Marker Handler] 解析标记数据失败:', parseError);
+                // 尝试清理损坏的数据
+                localStorage.removeItem('savedMarkers');
+                return;
+            }
+            
+            // 过滤无效标记
+            const validMarkerData = markerData.filter(data => {
+                return data && typeof data.lat === 'number' && typeof data.lng === 'number';
+            });
+            
+            if (validMarkerData.length === 0) {
+                console.log('[Marker Handler] 没有有效的标记数据');
+                return;
+            }
+            
+            console.log(`[Marker Handler] 找到 ${validMarkerData.length} 个有效标记，准备加载`);
+            
+            // 移动设备上分批加载标记
+            if (isMobile) {
+                console.log('[Marker Handler] 移动设备: 分批加载', validMarkerData.length, '个标记');
                 
-                // 移动设备上分批加载标记
-                if (isMobile) {
-                    console.log('[Marker Handler] 移动设备: 分批加载', markerData.length, '个标记');
-                    
-                    // 限制初始加载的标记数量
-                    const initialBatchSize = Math.min(markerData.length, 10);
-                    // 最大加载数量
-                    const maxMarkersToLoad = Math.min(markerData.length, MOBILE_MARKER_LIMIT);
-                    
-                    // 先加载前几个标记
-                    for (let i = 0; i < initialBatchSize; i++) {
-                        const data = markerData[i];
+                // 限制初始加载的标记数量
+                const initialBatchSize = Math.min(validMarkerData.length, 10);
+                // 最大加载数量
+                const maxMarkersToLoad = Math.min(validMarkerData.length, MOBILE_MARKER_LIMIT);
+                
+                // 先加载前几个标记
+                for (let i = 0; i < initialBatchSize; i++) {
+                    const data = validMarkerData[i];
+                    try {
                         addReportMarker(
                             {lat: data.lat, lng: data.lng},
-                            data.description,
+                            data.description || '无描述',
                             data.id,
                             data.image
                         );
+                    } catch (err) {
+                        console.warn(`[Marker Handler] 加载标记 ${i} 失败:`, err);
                     }
-                    
-                    // 剩余标记延迟加载
-                    if (maxMarkersToLoad > initialBatchSize) {
-                        setTimeout(function() {
-                            // 批量加载剩余标记
-                            for (let i = initialBatchSize; i < maxMarkersToLoad; i++) {
-                                const data = markerData[i];
+                }
+                
+                // 剩余标记延迟加载
+                if (maxMarkersToLoad > initialBatchSize) {
+                    setTimeout(function() {
+                        // 批量加载剩余标记
+                        for (let i = initialBatchSize; i < maxMarkersToLoad; i++) {
+                            const data = validMarkerData[i];
+                            try {
                                 addReportMarker(
                                     {lat: data.lat, lng: data.lng},
-                                    data.description,
+                                    data.description || '无描述',
                                     data.id,
                                     data.image
                                 );
+                            } catch (err) {
+                                console.warn(`[Marker Handler] 加载标记 ${i} 失败:`, err);
+                                // 继续加载其他标记
                             }
-                        }, 5000); // 5秒后加载剩余标记
-                    }
-                    
-                    console.log('[Marker Handler] 初始加载', initialBatchSize, '个标记，最大加载', maxMarkersToLoad, '个标记');
-                } else {
-                    // 桌面设备直接加载所有标记
-                    markerData.forEach(function(data) {
+                        }
+                    }, 5000); // 5秒后加载剩余标记
+                }
+                
+                console.log('[Marker Handler] 初始加载', initialBatchSize, '个标记，最大加载', maxMarkersToLoad, '个标记');
+            } else {
+                // 桌面设备直接加载所有标记
+                let loadedCount = 0;
+                validMarkerData.forEach(function(data, index) {
+                    try {
                         // Add marker to map
-                        addReportMarker(
+                        const marker = addReportMarker(
                             {lat: data.lat, lng: data.lng},
-                            data.description,
+                            data.description || '无描述',
                             data.id,
                             data.image
                         );
-                    });
-                    
-                    console.log('[Marker Handler] Loaded', markerData.length, 'markers from storage');
-                }
-            } else {
-                console.log('[Marker Handler] No saved markers found in storage');
+                        
+                        if (marker) loadedCount++;
+                    } catch (err) {
+                        console.warn(`[Marker Handler] 加载标记 ${index} 失败:`, err);
+                    }
+                });
+                
+                console.log('[Marker Handler] 已成功加载', loadedCount, '个标记，共', validMarkerData.length, '个');
             }
         } catch (error) {
             console.error('[Marker Handler] Error loading markers from storage:', error);
