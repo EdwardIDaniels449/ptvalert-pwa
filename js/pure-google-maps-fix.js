@@ -8,8 +8,8 @@
     
     console.log('[纯Google Maps修复] 初始化...');
     
-    // 保存原始函数
-    const originalAddReportMarker = window.UIController && window.UIController.addReportMarker;
+    // 保存原始函数 - 使用let而不是const，允许重新赋值
+    let originalAddReportMarker = window.UIController && window.UIController.addReportMarker;
     
     // 地图初始化就绪标志
     let mapReady = false;
