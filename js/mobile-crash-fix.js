@@ -10,18 +10,53 @@
     
     // 防止全局错误导致应用崩溃
     window.addEventListener('error', function(event) {
-        console.error('[Mobile Fix] 捕获到全局错误:', event.message);
-        event.preventDefault();
-        showErrorRecoveryUI(event);
-        return true; // 防止错误继续传播
+        try {
+            const errorMsg = event.message || '未知错误';
+            console.error('[Mobile Fix] 捕获到全局错误:', errorMsg);
+            
+            // 安全地阻止默认行为
+            if (event.preventDefault) {
+                event.preventDefault();
+            }
+            
+            // 安全地显示错误恢复UI
+            try {
+                showErrorRecoveryUI(event);
+            } catch (uiError) {
+                console.error('[Mobile Fix] 显示错误恢复UI时出错:', uiError);
+            }
+            
+            return true; // 防止错误继续传播
+        } catch (handlerError) {
+            console.error('[Mobile Fix] 错误处理器本身出错:', handlerError);
+            return true; // 仍然阻止错误传播
+        }
     }, true);
     
     // 捕获未处理的Promise拒绝
     window.addEventListener('unhandledrejection', function(event) {
-        console.error('[Mobile Fix] 捕获到未处理的Promise拒绝:', event.reason);
-        event.preventDefault();
-        showErrorRecoveryUI(event);
-        return true; // 防止错误继续传播
+        try {
+            const reason = event.reason || '未知原因';
+            const reasonMsg = reason.message || (typeof reason === 'string' ? reason : '未知Promise拒绝');
+            console.error('[Mobile Fix] 捕获到未处理的Promise拒绝:', reasonMsg);
+            
+            // 安全地阻止默认行为
+            if (event.preventDefault) {
+                event.preventDefault();
+            }
+            
+            // 安全地显示错误恢复UI
+            try {
+                showErrorRecoveryUI(event);
+            } catch (uiError) {
+                console.error('[Mobile Fix] 显示Promise拒绝恢复UI时出错:', uiError);
+            }
+            
+            return true;
+        } catch (handlerError) {
+            console.error('[Mobile Fix] Promise拒绝处理器本身出错:', handlerError);
+            return true;
+        }
     });
     
     // 在页面加载完成后应用修复
@@ -329,88 +364,203 @@
     
     // 显示错误恢复UI
     function showErrorRecoveryUI(event) {
-        // 只在严重错误时显示
-        if (!isCriticalError(event)) {
-            return;
-        }
-        
-        // 避免多次显示
-        if (document.getElementById('mobileErrorRecovery')) {
-            return;
-        }
-        
-        const errorUI = document.createElement('div');
-        errorUI.id = 'mobileErrorRecovery';
-        errorUI.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;color:white;padding:20px;';
-        
-        errorUI.innerHTML = `
-            <div style="font-size:50px;margin-bottom:20px;">⚠️</div>
-            <h2 style="margin-bottom:15px;font-size:18px;">应用遇到问题</h2>
-            <p style="margin-bottom:25px;font-size:14px;color:#ccc;">我们正在尝试自动恢复...</p>
-            <button id="recoveryButton" style="background:#0071e3;color:white;border:none;padding:12px 25px;border-radius:8px;font-weight:bold;margin-bottom:10px;">手动恢复</button>
-            <button id="dismissButton" style="background:transparent;color:#999;border:1px solid #555;padding:8px 15px;border-radius:8px;font-size:14px;">忽略</button>
-        `;
-        
-        document.body.appendChild(errorUI);
-        
-        // 添加按钮事件
-        document.getElementById('recoveryButton').addEventListener('click', function() {
-            window.location.reload();
-        });
-        
-        document.getElementById('dismissButton').addEventListener('click', function() {
-            errorUI.style.display = 'none';
-            setTimeout(function() {
-                if (errorUI.parentNode) {
-                    errorUI.parentNode.removeChild(errorUI);
-                }
-            }, 300);
-        });
-        
-        // 5秒后自动尝试恢复
-        setTimeout(function() {
-            // 如果还在显示错误UI，则尝试恢复
-            if (document.getElementById('mobileErrorRecovery')) {
-                // 首先尝试软恢复
-                checkAndRecover();
-                
-                // 然后移除错误UI
-                const errorUI = document.getElementById('mobileErrorRecovery');
-                if (errorUI) {
-                    errorUI.style.opacity = '0';
-                    errorUI.style.transition = 'opacity 0.3s';
-                    setTimeout(function() {
-                        if (errorUI.parentNode) {
-                            errorUI.parentNode.removeChild(errorUI);
-                        }
-                    }, 300);
-                }
+        try {
+            // 只在严重错误时显示
+            if (!isCriticalError(event)) {
+                return;
             }
-        }, 5000);
+            
+            // 避免多次显示
+            if (document.getElementById('mobileErrorRecovery')) {
+                return;
+            }
+            
+            // 创建错误UI元素
+            const errorUI = document.createElement('div');
+            errorUI.id = 'mobileErrorRecovery';
+            errorUI.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;color:white;padding:20px;';
+            
+            // 尝试获取错误信息
+            let errorDetails = '';
+            try {
+                if (event) {
+                    if (event.message) {
+                        errorDetails = event.message;
+                    } else if (event.reason) {
+                        errorDetails = event.reason.message || event.reason.toString();
+                    } else if (event.error) {
+                        errorDetails = event.error.message || event.error.toString();
+                    }
+                }
+            } catch (e) {
+                errorDetails = '无法获取错误详情';
+            }
+            
+            // 设置UI内容
+            errorUI.innerHTML = `
+                <div style="font-size:50px;margin-bottom:20px;">⚠️</div>
+                <h2 style="margin-bottom:15px;font-size:18px;">应用遇到问题</h2>
+                <p style="margin-bottom:25px;font-size:14px;color:#ccc;">我们正在尝试自动恢复...</p>
+                <button id="recoveryButton" style="background:#0071e3;color:white;border:none;padding:12px 25px;border-radius:8px;font-weight:bold;margin-bottom:10px;">手动恢复</button>
+                <button id="dismissButton" style="background:transparent;color:#999;border:1px solid #555;padding:8px 15px;border-radius:8px;font-size:14px;">忽略</button>
+            `;
+            
+            // 安全地添加到DOM
+            try {
+                document.body.appendChild(errorUI);
+            } catch (domError) {
+                console.error('[Mobile Fix] 添加错误UI到DOM失败:', domError);
+                return; // 如果无法添加到DOM，则放弃显示UI
+            }
+            
+            // 添加按钮事件 - 包含额外的错误处理
+            try {
+                const recoveryButton = document.getElementById('recoveryButton');
+                if (recoveryButton) {
+                    recoveryButton.addEventListener('click', function() {
+                        try {
+                            window.location.reload();
+                        } catch (e) {
+                            console.error('[Mobile Fix] 刷新页面失败:', e);
+                            // 尝试替代方法刷新
+                            setTimeout(function() { window.location = window.location.href; }, 100);
+                        }
+                    });
+                }
+                
+                const dismissButton = document.getElementById('dismissButton');
+                if (dismissButton) {
+                    dismissButton.addEventListener('click', function() {
+                        try {
+                            errorUI.style.display = 'none';
+                            setTimeout(function() {
+                                if (errorUI.parentNode) {
+                                    errorUI.parentNode.removeChild(errorUI);
+                                }
+                            }, 300);
+                        } catch (e) {
+                            console.error('[Mobile Fix] 关闭错误UI失败:', e);
+                            // 尝试更简单的方法隐藏
+                            try {
+                                errorUI.style.display = 'none';
+                            } catch (e2) {
+                                // 无法处理，放弃
+                            }
+                        }
+                    });
+                }
+            } catch (eventError) {
+                console.error('[Mobile Fix] 为错误UI添加事件处理器失败:', eventError);
+            }
+            
+            // 5秒后自动尝试恢复
+            try {
+                setTimeout(function() {
+                    try {
+                        // 如果还在显示错误UI，则尝试恢复
+                        const currentErrorUI = document.getElementById('mobileErrorRecovery');
+                        if (currentErrorUI) {
+                            // 首先尝试软恢复
+                            try {
+                                checkAndRecover();
+                            } catch (recoverError) {
+                                console.error('[Mobile Fix] 自动恢复失败:', recoverError);
+                            }
+                            
+                            // 然后移除错误UI
+                            try {
+                                currentErrorUI.style.opacity = '0';
+                                currentErrorUI.style.transition = 'opacity 0.3s';
+                                setTimeout(function() {
+                                    try {
+                                        if (currentErrorUI.parentNode) {
+                                            currentErrorUI.parentNode.removeChild(currentErrorUI);
+                                        }
+                                    } catch (e) {
+                                        // 静默失败
+                                    }
+                                }, 300);
+                            } catch (uiRemoveError) {
+                                // 移除失败，尝试更简单的方法
+                                try {
+                                    currentErrorUI.style.display = 'none';
+                                } catch (e) {
+                                    // 无法处理，放弃
+                                }
+                            }
+                        }
+                    } catch (autoRecoverError) {
+                        console.error('[Mobile Fix] 自动恢复过程出错:', autoRecoverError);
+                    }
+                }, 5000);
+            } catch (timerError) {
+                console.error('[Mobile Fix] 设置自动恢复计时器失败:', timerError);
+            }
+        } catch (rootError) {
+            // 整个错误UI处理失败
+            console.error('[Mobile Fix] 显示错误恢复UI整体失败:', rootError);
+            
+            // 最后尝试：如果一切都失败了，尝试在控制台显示一个简单的刷新按钮
+            console.log('%c点击这里刷新页面', 'color: white; background: red; font-size: 20px; padding: 10px; cursor: pointer; display: block;');
+            console.log('如果应用无响应，请尝试手动刷新页面或重新启动应用');
+        }
     }
     
     // 判断是否为严重错误
     function isCriticalError(event) {
-        // 获取错误信息
-        const errorMessage = event.message || (event.reason ? event.reason.message : '');
-        
-        // 检查是否包含关键词
-        const criticalPatterns = [
-            'script error',
-            'uncaught',
-            'cannot read property',
-            'undefined is not an object',
-            'null is not an object',
-            'not a function',
-            'setMap',
-            'invalid',
-            'google',
-            'maps'
-        ];
-        
-        return criticalPatterns.some(pattern => 
-            errorMessage.toLowerCase().includes(pattern.toLowerCase())
-        );
+        try {
+            // 获取错误信息
+            let errorMessage = '';
+            
+            if (!event) {
+                return false; // 无效事件对象
+            }
+            
+            if (event.message) {
+                errorMessage = event.message;
+            } else if (event.reason) {
+                if (typeof event.reason === 'string') {
+                    errorMessage = event.reason;
+                } else if (event.reason.message) {
+                    errorMessage = event.reason.message;
+                } else {
+                    errorMessage = String(event.reason);
+                }
+            } else if (event.error) {
+                errorMessage = event.error.message || String(event.error);
+            } else {
+                // 无法提取错误信息，假设为严重错误
+                return true;
+            }
+            
+            // 转换为小写进行检查
+            const lowerMessage = (errorMessage || '').toLowerCase();
+            
+            // 检查是否包含关键词
+            const criticalPatterns = [
+                'script error',
+                'uncaught',
+                'cannot read property',
+                'undefined is not an object',
+                'null is not an object',
+                'not a function',
+                'setmap',
+                'invalid',
+                'google',
+                'maps',
+                'marker',
+                'animation',
+                'typeerror',
+                'referenceerror'
+            ];
+            
+            return criticalPatterns.some(pattern => 
+                lowerMessage.includes(pattern.toLowerCase())
+            );
+        } catch (e) {
+            console.error('[Mobile Fix] 判断严重错误时出错:', e);
+            return true; // 如果判断过程出错，则当作严重错误处理
+        }
     }
     
     // 验证清单文件
