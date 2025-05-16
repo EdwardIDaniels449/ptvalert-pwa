@@ -62,9 +62,9 @@
     function addReportMarker(location, description, reportId, image) {
         console.log('[Marker Handler] Adding report marker:', location);
         
-        // 检查地图是否初始化
-        if (!window.map) {
-            console.warn('[Marker Handler] 地图未初始化，将标记添加到待处理队列');
+        // 验证地图对象
+        if (!isValidMapObject()) {
+            console.warn('[Marker Handler] 无效的地图对象，将标记添加到待处理队列');
             
             // 添加到待处理标记队列
             window.pendingMarkers = window.pendingMarkers || [];
@@ -78,10 +78,11 @@
             return null;
         }
         
-        // 验证地图实例的有效性
-        if (typeof window.map.getCenter !== 'function' || 
-            typeof window.map.getBounds !== 'function') {
-            console.error('[Marker Handler] 地图实例不是一个有效的Google Maps对象');
+        // 确保位置是有效的
+        if (!location || typeof location !== 'object' || 
+           (typeof location.lat !== 'function' && typeof location.lat !== 'number') ||
+           (typeof location.lng !== 'function' && typeof location.lng !== 'number')) {
+            console.error('[Marker Handler] 无效的位置对象:', location);
             return null;
         }
         
@@ -96,10 +97,28 @@
         };
         
         try {
+            // 处理位置格式
+            let markerPosition;
+            try {
+                if (typeof location.lat === 'function') {
+                    // 已经是LatLng对象
+                    markerPosition = location;
+                } else {
+                    // 创建新的LatLng对象
+                    markerPosition = new google.maps.LatLng(
+                        parseFloat(location.lat),
+                        parseFloat(location.lng)
+                    );
+                }
+            } catch (posError) {
+                console.error('[Marker Handler] 创建位置对象失败:', posError);
+                return null;
+            }
+            
             // 针对移动设备优化的标记选项
             const markerOptions = {
-                position: location,
-                map: window.map,
+                position: markerPosition,
+                // 先不设置地图，稍后再调用setMap
                 title: description,
                 optimized: true // 启用优化
             };
@@ -128,6 +147,16 @@
             
             // Create marker
             const marker = new google.maps.Marker(markerOptions);
+            
+            // 安全地设置地图
+            try {
+                if (isValidMapObject()) {
+                    marker.setMap(window.map);
+                }
+            } catch (setMapError) {
+                console.error('[Marker Handler] 设置地图时出错:', setMapError);
+                // 继续执行，保留标记对象以便后续使用
+            }
             
             // 移动设备上使用更轻量级的点击处理
             if (isMobile) {
@@ -194,15 +223,13 @@
                 
                 // 仅从地图上移除，但保留在数组中
                 markersToHide.forEach(function(marker) {
-                    if (marker && typeof marker.setMap === 'function') {
-                        marker.setMap(null);
-                    }
+                    safeSetMap(marker, null);
                 });
             } else {
                 // 确保所有标记都显示
                 window.markers.forEach(function(marker, index) {
-                    if (marker && typeof marker.setMap === 'function' && marker.getMap() === null) {
-                        marker.setMap(window.map);
+                    if (marker && marker.getMap && marker.getMap() === null) {
+                        safeSetMap(marker, window.map);
                     }
                 });
             }
@@ -271,7 +298,7 @@
         
         try {
             // 确保地图已初始化
-            if (!window.map || typeof window.map.getCenter !== 'function') {
+            if (!isValidMapObject()) {
                 console.warn('[Marker Handler] 地图未完全初始化，延迟加载标记');
                 setTimeout(loadExistingMarkers, 2000);
                 return;
@@ -417,10 +444,45 @@
         }
     }
     
+    // 辅助函数：验证地图对象是否有效
+    function isValidMapObject() {
+        // 验证地图对象存在且具有必要的方法
+        return (
+            window.map && 
+            typeof window.map === 'object' &&
+            typeof window.map.getCenter === 'function' &&
+            typeof window.map.getBounds === 'function' &&
+            typeof window.map.getDiv === 'function'
+        );
+    }
+    
+    // 辅助函数：安全地调用setMap
+    function safeSetMap(marker, mapObject) {
+        if (!marker || typeof marker !== 'object' || typeof marker.setMap !== 'function') {
+            return false;
+        }
+        
+        try {
+            // 验证地图对象（如果不是null）
+            if (mapObject !== null && !isValidMapObject()) {
+                console.warn('[Marker Handler] 尝试使用无效的地图对象');
+                return false;
+            }
+            
+            marker.setMap(mapObject);
+            return true;
+        } catch (error) {
+            console.error('[Marker Handler] setMap调用失败:', error);
+            return false;
+        }
+    }
+    
     // Expose functions to global scope
     window.MarkerHandler = {
         addReportMarker: addReportMarker,
         loadExistingMarkers: loadExistingMarkers,
-        saveMarkersToStorage: saveMarkersToStorage
+        saveMarkersToStorage: saveMarkersToStorage,
+        isValidMapObject: isValidMapObject,
+        safeSetMap: safeSetMap
     };
 })(); 

@@ -53,8 +53,8 @@
                         return resolve({ skipped: true, reason: '地图标记数组未定义' });
                     }
                     
-                    // 确保地图实例有效
-                    if (!window.map || typeof window.map.getCenter !== 'function') {
+                    // 确保地图实例有效 - 使用增强的检查方法
+                    if (!isValidMapObject()) {
                         console.warn('[Marker Cleanup Fix] 地图实例无效，跳过地图清理');
                         return resolve({ skipped: true, reason: '地图实例无效' });
                     }
@@ -128,7 +128,19 @@
     // 安全地从地图上移除标记
     function safelyRemoveMarker(marker) {
         try {
-            if (marker && typeof marker.setMap === 'function') {
+            if (!marker) {
+                console.warn('[Marker Cleanup Fix] 尝试移除空标记');
+                return;
+            }
+            
+            // 使用marker-handler.js中的safeSetMap如果可用
+            if (window.MarkerHandler && typeof window.MarkerHandler.safeSetMap === 'function') {
+                window.MarkerHandler.safeSetMap(marker, null);
+                return;
+            }
+            
+            // 否则使用我们自己的安全方法
+            if (typeof marker.setMap === 'function') {
                 console.log('[Marker Cleanup Fix] 安全移除标记');
                 
                 // 使用try-catch包裹每个setMap调用
@@ -154,7 +166,8 @@
             return;
         }
         
-        if (!window.map) {
+        // 使用增强的检查方法
+        if (!isValidMapObject()) {
             console.warn('[Marker Cleanup Fix] 地图实例不可用，跳过修复');
             return;
         }
@@ -226,6 +239,23 @@
         }
     }
     
+    // 辅助函数：验证地图对象是否有效
+    function isValidMapObject() {
+        // 首先使用marker-handler.js中的方法（如果可用）
+        if (window.MarkerHandler && typeof window.MarkerHandler.isValidMapObject === 'function') {
+            return window.MarkerHandler.isValidMapObject();
+        }
+        
+        // 否则使用我们自己的检查方法
+        return (
+            window.map && 
+            typeof window.map === 'object' &&
+            typeof window.map.getCenter === 'function' &&
+            typeof window.map.getBounds === 'function' &&
+            typeof window.map.getDiv === 'function'
+        );
+    }
+    
     // 执行立即清理
     function performImmediateCleanup() {
         if (!window.MarkersCleanup || typeof window.MarkersCleanup.cleanupNow !== 'function') {
@@ -233,10 +263,15 @@
             return;
         }
         
-        // 执行立即清理
+        // 延迟执行清理以确保地图已完全初始化
         setTimeout(function() {
-            console.log('[Marker Cleanup Fix] 执行立即清理...');
-            window.MarkersCleanup.cleanupNow();
+            // 仅在地图有效时执行清理
+            if (isValidMapObject()) {
+                console.log('[Marker Cleanup Fix] 执行立即清理...');
+                window.MarkersCleanup.cleanupNow();
+            } else {
+                console.warn('[Marker Cleanup Fix] 地图无效，跳过立即清理');
+            }
         }, 5000); // 延迟5秒执行
     }
 })(); 
