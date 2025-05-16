@@ -1158,21 +1158,22 @@ window.selectMapLocation = function(latLng) {
                         optimized: false
                     });
                     
+                    // 添加报告数据，包含时间戳，用于过期清理
+                    marker.reportData = {
+                        id: 'marker-' + Date.now(),
+                        location: window.selectedLocation,
+                        description: description,
+                        time: new Date().toISOString(),
+                        emoji: '🐶'
+                    };
+                    
                     // 保存标记
                     window.markers.push(marker);
                     
                     // 为标记添加点击事件
-                    marker.addListener('click', function() {
+                    marker.clickListener = marker.addListener('click', function() {
                         if (typeof window.showReportDetails === 'function') {
-                            const reportData = {
-                                id: 'marker-' + Date.now(),
-                                location: window.selectedLocation,
-                                description: description,
-                                time: new Date().toISOString(),
-                                image: '',
-                                emoji: '🐶'
-                            };
-                            window.showReportDetails(reportData);
+                            window.showReportDetails(marker.reportData);
                         } else {
                             // 关闭任何已打开的信息窗口
                             if (window.openedInfoWindow) {
@@ -1180,15 +1181,8 @@ window.selectMapLocation = function(latLng) {
                             }
                             
                             // 创建信息窗口
-                            const content = '<div style="padding: 10px; max-width: 300px;">' +
-                                '<div style="font-size: 14px; margin-bottom: 10px;">' + description + '</div>' +
-                                '<div style="font-size: 12px; color: #666; margin-top: 5px;">' + 
-                                    new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString() + 
-                                '</div>' +
-                            '</div>';
-                            
                             const infoWindow = new google.maps.InfoWindow({
-                                content: content,
+                                content: createInfoWindowContent(description),
                                 maxWidth: 300
                             });
                             
@@ -1207,7 +1201,8 @@ window.selectMapLocation = function(latLng) {
                 window.pendingMarkers = window.pendingMarkers || [];
                 window.pendingMarkers.push({
                     location: window.selectedLocation,
-                    description: description
+                    description: description,
+                    time: new Date().toISOString() // 添加时间戳
                 });
             }
             
@@ -1366,22 +1361,23 @@ window.selectMapLocation = function(latLng) {
                     optimized: false
                 });
                 
+                // 添加报告数据，包含时间戳，用于过期清理
+                marker.reportData = {
+                    id: 'marker-' + Date.now(),
+                    location: location,
+                    description: description,
+                    time: new Date().toISOString(),
+                    emoji: '🐶'
+                };
+                
                 // 保存标记
                 window.markers.push(marker);
                 
                 // 为标记添加点击事件
-                marker.addListener('click', function() {
+                marker.clickListener = marker.addListener('click', function() {
                     // 如果存在showReportDetails函数，则使用它
                     if (typeof window.showReportDetails === 'function') {
-                        const reportData = {
-                            id: 'marker-' + Date.now(),
-                            location: location,
-                            description: description,
-                            time: new Date().toISOString(),
-                            image: '',
-                            emoji: '🐶'
-                        };
-                        window.showReportDetails(reportData);
+                        window.showReportDetails(marker.reportData);
                     } else {
                         // 否则，使用InfoWindow显示
                         // 关闭任何已打开的信息窗口
@@ -1423,7 +1419,8 @@ window.selectMapLocation = function(latLng) {
             window.pendingMarkers = window.pendingMarkers || [];
             window.pendingMarkers.push({
                 location: location,
-                description: description
+                description: description,
+                time: new Date().toISOString() // 添加时间戳
             });
             return null;
         }
