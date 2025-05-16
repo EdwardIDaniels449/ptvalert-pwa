@@ -197,29 +197,46 @@
     
     // 监听和修复特定错误
     function monitorSpecificErrors() {
+        // 检查是否已经修补
+        if (window._undefinedFixConsolePatched) {
+            return;
+        }
+        window._undefinedFixConsolePatched = true;
+        
         // 观察控制台错误，查找特定模式
         const originalConsoleError = console.error;
         console.error = function() {
-            // 调用原始方法
-            originalConsoleError.apply(console, arguments);
-            
-            // 检查是否存在特定错误
+            // 检查是否为特定错误，如果是则不调用原始方法
             try {
-                const errorMsg = arguments[0];
-                if (typeof errorMsg === 'string') {
+                if (arguments.length > 0) {
+                    const errorMsg = arguments[0];
+                    
+                    // 如果是"未知错误"，直接转为普通日志并返回
+                    if (typeof errorMsg === 'string' && 
+                        (errorMsg.includes('未知错误') || 
+                         errorMsg.includes('unknown error'))) {
+                        console.log('[已拦截错误]:', errorMsg);
+                        return;
+                    }
+                    
                     // 检查常见错误模式
-                    if (errorMsg.includes('undefined') || errorMsg.includes('null')) {
-                        console.log('[Undefined Fix] 检测到undefined/null错误，尝试修复');
-                        // 刷新页面中的变量定义
-                        checkAndFixUndefinedErrors();
-                    } else if (errorMsg.includes('setMap')) {
-                        console.log('[Undefined Fix] 检测到setMap错误，修复标记');
-                        fixMarkerObjects();
+                    if (typeof errorMsg === 'string') {
+                        if (errorMsg.includes('undefined') || errorMsg.includes('null')) {
+                            console.log('[Undefined Fix] 检测到undefined/null错误，尝试修复');
+                            // 刷新页面中的变量定义
+                            checkAndFixUndefinedErrors();
+                        } else if (errorMsg.includes('setMap')) {
+                            console.log('[Undefined Fix] 检测到setMap错误，修复标记');
+                            fixMarkerObjects();
+                        }
                     }
                 }
             } catch (e) {
                 // 沉默处理监控错误
             }
+            
+            // 调用原始方法处理其他错误
+            originalConsoleError.apply(console, arguments);
         };
     }
     

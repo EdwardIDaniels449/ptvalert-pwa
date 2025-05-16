@@ -11,24 +11,39 @@
     // 防止全局错误导致应用崩溃
     window.addEventListener('error', function(event) {
         try {
-            const errorMsg = event.message || '未知错误';
-            console.error('[Mobile Fix] 捕获到全局错误:', errorMsg);
+            // 安全地获取错误信息，避免未定义错误
+            let errorMsg = '未知错误';
+            try {
+                if (event && event.message) {
+                    errorMsg = event.message;
+                } else if (event && event.error && event.error.message) {
+                    errorMsg = event.error.message;
+                }
+            } catch (inner) {
+                // 无法获取错误信息，使用默认值
+            }
+            
+            // 使用console.log代替console.error，减少级联错误
+            console.log('[Mobile Fix] 捕获到全局错误:', errorMsg);
             
             // 安全地阻止默认行为
-            if (event.preventDefault) {
+            if (event && event.preventDefault) {
                 event.preventDefault();
             }
             
-            // 安全地显示错误恢复UI
-            try {
-                showErrorRecoveryUI(event);
-            } catch (uiError) {
-                console.error('[Mobile Fix] 显示错误恢复UI时出错:', uiError);
+            // 跳过显示错误恢复UI，除非是严重错误
+            if (errorMsg !== '未知错误' && !errorMsg.includes('unknown')) {
+                try {
+                    showErrorRecoveryUI(event);
+                } catch (uiError) {
+                    console.log('[Mobile Fix] 显示错误恢复UI时出错:', uiError);
+                }
             }
             
             return true; // 防止错误继续传播
         } catch (handlerError) {
-            console.error('[Mobile Fix] 错误处理器本身出错:', handlerError);
+            // 使用console.log而不是console.error
+            console.log('[Mobile Fix] 错误处理器本身出错:', handlerError);
             return true; // 仍然阻止错误传播
         }
     }, true);
