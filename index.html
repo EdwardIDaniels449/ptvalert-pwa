@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- 终极地图修复脚本 - 必须最先加载 -->
-    <script src="js/ultimate-map-fix.js"></script>
-    
     <!-- 全局变量初始化 - 必须最先加载 -->
     <script>
       // 墨尔本中心坐标 - 全局变量
@@ -19,8 +16,8 @@
       console.log('[index.html] Global isMobile:', window.isMobile);
     </script>
     
-    <!-- 增强型地图修复脚本 - 放在最前面加载 -->
-    <script src="js/map-fix-enhanced.js"></script>
+    <!-- 纯Google Maps修复脚本 - 在其他脚本之前加载 -->
+    <script src="js/pure-google-maps-fix.js"></script>
     
     <!-- 紧急重定向脚本 - 必须最先加载 -->
     <script src="redirect.js"></script>
@@ -459,9 +456,6 @@
     
     <!-- 添加标记清理修复脚本 -->
     <script src="js/marker-cleanup-fix.js"></script>
-    
-    <!-- 添加地图显示修复脚本 -->
-    <script src="js/map-display-fix.js"></script>
 </body>
 
 <!-- 辅助脚本 -->
