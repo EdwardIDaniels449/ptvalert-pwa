@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试标记清理</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #0071e3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow: auto;
+        }
+        .result {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>标记清理测试页面</h1>
+    <p>测试标记清理功能是否正常工作。</p>
+    
+    <div>
+        <button id="testBtn">测试清理功能</button>
+        <button id="configBtn">修改配置 (1分钟过期)</button>
+    </div>
+    
+    <div class="result" id="resultContainer">
+        <h3>测试结果：</h3>
+        <pre id="resultOutput">点击上方按钮开始测试...</pre>
+    </div>
+    
+    <!-- 添加一些模拟Google Maps的代码，以免markers-cleanup.js报错 -->
+    <script>
+        // 模拟必要的全局对象
+        window.markers = [];
+        
+        // 模拟Firebase
+        window.firebase = {
+            database: function() {
+                return {
+                    ref: function() {
+                        return {
+                            once: function() {
+                                return Promise.resolve({
+                                    exists: function() { return false; },
+                                    forEach: function() {}
+                                });
+                            }
+                        };
+                    }
+                };
+            }
+        };
+        
+        // 模拟Cloudflare配置
+        window.cloudflareConfig = {
+            apiUrl: 'https://ptvalert.pages.dev',
+            dataEndpoint: '/api/reports'
+        };
+        
+        // 模拟本地存储中的标记数据
+        const oldMarkers = [
+            {
+                lat: -37.81,
+                lng: 144.96,
+                description: "测试标记1",
+                time: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString() // 4小时前
+            },
+            {
+                lat: -37.82,
+                lng: 144.97,
+                description: "测试标记2",
+                time: new Date().toISOString() // 现在
+            }
+        ];
+        localStorage.setItem('savedMarkers', JSON.stringify(oldMarkers));
+        
+        // 模拟MarkerHandler
+        window.MarkerHandler = {
+            saveMarkersToStorage: function() {
+                console.log('保存标记到本地存储');
+            }
+        };
+    </script>
+    
+    <!-- 加载标记清理脚本 -->
+    <script src="js/markers-cleanup.js"></script>
+    
+    <script>
+        document.getElementById('testBtn').addEventListener('click', function() {
+            const resultOutput = document.getElementById('resultOutput');
+            resultOutput.textContent = '正在测试标记清理功能...\n';
+            
+            // 检查MarkersCleanup是否已初始化
+            if (!window.MarkersCleanup) {
+                resultOutput.textContent += '错误：MarkersCleanup未初始化！\n';
+                return;
+            }
+            
+            // 执行清理
+            resultOutput.textContent += '开始执行清理...\n';
+            
+            // 临时替换console.log来捕获输出
+            const originalConsoleLog = console.log;
+            const logs = [];
+            
+            console.log = function() {
+                logs.push(Array.from(arguments).join(' '));
+                originalConsoleLog.apply(console, arguments);
+            };
+            
+            window.MarkersCleanup.cleanupNow();
+            
+            // 等待清理完成
+            setTimeout(function() {
+                console.log = originalConsoleLog;
+                
+                // 显示捕获的日志
+                resultOutput.textContent += '\n日志输出：\n' + logs.join('\n') + '\n';
+                
+                // 检查清理结果
+                const savedMarkers = JSON.parse(localStorage.getItem('savedMarkers') || '[]');
+                resultOutput.textContent += '\n清理结果：\n';
+                resultOutput.textContent += `- 清理前标记数量: ${oldMarkers.length}\n`;
+                resultOutput.textContent += `- 清理后标记数量: ${savedMarkers.length}\n`;
+                
+                if (savedMarkers.length < oldMarkers.length) {
+                    resultOutput.textContent += '\n✅ 测试成功：过期标记已被清理\n';
+                } else {
+                    resultOutput.textContent += '\n❌ 测试失败：过期标记未被清理\n';
+                }
+            }, 1000);
+        });
+        
+        document.getElementById('configBtn').addEventListener('click', function() {
+            const resultOutput = document.getElementById('resultOutput');
+            
+            // 检查MarkersCleanup是否已初始化
+            if (!window.MarkersCleanup) {
+                resultOutput.textContent = '错误：MarkersCleanup未初始化！\n';
+                return;
+            }
+            
+            // 修改配置 - 设置过期时间为1分钟
+            window.MarkersCleanup.updateConfig({
+                expirationTime: 1 * 60 * 1000, // 1分钟
+                checkInterval: 10 * 1000, // 10秒
+                verbose: true
+            });
+            
+            resultOutput.textContent = '已修改配置：\n- 过期时间：1分钟\n- 检查间隔：10秒\n\n现在可以测试清理功能了';
+        });
+    </script>
+</body>
+</html> 
