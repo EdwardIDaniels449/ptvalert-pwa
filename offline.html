@@ -15,7 +15,6 @@
         }
         
         body {
-            position: relative;
             width: 100%;
             min-height: 100vh;
             background-color: #1c1c1e;
@@ -23,50 +22,29 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             padding: 20px;
             text-align: center;
         }
         
         .offline-container {
-            max-width: 550px;
+            max-width: 500px;
             width: 100%;
-            padding: 30px;
-            background-color: rgba(50, 50, 54, 0.95);
+            padding: 30px 20px;
+            background-color: rgba(50, 50, 54, 0.8);
             border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            margin: 30px 0;
-        }
-        
-        .icon-container {
-            margin-bottom: 20px;
-            animation: pulse 2s infinite ease-in-out;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-            100% { transform: scale(1); opacity: 1; }
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            margin: 20px 0;
         }
         
         .icon {
-            font-size: 64px;
-            background-color: rgba(255, 255, 255, 0.1);
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
+            font-size: 50px;
+            margin-bottom: 20px;
         }
         
         h1 {
-            font-size: 28px;
-            margin-bottom: 20px;
-            background: linear-gradient(to right, #0071e3, #00c1d4);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-size: 24px;
+            margin-bottom: 15px;
             color: #0071e3;
         }
         
@@ -85,496 +63,125 @@
             text-decoration: none;
             border-radius: 8px;
             font-weight: bold;
-            margin-top: 10px;
+            margin-top: 15px;
             cursor: pointer;
             border: none;
             font-size: 16px;
-            transition: all 0.2s ease;
+            transition: background-color 0.2s ease;
+            width: 100%;
+            max-width: 300px;
         }
         
-        .button:hover {
+        .button:hover, .button:active {
             background-color: #0084ff;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 113, 227, 0.3);
-        }
-        
-        .button:active {
-            transform: translateY(0);
-            box-shadow: none;
-        }
-        
-        .secondary-button {
-            background-color: rgba(255, 255, 255, 0.1);
-            margin-right: 10px;
-        }
-        
-        .secondary-button:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
-        
-        .cached-content {
-            margin-top: 30px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding-top: 20px;
-        }
-        
-        .cached-content h2 {
-            font-size: 20px;
-            margin-bottom: 15px;
-            color: #0071e3;
-        }
-        
-        .cached-list {
-            margin: 0 auto;
-            max-width: 400px;
-        }
-        
-        .cached-item {
-            padding: 15px;
-            background-color: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: left;
-            display: flex;
-            align-items: center;
-        }
-        
-        .cached-item:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            transform: translateX(5px);
-        }
-        
-        .cached-item-icon {
-            margin-right: 10px;
-            font-size: 20px;
-        }
-        
-        .cached-item-title {
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-        
-        .cached-item-time {
-            font-size: 12px;
-            color: #999;
-        }
-        
-        .language-switch {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            border: none;
-            border-radius: 20px;
-            padding: 8px 16px;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: background 0.2s ease;
-        }
-        
-        .language-switch:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
-        .status-card {
-            background-color: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 20px;
-            margin: 15px 0;
-            border-left: 4px solid #0071e3;
-            text-align: left;
-        }
-        
-        .status-card h3 {
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            font-size: 16px;
-        }
-        
-        .status-card h3 span {
-            margin-right: 8px;
-        }
-        
-        .status-card p {
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-        
-        .status-card p:last-child {
-            margin-bottom: 0;
-        }
-        
-        .status-card ul {
-            list-style: none;
-            margin: 10px 0;
-            padding-left: 10px;
-        }
-        
-        .status-card ul li {
-            padding: 4px 0;
-            display: flex;
-            align-items: center;
-        }
-        
-        .status-card ul li:before {
-            content: "✓";
-            color: #34c759;
-            margin-right: 8px;
-        }
-        
-        .buttons-container {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 20px;
         }
         
         .network-status {
+            margin-top: 20px;
             font-size: 14px;
             color: #999;
-            margin-top: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         
         .status-indicator {
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
-            margin-right: 6px;
-            background-color: #ff3b30;
+            background-color: #cc0000;
+            display: inline-block;
+            margin-right: 8px;
         }
         
         .status-indicator.online {
             background-color: #34c759;
         }
-        
-        .pending-reports {
-            background-color: rgba(255, 149, 0, 0.1);
-            border-left-color: #ff9500;
-            margin-top: 20px;
-        }
-        
-        .warning-text {
-            color: #ff9500;
-        }
-        
-        .logo {
-            margin-top: 30px;
-            font-size: 24px;
-            font-weight: bold;
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .logo span {
-            margin-right: 8px;
-        }
-        
-        @media (max-width: 480px) {
-            .offline-container {
-                padding: 20px;
-            }
-            
-            h1 {
-                font-size: 24px;
-            }
-            
-            .icon {
-                width: 80px;
-                height: 80px;
-                font-size: 40px;
-            }
-            
-            .cached-list {
-                max-width: 100%;
-            }
-        }
     </style>
 </head>
 <body>
-    <div class="logo">
-        <span>🗺️</span> PtvAlert
-    </div>
-    
-    <button id="langSwitchBtn" class="language-switch">
-        <span style="font-size:16px;">🌐</span>
-        <span id="langSwitchText">EN</span>
-    </button>
-    
     <div class="offline-container">
-        <div class="icon-container">
-            <div class="icon">📡</div>
-        </div>
+        <div class="icon">📶</div>
+        <h1 id="title">您当前处于离线状态</h1>
+        <p id="message">无法连接到网络。请检查您的网络连接并重试。您可以访问已缓存的内容，或稍后重新尝试连接。</p>
         
-        <h1 id="offline-title">您当前处于离线状态</h1>
-        
-        <p id="offline-message">当前无法连接到互联网。PtvAlert在离线模式下仍可使用部分功能，但无法获取最新信息或添加新报告。</p>
+        <button class="button" id="retryButton" onclick="retryConnection()">重试连接</button>
         
         <div class="network-status">
-            <div id="statusIndicator" class="status-indicator"></div>
-            <span id="statusText">当前离线</span>
-        </div>
-        
-        <div class="status-card">
-            <h3><span>ℹ️</span> <span id="offlineFeatures">离线模式可用功能</span></h3>
-            <ul>
-                <li id="featureViewCached">查看已缓存的报告</li>
-                <li id="featureDraft">创建草稿报告 (稍后上传)</li>
-                <li id="featureOfflineMap">使用离线地图 (如果之前已缓存)</li>
-            </ul>
-        </div>
-        
-        <div id="pendingReportsCard" class="status-card pending-reports" style="display: none;">
-            <h3><span>⚠️</span> <span id="pendingTitle">待发送的报告</span></h3>
-            <p id="pendingDesc">您有 <span id="pendingCount" class="warning-text">0</span> 条报告等待上传。网络恢复后将自动发送。</p>
-        </div>
-        
-        <div class="buttons-container">
-            <button id="tryReconnect" class="button">重试连接</button>
-            <button id="viewCached" class="button secondary-button">查看已缓存内容</button>
-            <button id="goHome" class="button secondary-button">返回首页</button>
-        </div>
-        
-        <div class="cached-content" id="cachedContent" style="display: none;">
-            <h2 id="cached-title">已缓存内容</h2>
-            <div class="cached-list" id="cachedList">
-                <!-- Cached items will be inserted here dynamically -->
-            </div>
+            <span class="status-indicator" id="statusIndicator"></span>
+            <span id="statusText">离线</span>
         </div>
     </div>
-    
+
     <script>
-        // Language settings
-        let currentLang = 'zh';
-        const i18n = {
+        // 简单的语言切换逻辑
+        const texts = {
             zh: {
-                offlineTitle: '您当前处于离线状态',
-                offlineMessage: '当前无法连接到互联网。PtvAlert在离线模式下仍可使用部分功能，但无法获取最新信息或添加新报告。',
-                viewCached: '查看已缓存内容',
-                tryReconnect: '重试连接',
-                cachedTitle: '已缓存内容',
-                home: '首页',
-                goHome: '返回首页',
-                statusOffline: '当前离线',
-                statusOnline: '已恢复连接',
-                offlineFeatures: '离线模式可用功能',
-                featureViewCached: '查看已缓存的报告',
-                featureDraft: '创建草稿报告 (稍后上传)',
-                featureOfflineMap: '使用离线地图 (如果之前已缓存)',
-                pendingTitle: '待发送的报告',
-                pendingDesc: '您有 {count} 条报告等待上传。网络恢复后将自动发送。',
-                noCachedContent: '暂无缓存内容',
-                cachedReport: '缓存的报告',
-                cachedImage: '缓存的图片',
-                cachedPage: '缓存的页面',
-                lastUpdated: '最后更新: '
+                title: '您当前处于离线状态',
+                message: '无法连接到网络。请检查您的网络连接并重试。您可以访问已缓存的内容，或稍后重新尝试连接。',
+                retry: '重试连接',
+                offline: '离线',
+                online: '在线',
+                checking: '检查连接...'
             },
             en: {
-                offlineTitle: 'You\'re Currently Offline',
-                offlineMessage: 'Unable to connect to the internet. PtvAlert can still work in offline mode with limited functionality, but you cannot get latest updates or add new reports.',
-                viewCached: 'View Cached Content',
-                tryReconnect: 'Try Reconnect',
-                cachedTitle: 'Cached Content',
-                home: 'Home',
-                goHome: 'Return to Home',
-                statusOffline: 'Currently Offline',
-                statusOnline: 'Connection Restored',
-                offlineFeatures: 'Available Offline Features',
-                featureViewCached: 'View cached reports',
-                featureDraft: 'Create draft reports (upload later)',
-                featureOfflineMap: 'Use offline map (if previously cached)',
-                pendingTitle: 'Pending Reports',
-                pendingDesc: 'You have {count} reports waiting to be uploaded. They will be sent automatically when connection is restored.',
-                noCachedContent: 'No cached content available',
-                cachedReport: 'Cached Report',
-                cachedImage: 'Cached Image',
-                cachedPage: 'Cached Page',
-                lastUpdated: 'Last updated: '
+                title: 'You are currently offline',
+                message: 'Unable to connect to the network. Please check your network connection and try again. You can access cached content or try to reconnect later.',
+                retry: 'Retry Connection',
+                offline: 'Offline',
+                online: 'Online',
+                checking: 'Checking connection...'
             }
         };
         
-        // Initialize
-        document.addEventListener('DOMContentLoaded', async function() {
-            // Load preferred language
-            const savedLang = localStorage.getItem('preferredLanguage');
-            if (savedLang && (savedLang === 'zh' || savedLang === 'en')) {
-                currentLang = savedLang;
-            }
-            
-            // Update UI language
-            updateLanguage();
-            
-            // Check for pending reports
-            checkPendingReports();
-            
-            // Load cached content
-            await loadCachedContent();
-            
-            // Set up network status monitoring
-            setupNetworkMonitoring();
-        });
+        // 检测语言
+        const lang = navigator.language.includes('zh') ? 'zh' : 'en';
         
-        // Update UI language
-        function updateLanguage() {
-            document.getElementById('offline-title').textContent = i18n[currentLang].offlineTitle;
-            document.getElementById('offline-message').textContent = i18n[currentLang].offlineMessage;
-            document.getElementById('viewCached').textContent = i18n[currentLang].viewCached;
-            document.getElementById('tryReconnect').textContent = i18n[currentLang].tryReconnect;
-            document.getElementById('cached-title').textContent = i18n[currentLang].cachedTitle;
-            document.getElementById('langSwitchText').textContent = currentLang === 'zh' ? 'EN' : '中';
-            document.getElementById('statusText').textContent = i18n[currentLang].statusOffline;
-            document.getElementById('offlineFeatures').textContent = i18n[currentLang].offlineFeatures;
-            document.getElementById('featureViewCached').textContent = i18n[currentLang].featureViewCached;
-            document.getElementById('featureDraft').textContent = i18n[currentLang].featureDraft;
-            document.getElementById('featureOfflineMap').textContent = i18n[currentLang].featureOfflineMap;
-            document.getElementById('pendingTitle').textContent = i18n[currentLang].pendingTitle;
-            document.getElementById('goHome').textContent = i18n[currentLang].goHome;
-            
-            // Update pending reports description
-            const count = document.getElementById('pendingCount').textContent;
-            document.getElementById('pendingDesc').textContent = i18n[currentLang].pendingDesc.replace('{count}', count);
-        }
+        // 更新文本
+        document.getElementById('title').textContent = texts[lang].title;
+        document.getElementById('message').textContent = texts[lang].message;
+        document.getElementById('retryButton').textContent = texts[lang].retry;
+        document.getElementById('statusText').textContent = texts[lang].offline;
         
-        // Toggle language
-        document.getElementById('langSwitchBtn').addEventListener('click', function() {
-            currentLang = currentLang === 'zh' ? 'en' : 'zh';
-            updateLanguage();
+        // 检查网络状态
+        function updateNetworkStatus() {
+            const online = navigator.onLine;
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
             
-            // Save language preference
-            localStorage.setItem('preferredLanguage', currentLang);
-        });
-        
-        // Show cached content
-        document.getElementById('viewCached').addEventListener('click', function() {
-            const cachedContent = document.getElementById('cachedContent');
-            if (cachedContent.style.display === 'none') {
-                cachedContent.style.display = 'block';
-                this.textContent = currentLang === 'zh' ? '隐藏已缓存内容' : 'Hide Cached Content';
+            if (online) {
+                statusIndicator.classList.add('online');
+                statusText.textContent = texts[lang].online;
             } else {
-                cachedContent.style.display = 'none';
-                this.textContent = i18n[currentLang].viewCached;
+                statusIndicator.classList.remove('online');
+                statusText.textContent = texts[lang].offline;
             }
-        });
+        }
         
-        // Try reconnect
-        document.getElementById('tryReconnect').addEventListener('click', function() {
-            window.location.reload();
-        });
+        // 初始化检查
+        updateNetworkStatus();
         
-        // Go to home
-        document.getElementById('goHome').addEventListener('click', function() {
-            window.location.href = './';
-        });
-        
-        // Setup network monitoring
-        function setupNetworkMonitoring() {
-            const updateNetworkStatus = () => {
-                const online = navigator.onLine;
-                const statusIndicator = document.getElementById('statusIndicator');
-                const statusText = document.getElementById('statusText');
-                
-                if (online) {
-                    statusIndicator.classList.add('online');
-                    statusText.textContent = i18n[currentLang].statusOnline;
-                    // If online, show a message that we're reconnecting
-                    setTimeout(() => {
-                        window.location.href = './';
-                    }, 3000);
-                } else {
-                    statusIndicator.classList.remove('online');
-                    statusText.textContent = i18n[currentLang].statusOffline;
-                }
-            };
-            
-            // Initial check
+        // 监听网络状态变化
+        window.addEventListener('online', function() {
             updateNetworkStatus();
-            
-            // Listen for network changes
-            window.addEventListener('online', updateNetworkStatus);
-            window.addEventListener('offline', updateNetworkStatus);
-        }
+            // 如果在线，尝试自动重新加载
+            setTimeout(function() {
+                window.location.href = './';
+            }, 1500);
+        });
         
-        // Check for pending reports
-        function checkPendingReports() {
-            try {
-                const pendingReports = localStorage.getItem('pending_reports');
-                if (pendingReports) {
-                    const reports = JSON.parse(pendingReports);
-                    if (reports && reports.length > 0) {
-                        document.getElementById('pendingCount').textContent = reports.length;
-                        document.getElementById('pendingReportsCard').style.display = 'block';
-                        
-                        // Update description with count
-                        document.getElementById('pendingDesc').textContent = 
-                            i18n[currentLang].pendingDesc.replace('{count}', reports.length);
-                    }
-                }
-            } catch (error) {
-                console.error('Error checking pending reports:', error);
-            }
-        }
+        window.addEventListener('offline', updateNetworkStatus);
         
-        // Load cached content
-        async function loadCachedContent() {
-            if (!('caches' in window)) {
-                return;
-            }
+        // 重试连接
+        function retryConnection() {
+            const statusText = document.getElementById('statusText');
+            statusText.textContent = texts[lang].checking;
             
-            const cachedList = document.getElementById('cachedList');
-            cachedList.innerHTML = '';
-            
-            try {
-                // Try to get cached reports from localStorage
-                const cachedReports = localStorage.getItem('cached_reports');
-                if (cachedReports) {
-                    const reports = JSON.parse(cachedReports);
-                    if (reports && reports.length > 0) {
-                        reports.forEach(report => {
-                            const time = new Date(report.time).toLocaleString();
-                            const item = document.createElement('div');
-                            item.className = 'cached-item';
-                            item.innerHTML = `
-                                <div class="cached-item-icon">${report.emoji || '📍'}</div>
-                                <div>
-                                    <div class="cached-item-title">${report.description || i18n[currentLang].cachedReport}</div>
-                                    <div class="cached-item-time">${i18n[currentLang].lastUpdated}${time}</div>
-                                </div>
-                            `;
-                            cachedList.appendChild(item);
-                        });
-                    }
+            // 检查连接并重新加载
+            setTimeout(function() {
+                if (navigator.onLine) {
+                    window.location.href = './';
+                } else {
+                    updateNetworkStatus();
                 }
-                
-                // If there's still no content, show a message
-                if (cachedList.children.length === 0) {
-                    const emptyMessage = document.createElement('div');
-                    emptyMessage.style.textAlign = 'center';
-                    emptyMessage.style.padding = '20px';
-                    emptyMessage.style.color = '#999';
-                    emptyMessage.textContent = i18n[currentLang].noCachedContent;
-                    cachedList.appendChild(emptyMessage);
-                }
-            } catch (error) {
-                console.error('Error loading cached content:', error);
-                const errorMessage = document.createElement('div');
-                errorMessage.style.textAlign = 'center';
-                errorMessage.style.padding = '20px';
-                errorMessage.style.color = '#ff3b30';
-                errorMessage.textContent = 'Error loading cached content';
-                cachedList.appendChild(errorMessage);
-            }
+            }, 1000);
         }
     </script>
 </body>

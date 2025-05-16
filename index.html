@@ -16,6 +16,9 @@
       console.log('[index.html] Global isMobile:', window.isMobile);
     </script>
     
+    <!-- PWA Manifest修复脚本 - 解决移动设备上的PWA问题 -->
+    <script src="js/manifest-fix.js"></script>
+    
     <!-- 纯Google Maps修复脚本 - 在其他脚本之前加载 -->
     <script src="js/pure-google-maps-fix.js?v=2023051602"></script>
     
@@ -54,48 +57,98 @@
     <!-- Firebase与Cloudflare同步脚本 -->
     <script src="./js/firebase-to-cloudflare-sync.js"></script>
     
-    <!-- 全局变量声明 -->
+    <!-- 修复版Service Worker注册脚本 -->
     <script>
-        // 在页面加载时检查并卸载所有服务工作线程
+        // 确保Service Worker正确注册
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', async function() {
                 try {
-                    console.log('开始处理Service Worker注册...');
+                    console.log('[Service Worker] 开始注册Service Worker...');
                     
-                    // 卸载所有服务工作线程以确保使用最新版本
-                    const registrations = await navigator.serviceWorker.getRegistrations();
-                    for (let registration of registrations) {
-                        console.log('卸载旧的服务工作线程', registration.scope);
-                        await registration.unregister();
-                    }
-                    console.log('所有服务工作线程已卸载，将重新注册最新版本');
-                    
-                    // 使用简单的相对路径注册Service Worker
+                    // 先卸载所有现有的Service Worker
                     try {
-                        console.log('尝试使用相对路径注册Service Worker...');
-                        const registration = await navigator.serviceWorker.register('./service-worker.js', {
+                        const registrations = await navigator.serviceWorker.getRegistrations();
+                        for (let registration of registrations) {
+                            console.log('[Service Worker] 卸载旧的Service Worker:', registration.scope);
+                            await registration.unregister();
+                        }
+                        console.log('[Service Worker] 所有旧Service Worker已卸载');
+                    } catch (unregError) {
+                        console.warn('[Service Worker] 卸载旧Service Worker时出错:', unregError);
+                    }
+                    
+                    // 为不同环境准备正确的Service Worker路径
+                    let swPath = './service-worker.js';
+                    
+                    // 检测GitHub Pages环境并修正路径
+                    if (window.location.hostname.includes('github.io')) {
+                        const pathSegments = window.location.pathname.split('/');
+                        if (pathSegments.length >= 2 && pathSegments[1]) {
+                            const repoName = pathSegments[1];
+                            swPath = '/' + repoName + '/service-worker.js';
+                            console.log('[Service Worker] 检测到GitHub Pages环境，使用路径:', swPath);
+                        }
+                    }
+                    
+                    // 针对移动设备使用更简单的注册流程
+                    if (window.isMobile) {
+                        console.log('[Service Worker] 检测到移动设备，使用简化注册流程');
+                        
+                        try {
+                            const registration = await navigator.serviceWorker.register(swPath);
+                            console.log('[Service Worker] 移动设备注册成功:', registration.scope);
+                        } catch (mobileError) {
+                            console.error('[Service Worker] 移动设备注册失败:', mobileError);
+                            console.log('[Service Worker] 尝试使用备用Service Worker');
+                            
+                            try {
+                                const fallbackReg = await navigator.serviceWorker.register('./fallback-service-worker.js');
+                                console.log('[Service Worker] 备用Service Worker注册成功:', fallbackReg.scope);
+                            } catch (fallbackError) {
+                                console.error('[Service Worker] 备用Service Worker也注册失败:', fallbackError);
+                                
+                                // 使用内联最小Service Worker作为最后的兜底方案
+                                try {
+                                    const minimalSW = new Blob([
+                                        `self.addEventListener('install', () => self.skipWaiting());
+                                        self.addEventListener('activate', e => e.waitUntil(clients.claim()));
+                                        self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => 
+                                            new Response('离线模式，请稍后重试'))));`
+                                    ], {type: 'application/javascript'});
+                                    
+                                    const minimalURL = URL.createObjectURL(minimalSW);
+                                    const minimalReg = await navigator.serviceWorker.register(minimalURL);
+                                    console.log('[Service Worker] 内联最小Service Worker注册成功');
+                                } catch (inlineError) {
+                                    console.error('[Service Worker] 所有注册方法都失败');
+                                }
+                            }
+                        }
+                        return;
+                    }
+                    
+                    // 桌面设备使用标准注册流程
+                    try {
+                        const registration = await navigator.serviceWorker.register(swPath, {
                             scope: './'
                         });
-                        console.log('Service Worker注册成功:', registration.scope);
+                        console.log('[Service Worker] 注册成功:', registration.scope);
                     } catch (mainError) {
-                        console.error('使用主Service Worker注册失败:', mainError);
+                        console.error('[Service Worker] 主Service Worker注册失败:', mainError);
                         
-                        // 尝试使用备用Service Worker
                         try {
-                            console.log('尝试注册备用Service Worker...');
+                            console.log('[Service Worker] 尝试注册备用Service Worker');
                             const fallbackReg = await navigator.serviceWorker.register('./fallback-service-worker.js', {
                                 scope: './'
                             });
-                            console.log('备用Service Worker注册成功:', fallbackReg.scope);
+                            console.log('[Service Worker] 备用Service Worker注册成功:', fallbackReg.scope);
                         } catch (fallbackError) {
-                            console.error('备用Service Worker注册也失败:', fallbackError);
+                            console.error('[Service Worker] 备用Service Worker注册也失败:', fallbackError);
                             
-                            // 最后的回退 - 内联最小Service Worker
                             if (window.location.hostname.includes('github.io')) {
-                                console.log('尝试使用内联Service Worker作为最后的回退...');
+                                console.log('[Service Worker] 尝试使用内联Service Worker');
                                 
                                 const minimalSWBlob = new Blob([`
-                                    // 最小化内联Service Worker
                                     self.addEventListener('install', () => self.skipWaiting());
                                     self.addEventListener('activate', event => event.waitUntil(clients.claim()));
                                     self.addEventListener('fetch', event => event.respondWith(fetch(event.request)));
@@ -108,15 +161,15 @@
                                     const inlineReg = await navigator.serviceWorker.register(minimalSWUrl, {
                                         scope: './'
                                     });
-                                    console.log('内联Service Worker注册成功:', inlineReg.scope);
+                                    console.log('[Service Worker] 内联Service Worker注册成功:', inlineReg.scope);
                                 } catch (inlineError) {
-                                    console.error('所有Service Worker注册方法都失败:', inlineError);
+                                    console.error('[Service Worker] 所有Service Worker注册方法都失败');
                                 }
                             }
                         }
                     }
                 } catch (error) {
-                    console.error('处理服务工作线程时出错:', error);
+                    console.error('[Service Worker] 处理服务工作线程时出错:', error);
                 }
             });
         }
