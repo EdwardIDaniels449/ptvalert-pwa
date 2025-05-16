@@ -1,0 +1,227 @@
+/**
+ * 移动设备优化样式表
+ * 提高移动设备上的性能和用户体验
+ */
+
+/* 为移动设备优化的基本样式 */
+.mobile-optimized {
+    /* 减少动画和过渡效果以提高性能 */
+    --transition-speed: 0.2s !important;
+    --animation-speed: 0.3s !important;
+}
+
+/* 移动设备特定优化 */
+@media (max-width: 767px) {
+    /* 防止页面滚动时出现的弹性效果，这可能会导致性能问题 */
+    html, body {
+        overscroll-behavior: none;
+        -webkit-overflow-scrolling: auto;
+    }
+    
+    /* 优化触摸目标大小 */
+    button, 
+    input[type="button"], 
+    input[type="submit"],
+    .button,
+    .clickable,
+    a {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* 减少阴影复杂度 */
+    .box-shadow, 
+    [class*="shadow"],
+    .map-control button,
+    .popup-base,
+    .report-form {
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+    }
+    
+    /* 优化表单控件 */
+    .form-textarea, 
+    input[type="text"], 
+    input[type="email"], 
+    input[type="password"] {
+        -webkit-appearance: none; /* 移除iOS默认样式 */
+        appearance: none;
+        font-size: 16px !important; /* 防止iOS中输入时自动缩放 */
+    }
+    
+    /* 地图控制优化 */
+    .map-control {
+        bottom: 10px !important;
+    }
+    
+    /* 优化报告表单 */
+    .report-form {
+        border-radius: 20px 20px 0 0 !important;
+        transform: translateY(100%);
+        transition: transform 0.2s ease-out !important;
+    }
+    
+    /* 为弹出窗口使用硬件加速，避免闪烁 */
+    .popup-base {
+        will-change: transform, opacity;
+        transform: translateZ(0);
+    }
+    
+    /* 样式化地图标记，使用CSS而不是复杂的图标 */
+    .simple-marker {
+        background-color: #e74c3c;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        will-change: transform;
+        transform: translateZ(0);
+    }
+    
+    /* 减少或移除不必要的动画 */
+    * {
+        transition-duration: 0.2s !important;
+        animation-duration: 0.3s !important;
+    }
+    
+    /* 禁用不必要的悬停效果 */
+    *:hover {
+        transform: none !important;
+        box-shadow: inherit !important;
+    }
+    
+    /* 优化滚动容器 */
+    .scroll-container {
+        -webkit-overflow-scrolling: touch;
+        overflow-y: auto;
+    }
+    
+    /* 优化图像 */
+    img {
+        transform: translateZ(0); /* 硬件加速 */
+    }
+    
+    /* 地图容器优化 */
+    #map {
+        position: fixed !important;
+        width: 100% !important;
+        height: 100% !important;
+        top: 0 !important;
+        left: 0 !important;
+        z-index: 1 !important;
+    }
+    
+    /* 使地图标记更易于点击 */
+    .gm-style img {
+        transform: scale(1.2) !important;
+    }
+    
+    /* 提高表单元素的可操作性 */
+    button, input, select, textarea {
+        margin: 2px 0 !important;
+    }
+    
+    /* 减少过渡动画 */
+    .animated, .fade, .slide {
+        transition: none !important;
+        animation: none !important;
+    }
+    
+    /* 低内存设备额外优化 */
+    .low-memory-device .background-image,
+    .low-memory-device .bg-image {
+        background-image: none !important;
+    }
+    
+    /* 禁用渐变和复杂背景 */
+    .low-memory-device .gradient {
+        background: #2c2c2e !important;
+    }
+    
+    /* 崩溃恢复UI样式 */
+    #mobileErrorRecovery {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        text-align: center;
+        color: white;
+        padding: 20px;
+    }
+    
+    /* 设备方向变化时的优化 */
+    @media (orientation: landscape) {
+        .report-form {
+            height: 85vh !important;
+            max-height: 85vh !important;
+        }
+        
+        /* 在横屏模式下优化布局 */
+        .form-group {
+            margin-bottom: 8px !important;
+        }
+        
+        .form-label {
+            margin-bottom: 4px !important;
+        }
+    }
+}
+
+/* iOS 特定优化 */
+@supports (-webkit-touch-callout: none) {
+    /* iOS设备 */
+    body {
+        /* 防止iOS中的橡皮筋效果 */
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+    
+    /* 使用一个可滚动容器 */
+    .scrollable-content {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* 修复iOS上的固定元素问题 */
+    .map-control,
+    .fixed-bottom {
+        position: absolute !important;
+    }
+    
+    /* 修复iOS软键盘问题 */
+    input:focus, 
+    textarea:focus {
+        position: relative;
+        z-index: 1;
+    }
+}
+
+/* 安卓特定优化 */
+@supports not (-webkit-touch-callout: none) {
+    /* 非iOS设备（主要是安卓） */
+    input, textarea, select, button {
+        /* 移除安卓默认的输入框高亮 */
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* 修复安卓键盘弹出时的布局问题 */
+    .android-keyboard-fix {
+        height: auto !important;
+        overflow: visible !important;
+    }
+} 

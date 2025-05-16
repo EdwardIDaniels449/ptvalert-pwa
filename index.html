@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
+    <!-- 移动端闪退修复脚本 - 必须最先加载 -->
+    <script src="js/mobile-crash-fix.js"></script>
+    
     <!-- 全局变量初始化 - 必须最先加载 -->
     <script>
       // 墨尔本中心坐标 - 全局变量
@@ -206,6 +209,9 @@
     <!-- 样式表 -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     
+    <!-- 移动设备优化样式 -->
+    <link rel="stylesheet" href="css/mobile-optimization.css" />
+    
     <!-- 添加Firebase SDK 脚本 -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -241,6 +247,9 @@
     <!-- 先加载辅助脚本，确保它们在Google Maps API之前初始化 -->
     <!-- 地图加载修复脚本，必须最先加载 -->
     <script src="js/fix-google-maps-callback.js"></script>
+    
+    <!-- 轻量级地图初始化脚本 - 优化移动设备地图加载 -->
+    <script src="js/lightweight-map-init.js"></script>
 
     <!-- Google Maps API 脚本，添加超时参数 -->
     <script async defer
@@ -252,6 +261,9 @@
     <script src="js/app-connector.js"></script>
     <script src="js/functionality-recovery.js"></script>
     <script src="js/marker-handler.js"></script>
+    
+    <!-- 移动端标记修复脚本 -->
+    <script src="js/mobile-markers-fix.js"></script>
     
     <!-- 添加Firebase初始化脚本 -->
     <script src="js/firebase-initializer.js"></script>
