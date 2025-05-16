@@ -888,6 +888,7 @@
             animation: popup-fade-in 0.3s ease-out;
         }
     </style>
+    <script src="js/report-validator.js"></script>
 </head>
 <body>
     <!-- 右上角语言切换按钮 -->

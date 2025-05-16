@@ -228,8 +228,29 @@ function updateSyncConfig(newConfig) {
 
 // 同步单条报告到Cloudflare
 function syncSingleReportToCloudflare(reportData) {
-    if (!reportData || !reportData.id) {
-        console.error('[FB>CF] 无效的报告数据');
+    // 添加更严格的数据验证
+    if (!reportData) {
+        console.error('[FB>CF] 无效的报告数据: 数据为空');
+        return Promise.reject(new Error('无效的报告数据'));
+    }
+    
+    // 检查数据类型
+    if (typeof reportData !== 'object') {
+        console.error('[FB>CF] 无效的报告数据: 数据类型错误');
+        return Promise.reject(new Error('无效的报告数据'));
+    }
+    
+    // 检查必要字段
+    if (!reportData.id) {
+        console.error('[FB>CF] 无效的报告数据: 缺少id字段');
+        return Promise.reject(new Error('无效的报告数据'));
+    }
+    
+    // 检查其他必要字段
+    const requiredFields = ['lat', 'lng', 'description', 'time'];
+    const missingFields = requiredFields.filter(field => !reportData[field]);
+    if (missingFields.length > 0) {
+        console.error(`[FB>CF] 无效的报告数据: 缺少字段 ${missingFields.join(', ')}`);
         return Promise.reject(new Error('无效的报告数据'));
     }
     
