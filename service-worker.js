@@ -84,6 +84,7 @@ const CORE_ASSETS = [
   BASE_PATH + 'js/markers-cleanup.js',
   BASE_PATH + 'js/marker-cleanup-fix.js',
   BASE_PATH + 'js/map-display-fix.js',
+  BASE_PATH + 'js/map-fix-enhanced.js',
   BASE_PATH + 'images/icon-192x192.png'
 ];
 
