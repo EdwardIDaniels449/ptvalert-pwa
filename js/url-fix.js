@@ -267,35 +267,74 @@
     // 监听控制台错误
     function setupErrorListener() {
         try {
+            // 检查是否已修补，避免重复修补
+            if (window._urlFixErrorPatched) {
+                return;
+            }
+            window._urlFixErrorPatched = true;
+            
+            // 保存原始console.error引用
             const oldConsoleError = console.error;
+            
+            // 替换console.error，但确保安全处理
             console.error = function() {
-                const args = Array.from(arguments);
-                const errorText = args.join(' ');
-                
-                // 检查是否有错误URL
-                if (errorText.includes('your-subdomain.workers.dev')) {
-                    console.warn('在错误消息中检测到错误域名！尝试修复...');
-                    fixApiBaseUrl();
+                try {
+                    const args = Array.from(arguments);
+                    let errorText = '';
+                    
+                    // 安全地构建错误文本
+                    try {
+                        errorText = args.map(arg => 
+                            typeof arg === 'string' ? arg : 
+                            (arg && typeof arg.toString === 'function' ? arg.toString() : String(arg))
+                        ).join(' ');
+                    } catch (textError) {
+                        errorText = '[无法转换错误消息]';
+                    }
+                    
+                    // 检查是否包含"未知错误"，如果是则不处理
+                    if (errorText.includes('未知错误') || errorText.includes('unknown error')) {
+                        // 不处理这些错误，仅记录
+                        console.log('[URL Fix] 跳过已知错误模式:', errorText.substring(0, 50) + '...');
+                        return;
+                    }
+                    
+                    // 检查是否有错误URL
+                    if (errorText.includes('your-subdomain.workers.dev')) {
+                        console.log('[URL Fix] 在错误中检测到错误域名，修复中...');
+                        fixApiBaseUrl();
+                        return; // 不继续传播错误
+                    }
+                    
+                    // 检查是否有404错误
+                    if (errorText.includes('404') && errorText.includes('service-worker.js')) {
+                        console.log('[URL Fix] 检测到Service Worker 404错误，修复中...');
+                        fixServiceWorkerPath();
+                        return; // 不继续传播错误
+                    }
+                    
+                    // 检查DNS解析错误
+                    if (errorText.includes('ERR_NAME_NOT_RESOLVED') && errorText.includes('ptvalert.pages.dev')) {
+                        console.log('[URL Fix] 检测到API域名DNS解析错误!');
+                        checkApiServer();
+                        return; // 不继续传播错误
+                    }
+                    
+                    // 对于其他错误，调用原始的console.error
+                    oldConsoleError.apply(console, args);
+                } catch (handlerError) {
+                    // 确保错误处理器本身不会出错
+                    try {
+                        oldConsoleError.call(console, '[URL Fix] 错误处理中出错:', handlerError);
+                    } catch (finalError) {
+                        // 最后一道防线
+                    }
                 }
-                
-                // 检查是否有404错误
-                if (errorText.includes('404') && errorText.includes('service-worker.js')) {
-                    console.warn('检测到Service Worker 404错误，尝试修复...');
-                    fixServiceWorkerPath();
-                }
-                
-                // 检查DNS解析错误
-                if (errorText.includes('ERR_NAME_NOT_RESOLVED') && errorText.includes('ptvalert.pages.dev')) {
-                    console.warn('检测到API域名DNS解析错误!');
-                    checkApiServer();
-                }
-                
-                // 调用原始的console.error
-                oldConsoleError.apply(console, args);
             };
-            console.log('已设置错误监听器');
+            console.log('已设置安全的URL错误监听器');
         } catch (e) {
-            console.error('设置错误监听器失败:', e);
+            // 不使用console.error，以避免潜在的循环
+            console.log('[URL Fix] 设置错误监听器失败:', e);
         }
     }
     
