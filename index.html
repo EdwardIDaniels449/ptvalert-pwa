@@ -4,30 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- 清除浏览器缓存的脚本 -->
+    <!-- 紧急缓存清理和脚本拦截 -->
     <script>
-        // 强制清除缓存
-        if (window.caches) {
-            console.log('尝试清除缓存...');
-            caches.keys().then(function(cacheNames) {
-                return Promise.all(
-                    cacheNames.map(function(cacheName) {
-                        console.log('删除缓存:', cacheName);
-                        return caches.delete(cacheName);
-                    })
-                );
-            });
-        }
+        // 禁止加载任何edwardidaniels449.github.io的资源
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options) {
+            if (typeof url === 'string' && url.includes('edwardidaniels449.github.io')) {
+                console.warn('⚠️ 已拦截外部资源请求:', url);
+                return Promise.reject(new Error('Resource blocked'));
+            }
+            return originalFetch.apply(this, arguments);
+        };
         
-        // 阻止从外部域加载脚本
+        // 拦截XMLHttpRequest
+        const originalOpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+            if (typeof url === 'string' && url.includes('edwardidaniels449.github.io')) {
+                console.warn('⚠️ 已拦截XHR请求:', url);
+                throw new Error('XHR request blocked');
+            }
+            return originalOpen.call(this, method, url, ...rest);
+        };
+        
+        // 阻止外部脚本加载
         const originalCreateElement = document.createElement;
         document.createElement = function(tagName) {
             const element = originalCreateElement.call(document, tagName);
             if (tagName.toLowerCase() === 'script') {
                 const originalSetAttribute = element.setAttribute;
                 element.setAttribute = function(name, value) {
-                    if (name === 'src' && value.includes('edwardidaniels449.github.io')) {
-                        console.warn('阻止加载外部脚本:', value);
+                    if (name === 'src' && value && value.includes('edwardidaniels449.github.io')) {
+                        console.warn('⚠️ 已拦截脚本加载:', value);
                         return;
                     }
                     return originalSetAttribute.call(this, name, value);
@@ -35,6 +42,55 @@
             }
             return element;
         };
+        
+        // 强制清除所有缓存
+        if ('caches' in window) {
+            console.log('📣 清除所有缓存...');
+            caches.keys().then(cacheNames => {
+                cacheNames.forEach(cacheName => {
+                    console.log('🗑️ 删除缓存:', cacheName);
+                    caches.delete(cacheName);
+                });
+            });
+        }
+        
+        // 如果有Service Worker，尝试卸载它
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for (let registration of registrations) {
+                    console.log('🗑️ 卸载Service Worker:', registration.scope);
+                    registration.unregister();
+                }
+            });
+        }
+        
+        // 检测并报告已加载的问题脚本
+        window.addEventListener('DOMContentLoaded', function() {
+            const problemScripts = [
+                'mobile-error-final-fix.js',
+                'undefined-error-fix.js',
+                'error-fix-patch.js',
+                'offline-handler.js',
+                'mobile-fix.js',
+                'functionality-recovery.js'
+            ];
+            
+            let found = false;
+            document.querySelectorAll('script').forEach(script => {
+                if (script.src) {
+                    problemScripts.forEach(badScript => {
+                        if (script.src.includes(badScript)) {
+                            console.error('⚠️ 检测到问题脚本仍在加载:', script.src);
+                            found = true;
+                        }
+                    });
+                }
+            });
+            
+            if (!found) {
+                console.log('✅ 没有检测到问题脚本');
+            }
+        });
     </script>
     
     <!-- 提前加载关键资源 -->
@@ -213,13 +269,48 @@
             });
             
             console.log("地图已初始化");
+            
+            // 地图初始化后的事件处理
+            if (window.map) {
+                // 添加点击事件
+                window.map.addListener = window.map.addListener || function(event, callback) {
+                    console.log("添加地图事件监听器:", event);
+                    // 使用原生google.maps.event.addListener
+                    if (google && google.maps && google.maps.event && google.maps.event.addListener) {
+                        return google.maps.event.addListener(window.map, event, callback);
+                    } else {
+                        console.warn("无法添加地图事件监听器");
+                        return {
+                            remove: function() {}
+                        };
+                    }
+                };
+            }
         }
         
         // Google Maps API 加载回调
         function googleMapsLoadedCallback() {
-            console.log("Google Maps 已加载，初始化地图...");
-            initMap();
+            console.log("Google Maps API已加载");
+            
+            // 延迟执行，确保DOM已经完全加载
+            setTimeout(function() {
+                try {
+                    initMap();
+                } catch (e) {
+                    console.error("初始化地图时出错:", e);
+                }
+            }, 100);
         }
+        
+        // 备用计时器，以防回调未触发
+        setTimeout(function() {
+            if (!window.map) {
+                console.warn("Google Maps回调未触发，尝试手动初始化");
+                if (typeof initMap === 'function' && typeof google !== 'undefined') {
+                    initMap();
+                }
+            }
+        }, 5000);
     </script>
     <script async defer
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places&v=weekly"></script>
@@ -232,6 +323,42 @@
     
     <!-- 添加Firebase初始化脚本 -->
     <script src="js/firebase-initializer.js"></script>
+    
+    <!-- 基本样式 -->
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        #map {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .map-control {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .popup-base {
+            position: fixed;
+            background-color: #1c1c1e;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            z-index: 2000;
+            color: white;
+            padding: 20px;
+        }
+    </style>
 </head>
 <body>
     <!-- 右上角语言切换按钮 -->
