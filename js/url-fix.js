@@ -8,7 +8,15 @@
     
     // 设置适当的API服务器URL
     function getCorrectApiUrl() {
-        // 使用当前主机名
+        // 检查是否为本地开发环境
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.includes('192.168.');
+        
+        if (isLocalhost) {
+            // 本地开发环境使用 http
+            return 'http://' + window.location.host;
+        }
+        
+        // 其他环境使用 https
         return 'https://' + window.location.hostname;
     }
     
@@ -64,51 +72,68 @@
     // 检查API服务器是否可用
     async function checkApiServer() {
         try {
-            // 检查是否在GitHub Pages环境中
+            // 检查是否在本地环境或GitHub Pages环境中
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.includes('192.168.');
             const isGitHubPages = window.location.hostname.includes('github.io');
             
-            // 如果在GitHub Pages环境中，跳过API服务器检查
-            if (isGitHubPages) {
-                console.log('检测到GitHub Pages环境，跳过API服务器检查');
+            // 如果在本地环境或GitHub Pages环境中，跳过API服务器检查
+            if (isLocalhost || isGitHubPages) {
+                console.log('检测到本地或GitHub Pages环境，使用静态模式并跳过API服务器检查');
+                
+                // 设置为静态模式，不需要连接API服务器
+                window.API_MODE = 'static';
+                
                 return true;
             }
             
             // 获取正确的API URL
             const correctApiUrl = getCorrectApiUrl();
-            
-            // 使用HEAD请求检查服务器是否可达
-            // 使用随机参数防止缓存
-            const pingUrl = `${correctApiUrl}/ping?nocache=${Date.now()}`;
-            console.log(`Ping URL: ${pingUrl}`);
+            console.log('尝试API服务器连接:', correctApiUrl);
             
             try {
-                const response = await fetch(pingUrl, {
+                // 使用超时解决长时间等待问题
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('API请求超时')), 5000);
+                });
+                
+                // 使用随机参数防止缓存
+                const pingUrl = `${correctApiUrl}/ping?nocache=${Date.now()}`;
+                const fetchPromise = fetch(pingUrl, {
                     method: 'HEAD',
                     mode: 'cors',
                     cache: 'no-cache'
                 });
                 
+                // 使用Promise.race来实现超时功能
+                const response = await Promise.race([fetchPromise, timeoutPromise]);
+                
                 if (response.ok || response.status === 204) {
                     console.log('API服务器可达:', response.status);
+                    window.API_MODE = 'online';
                     return true;
                 } else {
                     console.warn(`API服务器返回状态码: ${response.status}`);
+                    window.API_MODE = 'static'; // 切换到静态模式
                     return false;
                 }
             } catch (error) {
                 console.error('API服务器连接失败:', error);
                 
+                // 设置为静态模式
+                window.API_MODE = 'static';
+                
                 // 尝试使用当前域名作为API服务器
                 if (typeof window.API_BASE_URL !== 'undefined') {
                     const originalUrl = window.API_BASE_URL;
                     window.API_BASE_URL = correctApiUrl;
-                    console.log(`API服务器连接失败, 已切换到当前域名: ${window.API_BASE_URL}`);
+                    console.log(`API服务器连接失败, 已切换到静态模式，将使用本地存储数据`);
                 }
                 
                 return false;
             }
         } catch (e) {
             console.error('检查API服务器失败:', e);
+            window.API_MODE = 'static'; // 切换到静态模式
             return false;
         }
     }

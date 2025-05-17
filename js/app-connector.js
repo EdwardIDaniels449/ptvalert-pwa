@@ -24,6 +24,12 @@
         
         // Show UI elements that might be hidden
         showUIElements();
+        
+        // 检查Google Maps是否已加载
+        checkMapsAPILoaded();
+        
+        // 添加调试信息到页面
+        addDebugInfoPanel();
     });
 
     // Connect UI controller with original app functions
@@ -229,4 +235,422 @@
     function getFirebaseAuth() {
         return window.getFirebaseAuth ? window.getFirebaseAuth() : null;
     }
+
+    // 检查Google Maps API是否已加载
+    function checkMapsAPILoaded() {
+        console.log('[App Connector] 检查Google Maps API状态...');
+        
+        // 15秒后检查地图状态
+        setTimeout(function() {
+            const mapStatus = document.getElementById('mapStatus');
+            
+            if (!window.google || !window.google.maps) {
+                console.error('[App Connector] Google Maps API未正确加载');
+                if (mapStatus) {
+                    mapStatus.textContent = '地图API加载失败';
+                    mapStatus.style.color = 'red';
+                }
+                
+                // 尝试手动重新加载Google Maps API
+                reloadMapsAPI();
+            } else if (!window.map) {
+                console.error('[App Connector] 地图对象未初始化');
+                if (mapStatus) {
+                    mapStatus.textContent = '地图未初始化';
+                    mapStatus.style.color = 'orange';
+                }
+                
+                // 尝试手动初始化地图
+                if (typeof initMap === 'function') {
+                    console.log('[App Connector] 尝试手动初始化地图...');
+                    try {
+                        initMap();
+                        if (window.map) {
+                            console.log('[App Connector] 地图手动初始化成功');
+                            if (mapStatus) {
+                                mapStatus.textContent = '地图已手动初始化';
+                                mapStatus.style.color = 'green';
+                            }
+                            
+                            // 初始化标记
+                            initializeMarkers();
+                        }
+                    } catch (e) {
+                        console.error('[App Connector] 手动初始化地图失败:', e);
+                    }
+                }
+            } else {
+                console.log('[App Connector] 地图已正确初始化');
+                if (mapStatus) {
+                    mapStatus.textContent = '地图已正确加载';
+                    mapStatus.style.color = 'green';
+                }
+                
+                // 地图已初始化，加载标记
+                initializeMarkers();
+            }
+        }, 5000);
+    }
+    
+    // 重新加载Google Maps API
+    function reloadMapsAPI() {
+        console.log('[App Connector] 尝试重新加载Google Maps API...');
+        
+        // 移除已有的Maps API脚本
+        const existingScripts = document.querySelectorAll('script[src*="maps.googleapis.com"]');
+        existingScripts.forEach(function(script) {
+            script.remove();
+            console.log('[App Connector] 已移除:', script.src);
+        });
+        
+        // 创建新的脚本标签
+        const script = document.createElement('script');
+        script.async = true;
+        script.defer = true;
+        script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places&v=weekly';
+        
+        // 添加加载事件监听
+        script.onload = function() {
+            console.log('[App Connector] 重新加载Google Maps API成功');
+            
+            // 延迟初始化地图
+            setTimeout(function() {
+                if (typeof initMap === 'function') {
+                    try {
+                        initMap();
+                        console.log('[App Connector] 重新加载后地图初始化成功');
+                        
+                        // 初始化标记
+                        initializeMarkers();
+                    } catch (e) {
+                        console.error('[App Connector] 重新加载后地图初始化失败:', e);
+                    }
+                }
+            }, 1000);
+        };
+        
+        script.onerror = function() {
+            console.error('[App Connector] 重新加载Google Maps API失败');
+            
+            // 尝试使用本地备份
+            useLocalMapsFallback();
+        };
+        
+        // 添加到文档
+        document.head.appendChild(script);
+    }
+    
+    // 使用离线备份
+    function useLocalMapsFallback() {
+        console.log('[App Connector] 尝试使用离线备份初始化地图...');
+        
+        // 创建简单的地图对象
+        window.map = {
+            center: window.MELBOURNE_CENTER || {lat: -37.8136, lng: 144.9631},
+            zoom: 13,
+            setCenter: function() {},
+            setZoom: function() {},
+            addListener: function() { return {remove: function() {}}; }
+        };
+        
+        // 显示离线模式提示
+        const mapElement = document.getElementById('map');
+        if (mapElement) {
+            mapElement.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.7);color:white;padding:20px;border-radius:10px;text-align:center;"><h3>地图服务暂时不可用</h3><p>请检查网络连接或稍后重试</p></div>';
+        }
+        
+        // 尝试使用本地缓存的标记
+        initializeMarkers();
+    }
+    
+    // 初始化标记
+    function initializeMarkers() {
+        console.log('[App Connector] 初始化标记...');
+        
+        // 检查地图是否已初始化
+        if (!window.map) {
+            console.warn('[App Connector] 地图未初始化，无法添加标记');
+            return;
+        }
+        
+        // 优先从本地存储加载标记数据
+        const loadFromStorage = function() {
+            try {
+                // 检查是否有标记数据
+                const storedMarkers = localStorage.getItem('savedMarkers');
+                if (storedMarkers) {
+                    const markerData = JSON.parse(storedMarkers);
+                    console.log(`[App Connector] 从本地存储加载了 ${markerData.length} 个标记`);
+                    
+                    // 循环添加标记
+                    markerData.forEach(function(marker) {
+                        // 调用 marker-handler.js 中的方法添加标记
+                        if (typeof window.addReportMarker === 'function') {
+                            window.addReportMarker(
+                                marker.location,
+                                marker.description,
+                                marker.id,
+                                marker.image
+                            );
+                        }
+                    });
+                    
+                    // 更新状态显示
+                    const markerStatus = document.getElementById('markerStatus');
+                    if (markerStatus) {
+                        markerStatus.textContent = `已加载 ${markerData.length} 个标记`;
+                        markerStatus.style.color = 'green';
+                    }
+                } else {
+                    console.log('[App Connector] 本地存储中没有标记数据');
+                    
+                    // 尝试从Firebase加载
+                    if (window.DataConnector && window.DataConnector.loadMarkersFromFirebase) {
+                        console.log('[App Connector] 尝试从Firebase加载标记...');
+                        window.DataConnector.loadMarkersFromFirebase();
+                    }
+                }
+            } catch (e) {
+                console.error('[App Connector] 从本地存储加载标记失败:', e);
+            }
+        };
+        
+        // 延迟加载标记，确保地图已完全初始化
+        setTimeout(loadFromStorage, 2000);
+    }
+    
+    // 添加调试信息面板
+    function addDebugInfoPanel() {
+        const debugPanel = document.createElement('div');
+        debugPanel.id = 'debugPanel';
+        debugPanel.style.cssText = `
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            z-index: 2000;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+        `;
+        
+        debugPanel.innerHTML = `
+            <div style="margin-bottom:10px;font-weight:bold;font-size:14px;border-bottom:1px solid rgba(255,255,255,0.2);padding-bottom:5px;">系统状态</div>
+            <div>模式: <span id="apiMode" style="color:#4CAF50;font-weight:bold;">静态模式</span></div>
+            <div>地图状态: <span id="mapStatus">检查中...</span></div>
+            <div>标记状态: <span id="markerStatus">等待地图加载...</span></div>
+            <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:5px;">
+                <button id="reloadMapsBtn" style="padding:5px 8px;font-size:12px;background:#0071e3;color:white;border:none;border-radius:4px;cursor:pointer;flex:1;">重新加载地图</button>
+                <button id="loadMarkersBtn" style="padding:5px 8px;font-size:12px;background:#4CAF50;color:white;border:none;border-radius:4px;cursor:pointer;flex:1;">加载标记</button>
+                <button id="toggleDebugBtn" style="padding:5px 8px;font-size:12px;background:#666;color:white;border:none;border-radius:4px;cursor:pointer;flex:1;">隐藏</button>
+            </div>
+        `;
+        
+        document.body.appendChild(debugPanel);
+        
+        // 更新API模式显示
+        const apiMode = document.getElementById('apiMode');
+        if (apiMode) {
+            apiMode.textContent = window.API_MODE === 'static' ? '静态模式' : '在线模式';
+            apiMode.style.color = window.API_MODE === 'static' ? '#4CAF50' : '#2196F3';
+        }
+        
+        // 添加按钮事件
+        document.getElementById('reloadMapsBtn').addEventListener('click', function() {
+            reloadMapsAPI();
+        });
+        
+        document.getElementById('loadMarkersBtn').addEventListener('click', function() {
+            // 尝试不同的方法加载标记
+            if (window.map) {
+                this.textContent = '加载中...';
+                
+                // 优先使用MapFix对象加载标记
+                if (window.MapFix && typeof window.MapFix.loadMarkersFromStorage === 'function') {
+                    try {
+                        window.MapFix.loadMarkersFromStorage();
+                        console.log('[App Connector] 使用MapFix加载标记成功');
+                        this.textContent = '加载成功';
+                        setTimeout(() => {
+                            this.textContent = '加载标记';
+                        }, 2000);
+                    } catch (e) {
+                        console.error('[App Connector] 使用MapFix加载标记失败:', e);
+                        this.textContent = '加载失败';
+                        setTimeout(() => {
+                            this.textContent = '加载标记';
+                        }, 2000);
+                    }
+                    return;
+                }
+                
+                // 尝试从本地存储加载
+                try {
+                    const storedMarkers = localStorage.getItem('savedMarkers');
+                    if (storedMarkers) {
+                        const markerData = JSON.parse(storedMarkers);
+                        console.log(`[App Connector] 手动从本地存储加载了 ${markerData.length} 个标记`);
+                        
+                        // 清除已有标记
+                        if (window.markers && window.markers.length > 0) {
+                            window.markers.forEach(marker => {
+                                if (marker && marker.setMap) {
+                                    marker.setMap(null);
+                                }
+                            });
+                            window.markers = [];
+                        }
+                        
+                        // 添加标记
+                        markerData.forEach(marker => {
+                            if (typeof window.addReportMarker === 'function') {
+                                window.addReportMarker(
+                                    marker.location,
+                                    marker.description,
+                                    marker.id,
+                                    marker.image
+                                );
+                            }
+                        });
+                        
+                        const markerStatus = document.getElementById('markerStatus');
+                        if (markerStatus) {
+                            markerStatus.textContent = `已加载 ${markerData.length} 个标记`;
+                            markerStatus.style.color = 'green';
+                        }
+                        
+                        this.textContent = '加载成功';
+                        setTimeout(() => {
+                            this.textContent = '加载标记';
+                        }, 2000);
+                    } else {
+                        console.log('[App Connector] 本地存储中没有标记数据，尝试创建示例标记');
+                        
+                        // 如果没有标记，创建示例标记
+                        if (window.MapFix && typeof window.MapFix.preloadMarkerData === 'function') {
+                            window.MapFix.preloadMarkerData();
+                            this.textContent = '创建示例标记';
+                            setTimeout(() => {
+                                this.textContent = '加载标记';
+                                // 重新尝试加载
+                                this.click();
+                            }, 1000);
+                        } else if (window.preloadMarkerData) {
+                            window.preloadMarkerData();
+                            this.textContent = '创建示例标记';
+                            setTimeout(() => {
+                                this.textContent = '加载标记';
+                                // 重新尝试加载
+                                this.click();
+                            }, 1000);
+                        } else {
+                            this.textContent = '无标记数据';
+                            setTimeout(() => {
+                                this.textContent = '加载标记';
+                            }, 2000);
+                        }
+                    }
+                } catch (e) {
+                    console.error('[App Connector] 手动加载标记失败:', e);
+                    this.textContent = '加载失败';
+                    setTimeout(() => {
+                        this.textContent = '加载标记';
+                    }, 2000);
+                }
+            } else {
+                alert('地图尚未初始化，无法加载标记');
+                this.textContent = '地图未就绪';
+                setTimeout(() => {
+                    this.textContent = '加载标记';
+                }, 2000);
+            }
+        });
+        
+        document.getElementById('toggleDebugBtn').addEventListener('click', function() {
+            const panel = document.getElementById('debugPanel');
+            if (panel) {
+                if (panel.style.height === '20px') {
+                    // 展开面板
+                    panel.style.height = 'auto';
+                    this.textContent = '隐藏';
+                } else {
+                    // 折叠面板
+                    panel.style.height = '20px';
+                    panel.style.overflow = 'hidden';
+                    this.textContent = '显示';
+                }
+            }
+        });
+        
+        // 暴露预加载标记函数
+        window.preloadMarkerData = function() {
+            // 创建示例标记数据
+            try {
+                console.log('[App Connector] 创建示例标记数据');
+                
+                // 墨尔本中心位置
+                const center = window.MELBOURNE_CENTER || {lat: -37.8136, lng: 144.9631};
+                
+                // 创建一些示例标记
+                const sampleMarkers = [
+                    {
+                        id: 'sample-1',
+                        location: {
+                            lat: center.lat + 0.005,
+                            lng: center.lng + 0.005
+                        },
+                        description: '墨尔本中央图书馆',
+                        image: null,
+                        timestamp: new Date().toISOString()
+                    },
+                    {
+                        id: 'sample-2',
+                        location: {
+                            lat: center.lat - 0.007,
+                            lng: center.lng + 0.002
+                        },
+                        description: '弗林德斯火车站',
+                        image: null,
+                        timestamp: new Date().toISOString()
+                    },
+                    {
+                        id: 'sample-3',
+                        location: {
+                            lat: center.lat + 0.001,
+                            lng: center.lng - 0.008
+                        },
+                        description: '墨尔本皇家植物园',
+                        image: null,
+                        timestamp: new Date().toISOString()
+                    }
+                ];
+                
+                // 保存到本地存储
+                localStorage.setItem('savedMarkers', JSON.stringify(sampleMarkers));
+                console.log('[App Connector] 已创建示例标记数据');
+                
+                // 更新状态
+                const markerStatus = document.getElementById('markerStatus');
+                if (markerStatus) {
+                    markerStatus.textContent = '已创建示例标记';
+                    markerStatus.style.color = '#ff9800';
+                }
+                
+                return true;
+            } catch (e) {
+                console.error('[App Connector] 创建示例标记数据失败:', e);
+                return false;
+            }
+        };
+    }
+    
+    // 公开方法到全局空间
+    window.AppConnector = {
+        reloadMapsAPI: reloadMapsAPI,
+        initializeMarkers: initializeMarkers
+    };
 })(); 
