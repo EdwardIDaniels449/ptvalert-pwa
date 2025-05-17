@@ -240,99 +240,59 @@
     function checkMapsAPILoaded() {
         console.log('[App Connector] 检查Google Maps API状态...');
         
+        // 使用我们的修复脚本来加载API
+        if (typeof document.dispatchEvent === 'function') {
+            console.log('[App Connector] 通过修复脚本请求加载API');
+            document.dispatchEvent(new CustomEvent('request_google_maps_api'));
+        }
+        
         // 15秒后检查地图状态
         setTimeout(function() {
             const mapStatus = document.getElementById('mapStatus');
             
             if (!window.google || !window.google.maps) {
-                console.error('[App Connector] Google Maps API未正确加载');
-                if (mapStatus) {
-                    mapStatus.textContent = '地图API加载失败';
-                    mapStatus.style.color = 'red';
-                }
+                console.log('[App Connector] Google Maps API尚未加载，尝试使用备用密钥');
                 
-                // 尝试手动重新加载Google Maps API
-                reloadMapsAPI();
-            } else if (!window.map) {
-                console.error('[App Connector] 地图对象未初始化');
-                if (mapStatus) {
-                    mapStatus.textContent = '地图未初始化';
-                    mapStatus.style.color = 'orange';
-                }
-                
-                // 尝试手动初始化地图
-                if (typeof initMap === 'function') {
-                    console.log('[App Connector] 尝试手动初始化地图...');
-                    try {
-                        initMap();
-                        if (window.map) {
-                            console.log('[App Connector] 地图手动初始化成功');
-                            if (mapStatus) {
-                                mapStatus.textContent = '地图已手动初始化';
-                                mapStatus.style.color = 'green';
-                            }
-                            
-                            // 初始化标记
-                            initializeMarkers();
-                        }
-                    } catch (e) {
-                        console.error('[App Connector] 手动初始化地图失败:', e);
+                // 使用我们配置的API密钥
+                if (window.GOOGLE_MAPS_API_KEY) {
+                    console.log('[App Connector] 使用配置的API密钥:', window.GOOGLE_MAPS_API_KEY);
+                    loadMapsAPIWithKey(window.GOOGLE_MAPS_API_KEY);
+                } else {
+                    console.error('[App Connector] Google Maps API未正确加载');
+                    if (mapStatus) {
+                        mapStatus.textContent = '地图API加载失败';
                     }
                 }
             } else {
-                console.log('[App Connector] 地图已正确初始化');
+                console.log('[App Connector] Google Maps API已加载成功');
                 if (mapStatus) {
-                    mapStatus.textContent = '地图已正确加载';
-                    mapStatus.style.color = 'green';
+                    mapStatus.textContent = '地图API已加载';
                 }
                 
-                // 地图已初始化，加载标记
-                initializeMarkers();
+                // 确保事件被触发
+                document.dispatchEvent(new CustomEvent('google_maps_loaded'));
             }
-        }, 5000);
+        }, 15000);
     }
     
-    // 重新加载Google Maps API
-    function reloadMapsAPI() {
-        console.log('[App Connector] 尝试重新加载Google Maps API...');
+    // 使用指定的密钥加载Maps API
+    function loadMapsAPIWithKey(apiKey) {
+        console.log('[App Connector] 尝试使用密钥加载Google Maps API:', apiKey);
         
-        // 移除已有的Maps API脚本
-        const existingScripts = document.querySelectorAll('script[src*="maps.googleapis.com"]');
-        existingScripts.forEach(function(script) {
-            script.remove();
-            console.log('[App Connector] 已移除:', script.src);
-        });
-        
-        // 创建新的脚本标签
+        // 创建脚本元素加载Google Maps API
         const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=googleMapsInitialized&v=weekly&loading=async`;
         script.async = true;
-        script.defer = true;
-        script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places&v=weekly';
         
-        // 添加加载事件监听
-        script.onload = function() {
-            console.log('[App Connector] 重新加载Google Maps API成功');
-            
-            // 延迟初始化地图
-            setTimeout(function() {
-                if (typeof initMap === 'function') {
-                    try {
-                        initMap();
-                        console.log('[App Connector] 重新加载后地图初始化成功');
-                        
-                        // 初始化标记
-                        initializeMarkers();
-                    } catch (e) {
-                        console.error('[App Connector] 重新加载后地图初始化失败:', e);
-                    }
-                }
-            }, 1000);
+        // 设置回调函数
+        window.googleMapsInitialized = function() {
+            console.log('[App Connector] Google Maps API 加载成功');
+            document.dispatchEvent(new CustomEvent('google_maps_loaded'));
         };
         
+        // 添加错误处理
         script.onerror = function() {
-            console.error('[App Connector] 重新加载Google Maps API失败');
-            
-            // 尝试使用本地备份
+            console.error('[App Connector] 无法加载Google Maps API，服务器可能不可用');
             useLocalMapsFallback();
         };
         

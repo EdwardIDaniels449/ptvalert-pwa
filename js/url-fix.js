@@ -363,44 +363,50 @@
         }
     }
     
+    // 检查Google Maps API密钥
+    function checkAndUpdateMapsApiKey() {
+        // 首先检查是否已有我们的域名密钥管理器设置的API密钥
+        if (window.MAPS_API_KEY_FOR_DOMAIN) {
+            console.log('已检测到通过域名密钥管理器设置的API密钥');
+            return;
+        }
+        
+        // 检查GitHub Pages环境
+        if (window.location.hostname.includes('github.io')) {
+            console.log('检测到GitHub Pages环境，使用专用API密钥');
+            // 为GitHub Pages设置专用API密钥
+            window.GOOGLE_MAPS_API_KEY = 'AIzaSyBSOYTUZ1MIc_TisEGTubKH6815WLIXbFM';
+            
+            // 触发API加载事件，使用新的API密钥
+            setTimeout(function() {
+                if (typeof document.dispatchEvent === 'function') {
+                    console.log('通过url-fix触发API加载请求');
+                    document.dispatchEvent(new CustomEvent('request_google_maps_api'));
+                }
+            }, 1000);
+        }
+    }
+    
     // 初始化
     async function initialize() {
-        // 检查是否在GitHub Pages环境中
-        const isGitHubPages = window.location.hostname.includes('github.io');
-        
-        // 立即执行GitHub Pages路径修复
-        fixServiceWorkerPath();
-        
-        // 等待页面完全加载
-        if (document.readyState === 'complete') {
-            console.log('页面已完全加载，开始URL修复');
-            await clearServiceWorkerAndCache();
+        try {
+            console.log('初始化URL修复...');
+            
+            // 修复API基础URL
             fixApiBaseUrl();
             
-            // 只在非GitHub Pages环境下检查API服务器
-            if (!isGitHubPages) {
-                await checkApiServer();
-            } else {
-                console.log('检测到GitHub Pages环境，跳过API服务器检查');
+            // 检查并修复API密钥
+            checkAndUpdateMapsApiKey();
+            
+            // 如果是GitHub Pages，修复Service Worker路径
+            if (window.location.hostname.includes('github.io')) {
+                fixServiceWorkerPath();
             }
             
+            // 建立错误监听器
             setupErrorListener();
-        } else {
-            console.log('等待页面加载完成...');
-            window.addEventListener('load', async function() {
-                console.log('页面已加载，开始URL修复');
-                await clearServiceWorkerAndCache();
-                fixApiBaseUrl();
-                
-                // 只在非GitHub Pages环境下检查API服务器
-                if (!isGitHubPages) {
-                    await checkApiServer();
-                } else {
-                    console.log('检测到GitHub Pages环境，跳过API服务器检查');
-                }
-                
-                setupErrorListener();
-            });
+        } catch (e) {
+            console.error('初始化URL修复失败:', e);
         }
     }
     
