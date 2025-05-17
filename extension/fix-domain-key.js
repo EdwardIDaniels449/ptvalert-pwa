@@ -15,14 +15,14 @@
     '127.0.0.1': 'AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U',
     
     // GitHub Pages 域名
-    'edwardidaniels449.github.io': 'AIzaSyDkY7g-iL9zGxx2JFssL_KmAxK-HZFD-uA', // 这个是示例密钥，请替换为您自己的
+    'edwardidaniels449.github.io': 'AIzaSyBSOYTUZ1MIc_TisEGTubKH6815WLIXbFM', // 用户提供的真实密钥
     
     // 生产域名，如果有的话
     'ptvalert.com': 'AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U',
     'www.ptvalert.com': 'AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U',
     
     // 默认密钥
-    'default': 'AIzaSyDkY7g-iL9zGxx2JFssL_KmAxK-HZFD-uA'
+    'default': 'AIzaSyBSOYTUZ1MIc_TisEGTubKH6815WLIXbFM'
   };
   
   // 获取当前域名
