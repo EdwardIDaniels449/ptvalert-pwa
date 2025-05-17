@@ -1,16 +1,20 @@
 /**
  * Google Maps API 加载守卫
  * 在页面最早阶段运行，设置全局变量，防止重复加载 Google Maps API
- * 版本: 1.0.1
+ * 版本: 1.0.2
  */
 
 (function() {
-    console.log('[API守卫] 初始化 - 版本1.0.1');
+    console.log('[API守卫] 初始化 - 版本1.0.2');
     
     // 定义全局状态变量
     window.GOOGLE_MAPS_LOADING = window.GOOGLE_MAPS_LOADING || false;
     window.GOOGLE_MAPS_LOADED = window.GOOGLE_MAPS_LOADED || !!(window.google && window.google.maps);
     window.GOOGLE_MAPS_CALLBACKS = window.GOOGLE_MAPS_CALLBACKS || [];
+    
+    // 固定API版本以避免版本冲突
+    const API_VERSION = 'weekly';
+    const API_LIBRARIES = 'places';
     
     console.log('[API守卫] 当前状态: ' + 
         (window.GOOGLE_MAPS_LOADED ? '已加载' : 
@@ -42,6 +46,20 @@
             } else if (index === 0 && !window.GOOGLE_MAPS_LOADING && !window.GOOGLE_MAPS_LOADED) {
                 // 如果这是第一个脚本，允许它加载
                 console.log('[API守卫] 允许首个地图脚本加载:', script.src);
+                
+                // 确保使用async参数
+                if(!script.async) {
+                    console.log('[API守卫] 添加async属性');
+                    script.async = true; 
+                }
+                
+                // 保证使用一致的API版本
+                var enhancedSrc = enhanceApiUrl(script.src);
+                if (enhancedSrc !== script.src) {
+                    console.log('[API守卫] 优化API URL:', enhancedSrc);
+                    script.src = enhancedSrc;
+                }
+                
                 window.GOOGLE_MAPS_LOADING = true;
                 
                 // 添加加载完成事件
@@ -58,6 +76,45 @@
                 });
             }
         });
+    }
+    
+    // 优化API URL，确保使用一致的版本和参数
+    function enhanceApiUrl(url) {
+        if (!url || typeof url !== 'string') return url;
+        
+        try {
+            // 解析URL
+            const urlObj = new URL(url);
+            
+            // 设置必要参数
+            if (!urlObj.searchParams.has('v') || urlObj.searchParams.get('v') !== API_VERSION) {
+                urlObj.searchParams.set('v', API_VERSION);
+            }
+            
+            if (!urlObj.searchParams.has('libraries') || !urlObj.searchParams.get('libraries').includes(API_LIBRARIES)) {
+                const currentLibs = urlObj.searchParams.get('libraries') || '';
+                if (currentLibs) {
+                    // 确保不重复添加libraries
+                    const libsArray = currentLibs.split(',');
+                    if (!libsArray.includes(API_LIBRARIES)) {
+                        libsArray.push(API_LIBRARIES);
+                        urlObj.searchParams.set('libraries', libsArray.join(','));
+                    }
+                } else {
+                    urlObj.searchParams.set('libraries', API_LIBRARIES);
+                }
+            }
+            
+            // 确保使用loading=async参数
+            if (!urlObj.searchParams.has('loading')) {
+                urlObj.searchParams.set('loading', 'async');
+            }
+            
+            return urlObj.toString();
+        } catch (e) {
+            console.error('[API守卫] URL增强失败:', e);
+            return url;
+        }
     }
     
     // 拦截直接script标签加载 - 使用更强大的拦截方法
@@ -109,30 +166,113 @@
                 });
             }
             
+            // 监控iframe创建
+            if (tagName.toLowerCase() === 'iframe') {
+                element.addEventListener('load', function() {
+                    try {
+                        // 为iframe也添加守卫
+                        injectGuardToIframe(element);
+                    } catch(e) {
+                        console.error('[API守卫] 注入iframe守卫失败:', e);
+                    }
+                });
+            }
+            
             return element;
         };
     }
     
-    // 拦截文档write方法，防止通过document.write插入脚本
-    function patchDocumentWrite() {
-        var originalWrite = document.write;
-        var originalWriteln = document.writeln;
+    // 注入守卫到iframe
+    function injectGuardToIframe(iframe) {
+        try {
+            if (!iframe.contentDocument || !iframe.contentWindow) {
+                return;
+            }
+            
+            console.log('[API守卫] 为iframe注入守卫');
+            
+            // 与主窗口共享状态
+            iframe.contentWindow.GOOGLE_MAPS_LOADING = window.GOOGLE_MAPS_LOADING;
+            iframe.contentWindow.GOOGLE_MAPS_LOADED = window.GOOGLE_MAPS_LOADED;
+            iframe.contentWindow.GOOGLE_MAPS_CALLBACKS = window.GOOGLE_MAPS_CALLBACKS;
+            
+            // 注入主要拦截函数到iframe
+            var iframeDoc = iframe.contentDocument;
+            
+            // 拦截document.write
+            patchDocumentWriteInContext(iframe.contentWindow, iframe.contentDocument);
+            
+            // 监视iframe中的script创建
+            var scriptCreateObserver = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.tagName && node.tagName.toLowerCase() === 'script') {
+                            if (node.src && node.src.includes('maps.googleapis.com/maps/api/js')) {
+                                console.warn('[API守卫] 阻止iframe中的Maps API加载:', node.src);
+                                
+                                // 提取回调
+                                var callbackMatch = node.src.match(/callback=([^&]+)/);
+                                if (callbackMatch && callbackMatch[1] && iframe.contentWindow[callbackMatch[1]]) {
+                                    window.GOOGLE_MAPS_CALLBACKS.push(iframe.contentWindow[callbackMatch[1]]);
+                                }
+                                
+                                // 阻止加载
+                                node.src = "data:text/javascript;base64,Ly8gQmxvY2tlZCBieSBBUEkgZ3VhcmQ=";
+                                node.type = "disabled/javascript";
+                            }
+                        }
+                    });
+                });
+            });
+            
+            // 开始监视iframe文档
+            scriptCreateObserver.observe(iframeDoc, {
+                childList: true,
+                subtree: true
+            });
+            
+        } catch(e) {
+            console.error('[API守卫] 处理iframe失败:', e);
+        }
+    }
+    
+    // 监控已有的iframe
+    function monitorExistingIframes() {
+        var iframes = document.querySelectorAll('iframe');
+        iframes.forEach(function(iframe) {
+            try {
+                if (iframe.contentDocument) {
+                    injectGuardToIframe(iframe);
+                }
+            } catch(e) {
+                // 可能由于跨域限制无法访问iframe内容
+                console.log('[API守卫] 无法访问iframe内容:', e.message);
+            }
+        });
+    }
+    
+    // 为特定上下文拦截document.write方法
+    function patchDocumentWriteInContext(windowContext, docContext) {
+        if (!windowContext || !docContext) return;
         
-        document.write = function(markup) {
+        var originalWrite = docContext.write;
+        var originalWriteln = docContext.writeln;
+        
+        docContext.write = function(markup) {
             if (typeof markup === 'string' && markup.includes('maps.googleapis.com/maps/api/js')) {
                 console.warn('[API守卫] 阻止通过document.write加载Maps API');
                 
                 // 提取回调
                 var callbackMatch = markup.match(/callback=([^&"']+)/);
-                if (callbackMatch && callbackMatch[1] && window[callbackMatch[1]]) {
+                if (callbackMatch && callbackMatch[1] && windowContext[callbackMatch[1]]) {
                     console.log('[API守卫] 从document.write捕获回调:', callbackMatch[1]);
-                    window.GOOGLE_MAPS_CALLBACKS.push(window[callbackMatch[1]]);
+                    window.GOOGLE_MAPS_CALLBACKS.push(windowContext[callbackMatch[1]]);
                     
                     // 如果API已加载，执行回调
                     if (window.GOOGLE_MAPS_LOADED) {
                         setTimeout(function() {
                             try {
-                                window[callbackMatch[1]]();
+                                windowContext[callbackMatch[1]]();
                             } catch(e) {
                                 console.error('[API守卫] 执行回调失败:', e);
                             }
@@ -144,17 +284,22 @@
                 markup = markup.replace(/(https?:)?\/\/maps\.googleapis\.com\/maps\/api\/js[^"']+["']/g, 
                                       "'data:text/javascript;base64,Ly8gQmxvY2tlZCBieSBBUEkgZ3VhcmQ='");
             }
-            return originalWrite.call(this, markup);
+            return originalWrite.call(docContext, markup);
         };
         
-        document.writeln = function(markup) {
+        docContext.writeln = function(markup) {
             if (typeof markup === 'string' && markup.includes('maps.googleapis.com/maps/api/js')) {
                 console.warn('[API守卫] 阻止通过document.writeln加载Maps API');
                 markup = markup.replace(/(https?:)?\/\/maps\.googleapis\.com\/maps\/api\/js[^"']+["']/g, 
                                       "'data:text/javascript;base64,Ly8gQmxvY2tlZCBieSBBUEkgZ3VhcmQ='");
             }
-            return originalWriteln.call(this, markup);
+            return originalWriteln.call(docContext, markup);
         };
+    }
+    
+    // 拦截主文档的document.write方法
+    function patchDocumentWrite() {
+        patchDocumentWriteInContext(window, document);
     }
     
     // 处理脚本src变化的通用方法
@@ -197,6 +342,16 @@
             window.GOOGLE_MAPS_LOADING = true;
             console.log('[API守卫] 允许加载 Google Maps API');
             
+            // 确保async和版本参数
+            var enhancedUrl = enhanceApiUrl(url);
+            if (enhancedUrl !== url) {
+                console.log('[API守卫] 优化API URL:', enhancedUrl);
+                url = enhancedUrl;
+            }
+            
+            // 确保async属性
+            element.async = true;
+            
             // 在脚本加载完成后设置状态
             element.onload = function() {
                 console.log('[API守卫] Google Maps API 加载完成');
@@ -207,6 +362,9 @@
                 console.error('[API守卫] Google Maps API 加载失败');
                 window.GOOGLE_MAPS_LOADING = false;
             };
+            
+            // 返回增强后的URL
+            return url;
         }
     }
     
@@ -257,15 +415,25 @@
                 console.log('[API守卫] 使用MapIntegration加载API');
                 window.MapIntegration.loadAPI();
             } else {
-                console.log('[API守卫] 没有找到加载器，等待其他脚本加载API');
+                console.log('[API守卫] 没有找到加载器，创建脚本加载API');
+                // 自行加载API
+                var script = document.createElement('script');
+                script.async = true;
+                script.src = enhanceApiUrl('https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsAPILoaded');
+                
+                // 设置回调
+                window.googleMapsAPILoaded = function() {
+                    console.log('[API守卫] 自加载API完成');
+                    handleAPILoaded();
+                };
+                
+                document.head.appendChild(script);
             }
         });
     }
     
     // 如果iframe中尝试加载API，拦截postMessage请求
     function patchPostMessage() {
-        var originalPostMessage = window.postMessage;
-        
         // 只在非iframe环境中拦截
         if (window === window.top) {
             window.addEventListener('message', function(event) {
@@ -341,9 +509,39 @@
         }
     }
     
+    // 设置MutationObserver监控整个文档的iframe创建
+    function setupIframeObserver() {
+        if (!window.MutationObserver) return;
+        
+        var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                    // 检查是否是iframe
+                    if (node.tagName && node.tagName.toLowerCase() === 'iframe') {
+                        node.addEventListener('load', function() {
+                            injectGuardToIframe(node);
+                        });
+                    }
+                });
+            });
+        });
+        
+        // 开始监视文档
+        observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true
+        });
+    }
+    
     // 运行守卫功能
     // 首先检查并阻止现有脚本
     blockExistingScripts();
+    
+    // 处理现有iframe
+    monitorExistingIframes();
+    
+    // 设置iframe监控
+    setupIframeObserver();
     
     // 然后添加各种拦截
     patchDocumentCreateElement();
