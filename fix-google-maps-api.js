@@ -32,10 +32,10 @@
       '127.0.0.1': 'AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U',
       
       // GitHub Pages 域名 - 使用允许在GitHub Pages上使用的API密钥
-      'edwardidaniels449.github.io': 'AIzaSyBSOYTUZ1MIc_TisEGTubKH6815WLIXbFM', // 用户提供的实际密钥
+      'edwardidaniels449.github.io': 'AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U', // 指定的API密钥
       
       // 默认密钥
-      'default': 'AIzaSyBSOYTUZ1MIc_TisEGTubKH6815WLIXbFM'
+      'default': 'AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U'
     };
     
     console.log('[API修复] 当前域名:', domain);
@@ -192,7 +192,7 @@
     // 尝试使用备用API密钥
     if (!window._hasTriedBackupKey) {
       window._hasTriedBackupKey = true;
-      window.GOOGLE_MAPS_API_KEY = 'AIzaSyBSOYTUZ1MIc_TisEGTubKH6815WLIXbFM'; // 用户提供的实际密钥
+      window.GOOGLE_MAPS_API_KEY = 'AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U'; // 用户提供的实际密钥
       console.log('[API修复] 尝试使用备用密钥');
       
       // 重新触发API加载
