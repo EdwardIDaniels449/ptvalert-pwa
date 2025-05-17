@@ -1,11 +1,11 @@
 /**
- * Map Fix Script (v1.0.2)
+ * Map Fix Script (v1.0.3)
  * 用于修复地图加载和标记显示问题
  * 解决谷歌地图API加载失败或未初始化的问题
  */
 
 (function() {
-    console.log('[Map Fix] 地图修复脚本已加载 v1.0.2');
+    console.log('[Map Fix] 地图修复脚本已加载 v1.0.3');
     
     // 强制静态模式，不依赖后端API
     window.FORCE_STATIC_MODE = true;
@@ -17,6 +17,10 @@
     window.openedInfoWindow = null;
     window.selectedLocation = null;
     window.addingReport = false;
+    window.mapInitialized = false;
+    
+    // 添加轮询检查，确保地图真正初始化
+    window.mapInitCheckInterval = null;
     
     // 清除可能无效的标记数据
     try {
@@ -65,12 +69,58 @@
         window.API_MODE = 'static';
         console.log('[Map Fix] 已设置为静态模式，使用本地存储数据');
         
+        // 启动轮询检查，确保地图初始化
+        startMapInitCheck();
+        
         // 2秒后检查地图状态，减少等待时间
         setTimeout(checkMapStatus, 2000);
     });
     
+    // 启动地图初始化检查轮询
+    function startMapInitCheck() {
+        // 清除之前可能存在的轮询
+        if (window.mapInitCheckInterval) {
+            clearInterval(window.mapInitCheckInterval);
+        }
+        
+        // 设置轮询，每1秒检查一次地图状态
+        window.mapInitCheckInterval = setInterval(function() {
+            // 如果地图已经初始化，则停止轮询
+            if (window.mapInitialized) {
+                clearInterval(window.mapInitCheckInterval);
+                return;
+            }
+            
+            // 检查Google Maps API是否已经加载
+            if (window.google && window.google.maps) {
+                // 检查地图对象
+                if (window.map && typeof window.map.setCenter === 'function') {
+                    // 标记地图已初始化
+                    window.mapInitialized = true;
+                    clearInterval(window.mapInitCheckInterval);
+                    
+                    console.log('[Map Fix] 轮询检测到地图已初始化');
+                    handleMapInitialized();
+                } else if (typeof window.initMap === 'function') {
+                    // API已加载但地图未初始化，尝试初始化
+                    try {
+                        window.initMap();
+                    } catch (e) {
+                        console.error('[Map Fix] 轮询中尝试初始化地图失败:', e);
+                    }
+                }
+            }
+        }, 1000);
+    }
+    
     // 处理地图初始化完成事件
     function handleMapInitialized() {
+        // 避免重复初始化
+        if (window.mapFixInitialized) {
+            return;
+        }
+        window.mapFixInitialized = true;
+        
         console.log('[Map Fix] 处理地图初始化完成事件');
         
         // 为地图添加点击事件，用于添加标记
@@ -93,8 +143,9 @@
         console.log('[Map Fix] 检查地图状态...');
         
         // 检查地图对象是否已初始化
-        if (window.map) {
+        if (window.map && typeof window.map.setCenter === 'function') {
             console.log('[Map Fix] 地图对象已存在，处理初始化完成');
+            window.mapInitialized = true;
             handleMapInitialized();
             return;
         }
@@ -113,8 +164,9 @@
                 console.log('[Map Fix] 调用initMap函数');
                 window.initMap();
                 
-                if (window.map) {
+                if (window.map && typeof window.map.setCenter === 'function') {
                     console.log('[Map Fix] 地图初始化成功');
+                    window.mapInitialized = true;
                     handleMapInitialized();
                 } else {
                     console.error('[Map Fix] initMap调用后地图对象仍未创建，使用备用初始化');
@@ -209,6 +261,7 @@
             });
             
             console.log('[Map Fix] 备用地图创建成功');
+            window.mapInitialized = true;
             
             // 处理地图初始化完成
             handleMapInitialized();
@@ -220,7 +273,7 @@
     
     // 为地图添加点击事件
     function addMapClickHandler() {
-        if (!window.map || !google || !google.maps || !google.maps.event) {
+        if (!window.map || !google || !google.maps || !google.maps.event || typeof window.map.addListener !== 'function') {
             console.error('[Map Fix] 无法为地图添加点击事件');
             return;
         }
@@ -245,6 +298,19 @@
                         detail: { location: location }
                     });
                     document.dispatchEvent(locationSelectedEvent);
+                    
+                    // 显示表单
+                    const reportForm = document.getElementById('reportForm');
+                    if (reportForm) {
+                        reportForm.style.display = 'block';
+                        reportForm.style.transform = 'translateY(0)';
+                    }
+                    
+                    // 隐藏提示
+                    const addReportTip = document.getElementById('addReportTip');
+                    if (addReportTip) {
+                        addReportTip.style.display = 'none';
+                    }
                     
                     console.log('[Map Fix] 已保存选中位置:', location);
                 }
@@ -273,7 +339,9 @@
             setCenter: function() {},
             setZoom: function() {},
             panTo: function() {},
-            addListener: function() { return {remove: function() {}}; }
+            addListener: function() { return {remove: function() {}}; },
+            // 确保setMap也能正常工作
+            setMap: function() {}
         };
         
         // 创建离线界面
@@ -332,6 +400,13 @@
         console.log('[Map Fix] 尝试从本地存储加载标记...');
         
         try {
+            // 确保地图已初始化
+            if (!window.mapInitialized) {
+                console.warn('[Map Fix] 地图尚未初始化，等待地图初始化后再加载标记');
+                setTimeout(loadMarkersFromStorage, 1000);
+                return;
+            }
+        
             // 清除现有标记
             if (window.markers && window.markers.length > 0) {
                 window.markers.forEach(function(marker) {
@@ -360,111 +435,11 @@
                     // 有效标记计数器
                     let validMarkerCount = 0;
                     
-                    // 添加新标记
-                    markerData.forEach(function(markerInfo) {
-                        try {
-                            // 检查标记数据是否有效
-                            if (!markerInfo) {
-                                console.warn('[Map Fix] 跳过无效标记数据');
-                                return;
-                            }
-                            
-                            // 检查并确保位置数据完整
-                            if (!markerInfo.location || typeof markerInfo.location.lat === 'undefined' || typeof markerInfo.location.lng === 'undefined') {
-                                console.warn('[Map Fix] 跳过无位置数据的标记:', markerInfo.id || '未知ID');
-                                return;
-                            }
-                            
-                            // 确保lat和lng是数值
-                            const lat = parseFloat(markerInfo.location.lat);
-                            const lng = parseFloat(markerInfo.location.lng);
-                            
-                            if (isNaN(lat) || isNaN(lng)) {
-                                console.warn('[Map Fix] 跳过无效位置坐标的标记:', markerInfo.id || '未知ID');
-                                return;
-                            }
-                            
-                            // 确保描述存在
-                            const description = markerInfo.description || '无描述';
-                            
-                            // 创建标记
-                            const marker = new google.maps.Marker({
-                                position: {lat: lat, lng: lng},
-                                map: window.map,
-                                title: description,
-                                label: {
-                                    text: '🐶',
-                                    fontSize: '24px'
-                                },
-                                icon: {
-                                    path: google.maps.SymbolPath.CIRCLE,
-                                    scale: 0
-                                },
-                                optimized: false
-                            });
-                            
-                            // 添加点击事件
-                            marker.addListener('click', function() {
-                                // 关闭任何已打开的信息窗口
-                                if (window.openedInfoWindow) {
-                                    window.openedInfoWindow.close();
-                                }
-                                
-                                // 创建信息窗口内容
-                                let content = '<div style="padding:10px;max-width:300px;">';
-                                
-                                // 如果有图片，添加图片
-                                if (markerInfo.image) {
-                                    content += `<div style="margin-bottom:10px;"><img src="${markerInfo.image}" style="max-width:100%;max-height:150px;border-radius:4px;"></div>`;
-                                }
-                                
-                                // 添加描述
-                                content += `<div style="font-size:14px;margin-bottom:10px;">${description}</div>`;
-                                
-                                // 添加时间戳
-                                const time = markerInfo.timestamp ? new Date(markerInfo.timestamp) : new Date();
-                                content += `<div style="font-size:12px;color:#666;">${time.toLocaleDateString()} ${time.toLocaleTimeString()}</div>`;
-                                
-                                content += '</div>';
-                                
-                                // 创建并打开信息窗口
-                                const infoWindow = new google.maps.InfoWindow({
-                                    content: content,
-                                    maxWidth: 300
-                                });
-                                
-                                infoWindow.open(window.map, marker);
-                                
-                                // 保存当前打开的信息窗口
-                                window.openedInfoWindow = infoWindow;
-                            });
-                            
-                            // 将标记保存到全局数组
-                            window.markers.push(marker);
-                            validMarkerCount++;
-                        } catch (markerError) {
-                            console.error('[Map Fix] 创建标记失败:', markerError);
-                        }
-                    });
+                    // 添加新标记，确保有延迟，避免太快添加标记导致地图未就绪
+                    setTimeout(function() {
+                        addMarkersToMap(markerData);
+                    }, 500);
                     
-                    // 更新状态显示
-                    const markerStatus = document.getElementById('markerStatus');
-                    if (markerStatus) {
-                        markerStatus.textContent = `已加载 ${validMarkerCount} 个标记`;
-                        markerStatus.style.color = validMarkerCount > 0 ? 'green' : 'orange';
-                    }
-                    
-                    if (validMarkerCount > 0) {
-                        console.log(`[Map Fix] 成功加载 ${validMarkerCount} 个标记`);
-                    } else {
-                        console.warn('[Map Fix] 没有加载到有效标记，尝试创建示例标记');
-                        // 清除可能无效的标记数据
-                        localStorage.removeItem('savedMarkers');
-                        // 创建新的示例标记
-                        preloadMarkerData();
-                        // 重新尝试加载
-                        setTimeout(loadMarkersFromStorage, 500);
-                    }
                 } catch (parseError) {
                     console.error('[Map Fix] 解析标记数据失败:', parseError);
                     // 清除无效的标记数据
@@ -472,14 +447,14 @@
                     // 创建新的示例标记
                     preloadMarkerData();
                     // 重新尝试加载
-                    setTimeout(loadMarkersFromStorage, 500);
+                    setTimeout(loadMarkersFromStorage, 1000);
                 }
             } else {
                 console.log('[Map Fix] 本地存储中没有标记数据，创建示例标记');
                 // 创建示例标记
                 preloadMarkerData();
                 // 重新尝试加载
-                setTimeout(loadMarkersFromStorage, 500);
+                setTimeout(loadMarkersFromStorage, 1000);
             }
         } catch (e) {
             console.error('[Map Fix] 从本地存储加载标记失败:', e);
@@ -487,6 +462,133 @@
             localStorage.removeItem('savedMarkers');
             // 创建新的示例标记
             preloadMarkerData();
+        }
+    }
+    
+    // 添加标记到地图
+    function addMarkersToMap(markerData) {
+        // 有效标记计数器
+        let validMarkerCount = 0;
+        
+        // 遍历标记数据
+        for (let i = 0; i < markerData.length; i++) {
+            (function(index) {
+                setTimeout(function() {
+                    try {
+                        const markerInfo = markerData[index];
+                        
+                        // 检查标记数据是否有效
+                        if (!markerInfo) {
+                            console.warn('[Map Fix] 跳过无效标记数据');
+                            return;
+                        }
+                        
+                        // 检查并确保位置数据完整
+                        if (!markerInfo.location || typeof markerInfo.location.lat === 'undefined' || typeof markerInfo.location.lng === 'undefined') {
+                            console.warn('[Map Fix] 跳过无位置数据的标记:', markerInfo.id || '未知ID');
+                            return;
+                        }
+                        
+                        // 确保lat和lng是数值
+                        const lat = parseFloat(markerInfo.location.lat);
+                        const lng = parseFloat(markerInfo.location.lng);
+                        
+                        if (isNaN(lat) || isNaN(lng)) {
+                            console.warn('[Map Fix] 跳过无效位置坐标的标记:', markerInfo.id || '未知ID');
+                            return;
+                        }
+                        
+                        // 确保描述存在
+                        const description = markerInfo.description || '无描述';
+                        
+                        // 再次确认地图对象可用
+                        if (!window.map || typeof window.map.setCenter !== 'function') {
+                            console.error('[Map Fix] 地图对象无效，无法添加标记');
+                            return;
+                        }
+                        
+                        // 创建标记
+                        const marker = new google.maps.Marker({
+                            position: {lat: lat, lng: lng},
+                            map: window.map,
+                            title: description,
+                            label: {
+                                text: '🐶',
+                                fontSize: '24px'
+                            },
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: 0
+                            },
+                            optimized: false
+                        });
+                        
+                        // 添加点击事件
+                        marker.addListener('click', function() {
+                            // 关闭任何已打开的信息窗口
+                            if (window.openedInfoWindow) {
+                                window.openedInfoWindow.close();
+                            }
+                            
+                            // 创建信息窗口内容
+                            let content = '<div style="padding:10px;max-width:300px;">';
+                            
+                            // 如果有图片，添加图片
+                            if (markerInfo.image) {
+                                content += `<div style="margin-bottom:10px;"><img src="${markerInfo.image}" style="max-width:100%;max-height:150px;border-radius:4px;"></div>`;
+                            }
+                            
+                            // 添加描述
+                            content += `<div style="font-size:14px;margin-bottom:10px;">${description}</div>`;
+                            
+                            // 添加时间戳
+                            const time = markerInfo.timestamp ? new Date(markerInfo.timestamp) : new Date();
+                            content += `<div style="font-size:12px;color:#666;">${time.toLocaleDateString()} ${time.toLocaleTimeString()}</div>`;
+                            
+                            content += '</div>';
+                            
+                            // 创建并打开信息窗口
+                            const infoWindow = new google.maps.InfoWindow({
+                                content: content,
+                                maxWidth: 300
+                            });
+                            
+                            infoWindow.open(window.map, marker);
+                            
+                            // 保存当前打开的信息窗口
+                            window.openedInfoWindow = infoWindow;
+                        });
+                        
+                        // 将标记保存到全局数组
+                        window.markers.push(marker);
+                        validMarkerCount++;
+                        
+                        // 如果是最后一个标记，输出日志
+                        if (index === markerData.length - 1) {
+                            // 更新状态显示
+                            const markerStatus = document.getElementById('markerStatus');
+                            if (markerStatus) {
+                                markerStatus.textContent = `已加载 ${validMarkerCount} 个标记`;
+                                markerStatus.style.color = validMarkerCount > 0 ? 'green' : 'orange';
+                            }
+                            
+                            if (validMarkerCount > 0) {
+                                console.log(`[Map Fix] 成功加载 ${validMarkerCount} 个标记`);
+                            } else {
+                                console.warn('[Map Fix] 没有加载到有效标记，尝试创建示例标记');
+                                // 清除可能无效的标记数据
+                                localStorage.removeItem('savedMarkers');
+                                // 创建新的示例标记
+                                preloadMarkerData();
+                                // 重新尝试加载
+                                setTimeout(loadMarkersFromStorage, 1000);
+                            }
+                        }
+                    } catch (markerError) {
+                        console.error('[Map Fix] 创建标记失败:', markerError);
+                    }
+                }, index * 100); // 每个标记添加间隔100毫秒，避免过快添加
+            })(i);
         }
     }
     
