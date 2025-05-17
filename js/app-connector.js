@@ -240,13 +240,19 @@
     function checkMapsAPILoaded() {
         console.log('[App Connector] 检查Google Maps API状态...');
         
+        // 检查是否已通过内联脚本加载
+        if (window.google && window.google.maps) {
+            console.log('[App Connector] Google Maps API已通过内联脚本成功加载');
+            return;
+        }
+        
         // 使用我们的修复脚本来加载API
         if (typeof document.dispatchEvent === 'function') {
             console.log('[App Connector] 通过修复脚本请求加载API');
             document.dispatchEvent(new CustomEvent('request_google_maps_api'));
         }
         
-        // 15秒后检查地图状态
+        // 5秒后检查地图状态 - 缩短等待时间
         setTimeout(function() {
             const mapStatus = document.getElementById('mapStatus');
             
@@ -257,6 +263,28 @@
                 if (window.GOOGLE_MAPS_API_KEY) {
                     console.log('[App Connector] 使用配置的API密钥:', window.GOOGLE_MAPS_API_KEY);
                     loadMapsAPIWithKey(window.GOOGLE_MAPS_API_KEY);
+                    
+                    // 再次检查 - 再给5秒
+                    setTimeout(function() {
+                        if (!window.google || !window.google.maps) {
+                            console.log('[App Connector] 第二次尝试失败，最后尝试强制加载');
+                            // 强制加载 - 使用内联脚本方式
+                            var script = document.createElement('script');
+                            script.src = 'https://maps.googleapis.com/maps/api/js?key=' + 
+                                window.GOOGLE_MAPS_API_KEY + 
+                                '&libraries=places&callback=initMap&loading=async';
+                            script.async = true;
+                            script.defer = true;
+                            
+                            // 设置初始化函数
+                            window.initMap = function() {
+                                console.log('[App Connector] 强制加载的Maps API初始化成功');
+                                document.dispatchEvent(new CustomEvent('google_maps_loaded'));
+                            };
+                            
+                            document.head.appendChild(script);
+                        }
+                    }, 5000);
                 } else {
                     console.error('[App Connector] Google Maps API未正确加载');
                     if (mapStatus) {
@@ -268,11 +296,8 @@
                 if (mapStatus) {
                     mapStatus.textContent = '地图API已加载';
                 }
-                
-                // 确保事件被触发
-                document.dispatchEvent(new CustomEvent('google_maps_loaded'));
             }
-        }, 15000);
+        }, 5000);
     }
     
     // 使用指定的密钥加载Maps API
@@ -283,6 +308,7 @@
         const script = document.createElement('script');
         script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=googleMapsInitialized&v=weekly&loading=async`;
         script.async = true;
+        script.defer = true;
         
         // 设置回调函数
         window.googleMapsInitialized = function() {
@@ -293,6 +319,53 @@
         // 添加错误处理
         script.onerror = function() {
             console.error('[App Connector] 无法加载Google Maps API，服务器可能不可用');
+            useLocalMapsFallback();
+        };
+        
+        document.head.appendChild(script);
+    }
+    
+    // 重新加载Google Maps API
+    function reloadMapsAPI() {
+        console.log('[App Connector] 尝试重新加载Google Maps API...');
+        
+        // 移除已有的Maps API脚本
+        const existingScripts = document.querySelectorAll('script[src*="maps.googleapis.com"]');
+        existingScripts.forEach(function(script) {
+            script.remove();
+            console.log('[App Connector] 已移除:', script.src);
+        });
+        
+        // 创建新的脚本标签
+        const script = document.createElement('script');
+        script.async = true;
+        script.defer = true;
+        script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places&v=weekly';
+        
+        // 添加加载事件监听
+        script.onload = function() {
+            console.log('[App Connector] 重新加载Google Maps API成功');
+            
+            // 延迟初始化地图
+            setTimeout(function() {
+                if (typeof initMap === 'function') {
+                    try {
+                        initMap();
+                        console.log('[App Connector] 重新加载后地图初始化成功');
+                        
+                        // 初始化标记
+                        initializeMarkers();
+                    } catch (e) {
+                        console.error('[App Connector] 重新加载后地图初始化失败:', e);
+                    }
+                }
+            }, 1000);
+        };
+        
+        script.onerror = function() {
+            console.error('[App Connector] 重新加载Google Maps API失败');
+            
+            // 尝试使用本地备份
             useLocalMapsFallback();
         };
         
