@@ -4,6 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
+    <!-- 清除浏览器缓存的脚本 -->
+    <script>
+        // 强制清除缓存
+        if (window.caches) {
+            console.log('尝试清除缓存...');
+            caches.keys().then(function(cacheNames) {
+                return Promise.all(
+                    cacheNames.map(function(cacheName) {
+                        console.log('删除缓存:', cacheName);
+                        return caches.delete(cacheName);
+                    })
+                );
+            });
+        }
+        
+        // 阻止从外部域加载脚本
+        const originalCreateElement = document.createElement;
+        document.createElement = function(tagName) {
+            const element = originalCreateElement.call(document, tagName);
+            if (tagName.toLowerCase() === 'script') {
+                const originalSetAttribute = element.setAttribute;
+                element.setAttribute = function(name, value) {
+                    if (name === 'src' && value.includes('edwardidaniels449.github.io')) {
+                        console.warn('阻止加载外部脚本:', value);
+                        return;
+                    }
+                    return originalSetAttribute.call(this, name, value);
+                };
+            }
+            return element;
+        };
+    </script>
+    
+    <!-- 提前加载关键资源 -->
+    <link rel="dns-prefetch" href="https://maps.googleapis.com">
+    <link rel="preconnect" href="https://maps.googleapis.com">
+    <link rel="preload" href="images/icon-192x192.png" as="image">
+    
+    <!-- PWA配置 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PtvAlert">
+    <link rel="apple-touch-icon" href="images/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="images/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/icon-180x180.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="images/icon-167x167.png">
+    
     <!-- 全局变量初始化 - 必须最先加载 -->
     <script>
       // 墨尔本中心坐标 - 全局变量
@@ -16,160 +63,65 @@
       console.log('[index.html] Global isMobile:', window.isMobile);
     </script>
     
-    <!-- PWA Manifest修复脚本 - 解决移动设备上的PWA问题 -->
-    <script src="js/manifest-fix.js"></script>
-    
-    <!-- 纯Google Maps修复脚本 - 在其他脚本之前加载 -->
-    <script src="js/pure-google-maps-fix.js?v=2023051602"></script>
-    
-    <!-- 紧急重定向脚本 - 必须最先加载 -->
-    <script src="redirect.js"></script>
-    <!-- Cloudflare配置 - 必须最先加载 -->
-    <script src="cloudflare-config.js"></script>
-    <!-- 全面API修复脚本 - 必须最先加载 -->
-    <script src="fix-api-mode.js"></script>
-    <!-- API诊断弹窗移除脚本 -->
-    <script src="js/remove-api-popup.js"></script>
-    <!-- 引用错误修复脚本 - 必须最先加载 -->
-    <script src="js/reference-error-fix.js"></script>
-    <!-- 地图加载辅助脚本 -->
-    <script src="js/map-loader.js"></script>
     <meta name="theme-color" content="#ffffff">
-    <!-- 紧急修复缓存函数未定义错误 -->
-    <script src="emergency-fix.js"></script>
-    <!-- 地图紧急修复脚本 - 解决Google Maps API加载问题 -->
-    <script src="map-emergency-fix.js"></script>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="description" content="墨尔本交通信息共享平台">
     <meta name="apple-mobile-web-app-title" content="PtvAlert">
     
-    <!-- 全局变量修复脚本 - 必须最先加载 -->
-    <script src="./js/globals-fix.js"></script>
     <script src="./js/cache-functions.js"></script>
-    <!-- 强制使用真实API -->
-    <script src="force-real-api.js"></script>
     <script src="config.js"></script>
     <script src="vapid-keys.js"></script>
     <script src="push-client.js"></script>
     
-    <!-- Firebase与Cloudflare同步脚本 -->
-    <script src="./js/firebase-to-cloudflare-sync.js"></script>
-    
     <!-- 修复版Service Worker注册脚本 -->
     <script>
-        // 确保Service Worker正确注册
+        // 确保Service Worker正确注册 - 对移动设备友好的版本
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', async function() {
+            // 延迟注册Service Worker，确保页面核心内容已加载
+            window.addEventListener('load', function() {
                 try {
                     console.log('[Service Worker] 开始注册Service Worker...');
                     
-                    // 先卸载所有现有的Service Worker
-                    try {
-                        const registrations = await navigator.serviceWorker.getRegistrations();
-                        for (let registration of registrations) {
-                            console.log('[Service Worker] 卸载旧的Service Worker:', registration.scope);
-                            await registration.unregister();
-                        }
-                        console.log('[Service Worker] 所有旧Service Worker已卸载');
-                    } catch (unregError) {
-                        console.warn('[Service Worker] 卸载旧Service Worker时出错:', unregError);
-                    }
+                    // 计算正确的Service Worker路径
+                    var swPath = './service-worker.js';
                     
-                    // 为不同环境准备正确的Service Worker路径
-                    let swPath = './service-worker.js';
-                    
-                    // 检测GitHub Pages环境并修正路径
+                    // 处理GitHub Pages的情况
                     if (window.location.hostname.includes('github.io')) {
-                        const pathSegments = window.location.pathname.split('/');
+                        var pathSegments = window.location.pathname.split('/');
                         if (pathSegments.length >= 2 && pathSegments[1]) {
-                            const repoName = pathSegments[1];
-                            swPath = '/' + repoName + '/service-worker.js';
-                            console.log('[Service Worker] 检测到GitHub Pages环境，使用路径:', swPath);
+                            swPath = '/' + pathSegments[1] + '/service-worker.js';
+                            console.log('[Service Worker] GitHub Pages环境，使用路径:', swPath);
                         }
                     }
                     
-                    // 针对移动设备使用更简单的注册流程
-                    if (window.isMobile) {
-                        console.log('[Service Worker] 检测到移动设备，使用简化注册流程');
+                    // 对于移动设备，使用更简单的注册流程
+                    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                        console.log('[Service Worker] 使用移动设备友好的注册流程');
                         
-                        try {
-                            const registration = await navigator.serviceWorker.register(swPath);
-                            console.log('[Service Worker] 移动设备注册成功:', registration.scope);
-                        } catch (mobileError) {
-                            console.error('[Service Worker] 移动设备注册失败:', mobileError);
-                            console.log('[Service Worker] 尝试使用备用Service Worker');
-                            
-                            try {
-                                const fallbackReg = await navigator.serviceWorker.register('./fallback-service-worker.js');
-                                console.log('[Service Worker] 备用Service Worker注册成功:', fallbackReg.scope);
-                            } catch (fallbackError) {
-                                console.error('[Service Worker] 备用Service Worker也注册失败:', fallbackError);
-                                
-                                // 使用内联最小Service Worker作为最后的兜底方案
-                                try {
-                                    const minimalSW = new Blob([
-                                        `self.addEventListener('install', () => self.skipWaiting());
-                                        self.addEventListener('activate', e => e.waitUntil(clients.claim()));
-                                        self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => 
-                                            new Response('离线模式，请稍后重试'))));`
-                                    ], {type: 'application/javascript'});
-                                    
-                                    const minimalURL = URL.createObjectURL(minimalSW);
-                                    const minimalReg = await navigator.serviceWorker.register(minimalURL);
-                                    console.log('[Service Worker] 内联最小Service Worker注册成功');
-                                } catch (inlineError) {
-                                    console.error('[Service Worker] 所有注册方法都失败');
-                                }
-                            }
-                        }
-                        return;
-                    }
-                    
-                    // 桌面设备使用标准注册流程
-                    try {
-                        const registration = await navigator.serviceWorker.register(swPath, {
-                            scope: './'
-                        });
-                        console.log('[Service Worker] 注册成功:', registration.scope);
-                    } catch (mainError) {
-                        console.error('[Service Worker] 主Service Worker注册失败:', mainError);
-                        
-                        try {
-                            console.log('[Service Worker] 尝试注册备用Service Worker');
-                            const fallbackReg = await navigator.serviceWorker.register('./fallback-service-worker.js', {
-                                scope: './'
+                        navigator.serviceWorker.register(swPath)
+                            .then(function(registration) {
+                                console.log('[Service Worker] 移动设备注册成功:', registration.scope);
+                            })
+                            .catch(function(error) {
+                                console.error('[Service Worker] 移动设备注册失败:', error);
+                                // 不要尝试备选方案，直接允许网站正常加载
                             });
-                            console.log('[Service Worker] 备用Service Worker注册成功:', fallbackReg.scope);
-                        } catch (fallbackError) {
-                            console.error('[Service Worker] 备用Service Worker注册也失败:', fallbackError);
-                            
-                            if (window.location.hostname.includes('github.io')) {
-                                console.log('[Service Worker] 尝试使用内联Service Worker');
-                                
-                                const minimalSWBlob = new Blob([`
-                                    self.addEventListener('install', () => self.skipWaiting());
-                                    self.addEventListener('activate', event => event.waitUntil(clients.claim()));
-                                    self.addEventListener('fetch', event => event.respondWith(fetch(event.request)));
-                                    console.log('内联最小Service Worker已激活');
-                                `], {type: 'application/javascript'});
-                                
-                                const minimalSWUrl = URL.createObjectURL(minimalSWBlob);
-                                
-                                try {
-                                    const inlineReg = await navigator.serviceWorker.register(minimalSWUrl, {
-                                        scope: './'
-                                    });
-                                    console.log('[Service Worker] 内联Service Worker注册成功:', inlineReg.scope);
-                                } catch (inlineError) {
-                                    console.error('[Service Worker] 所有Service Worker注册方法都失败');
-                                }
-                            }
-                        }
+                    } else {
+                        // 桌面设备使用常规注册流程
+                        navigator.serviceWorker.register(swPath)
+                            .then(function(registration) {
+                                console.log('[Service Worker] 注册成功:', registration.scope);
+                            })
+                            .catch(function(error) {
+                                console.error('[Service Worker] 注册失败:', error);
+                                // 允许网站继续加载
+                            });
                     }
                 } catch (error) {
-                    console.error('[Service Worker] 处理服务工作线程时出错:', error);
+                    console.error('[Service Worker] 注册过程出错:', error);
+                    // 错误不会阻止网站加载
                 }
             });
         }
@@ -237,12 +189,38 @@
             }, 100);
         })();
     </script>
-    
-    <!-- 先加载辅助脚本，确保它们在Google Maps API之前初始化 -->
-    <!-- 地图加载修复脚本，必须最先加载 -->
-    <script src="js/fix-google-maps-callback.js"></script>
 
-    <!-- Google Maps API 脚本，添加超时参数 -->
+    <!-- Google Maps API 脚本 -->
+    <script>
+        // 初始化地图函数
+        function initMap() {
+            console.log("初始化地图...");
+            
+            if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+                console.error("Google Maps API尚未加载");
+                return;
+            }
+            
+            // 创建地图
+            window.map = new google.maps.Map(document.getElementById('map'), {
+                center: window.MELBOURNE_CENTER,
+                zoom: 13,
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                fullscreenControl: false,
+                streetViewControl: false,
+                zoomControl: true,
+                mapTypeControl: false
+            });
+            
+            console.log("地图已初始化");
+        }
+        
+        // Google Maps API 加载回调
+        function googleMapsLoadedCallback() {
+            console.log("Google Maps 已加载，初始化地图...");
+            initMap();
+        }
+    </script>
     <script async defer
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places&v=weekly"></script>
 
@@ -250,7 +228,6 @@
     <script src="js/ui-controller.js"></script>
     <script src="js/data-connector.js"></script>
     <script src="js/app-connector.js"></script>
-    <script src="js/functionality-recovery.js"></script>
     <script src="js/marker-handler.js"></script>
     
     <!-- 添加Firebase初始化脚本 -->
@@ -262,9 +239,6 @@
       <span style="font-size:16px;">🌐</span>
       <span id="langSwitchText">EN</span>
     </button>
-    
-    <!-- 用户菜单 - 完全隐藏，不显示任何内容 -->
-    <!-- 移除所有用户菜单相关代码 -->
     
     <!-- 添加弹幕容器 -->
     <div class="danmaku-container" id="danmakuContainer"></div>
@@ -503,66 +477,6 @@
         }
     }
     </script>
-
-    <!-- 添加标记自动清理脚本 -->
-    <script src="js/marker-cleanup-service.js"></script>
-    
-    <!-- 添加标记清理修复脚本 -->
-    <script src="js/marker-cleanup-fix.js"></script>
 </body>
-
-<!-- 辅助脚本 -->
-    <script>
-  // 处理地图初始化错误的函数
-  function handleMapInitError() {
-    // 如果已经有离线模式处理，不再显示额外的错误
-    if (window.mapsInitialized || document.getElementById('offlineMapNotice')) {
-      return;
-    }
-    
-    // 创建一个简单的地图替代元素
-    const mapElement = document.getElementById('map');
-    if (mapElement) {
-      mapElement.style.backgroundImage = 'linear-gradient(to bottom, #cfd9df 0%, #e2ebf0 100%)';
-      mapElement.style.backgroundSize = 'cover';
-    }
-    
-    // 创建一个模拟的地图对象
-    window.map = window.map || {
-      getCenter: function() {
-        return {
-          lat: function() { return MELBOURNE_CENTER.lat; },
-          lng: function() { return MELBOURNE_CENTER.lng; }
-        };
-      },
-      setCenter: function() { return this; },
-      addListener: function() { return { remove: function() {} }; }
-    };
-    
-    // 提示用户
-    const notice = document.createElement('div');
-    notice.id = 'offlineMapNotice';
-    notice.style.cssText = 'position:fixed;top:50px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:10px 20px;border-radius:20px;z-index:1000;font-size:14px;text-align:center;';
-    notice.textContent = '地图加载受限，但您仍可添加报告';
-    document.body.appendChild(notice);
-    
-    // 5秒后移除通知
-    setTimeout(function() {
-      if (notice.parentNode) {
-        notice.style.opacity = '0';
-        notice.style.transition = 'opacity 0.5s';
-        setTimeout(function() {
-          if (notice.parentNode) {
-            notice.parentNode.removeChild(notice);
-          }
-        }, 500);
-      }
-    }, 5000);
-    
-    // 标记地图已初始化（避免重复显示错误）
-    window.mapsInitialized = true;
-  }
-    </script>
-
 </html>
 
