@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
+<<<<<<< HEAD
+=======
     <!-- 紧急缓存清理和脚本拦截 -->
     <script>
         // 禁止加载任何edwardidaniels449.github.io的资源
@@ -93,11 +95,24 @@
         });
     </script>
     
+>>>>>>> clean-version
     <!-- 提前加载关键资源 -->
     <link rel="dns-prefetch" href="https://maps.googleapis.com">
     <link rel="preconnect" href="https://maps.googleapis.com">
     <link rel="preload" href="images/icon-192x192.png" as="image">
     
+<<<<<<< HEAD
+    <!-- 移动端加载修复脚本 - 必须最先加载 -->
+    <script src="mobile-fix.js"></script>
+    
+    <!-- 离线状态处理脚本 -->
+    <script src="js/offline-handler.js"></script>
+    
+    <!-- 移动端性能优化脚本 -->
+    <script src="js/mobile-performance.js"></script>
+    
+=======
+>>>>>>> clean-version
     <!-- PWA配置 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -107,6 +122,30 @@
     <link rel="apple-touch-icon" sizes="180x180" href="images/icon-180x180.png">
     <link rel="apple-touch-icon" sizes="167x167" href="images/icon-167x167.png">
     
+<<<<<<< HEAD
+    <!-- 移动端错误终极修复 - 必须最先加载，解决循环错误引用 -->
+    <script src="js/mobile-error-final-fix.js"></script>
+    
+    <!-- 移动端内存清理 - 定期清理内存，防止内存泄漏导致崩溃 -->
+    <script src="js/mobile-memory-cleaner.js"></script>
+    
+    <!-- 标记加载修复 - 解决标记加载和保存造成的控制台刷屏和内存问题 -->
+    <script src="js/marker-loading-fix.js"></script>
+    
+    <!-- 移动端存储清理工具 - 自动清理过多的标记数据 -->
+    <script src="js/mobile-storage-cleaner.js"></script>
+    
+    <!-- Undefined错误修复脚本 - 必须最先加载 -->
+    <script src="js/undefined-error-fix.js"></script>
+    
+    <!-- 移动端闪退修复脚本 - 必须最先加载 -->
+    <script src="js/mobile-crash-fix.js"></script>
+    
+    <!-- 特定错误修复补丁 - 解决"未知错误"问题 -->
+    <script src="js/error-fix-patch.js"></script>
+    
+=======
+>>>>>>> clean-version
     <!-- 全局变量初始化 - 必须最先加载 -->
     <script>
       // 墨尔本中心坐标 - 全局变量
@@ -214,15 +253,18 @@
     <!-- 样式表 -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     
+    <!-- 移动设备优化样式 -->
+    <link rel="stylesheet" href="css/mobile-optimization.css" />
+    
     <!-- 添加Firebase SDK 脚本 -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     
     <!-- URL修复工具 - 处理推送通知URL问题 -->
-    <script src="./js/url-fix.js?v=1.0.0"></script>
+    <script defer src="./js/url-fix.js?v=1.0.0"></script>
     
     <!-- 推送通知处理脚本 -->
-    <script src="./js/notification-handler.js?v=2.0.1_20231121" id="notification-handler-script"></script>
+    <script defer src="./js/notification-handler.js?v=2.0.1_20231121" id="notification-handler-script"></script>
     
     <!-- URL修复脚本 - 确保使用正确的域名 -->
     <script>
@@ -245,6 +287,16 @@
             }, 100);
         })();
     </script>
+<<<<<<< HEAD
+    
+    <!-- 先加载辅助脚本，确保它们在Google Maps API之前初始化 -->
+    <!-- 地图加载修复脚本，必须最先加载 -->
+    <script defer src="js/fix-google-maps-callback.js"></script>
+    
+    <!-- 轻量级地图初始化脚本 - 优化移动设备地图加载 -->
+    <script defer src="js/lightweight-map-init.js"></script>
+=======
+>>>>>>> clean-version
 
     <!-- Google Maps API 脚本 -->
     <script>
@@ -316,6 +368,24 @@
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places&v=weekly"></script>
 
     <!-- 在Google Maps API加载后加载这些脚本 -->
+<<<<<<< HEAD
+    <script defer src="js/ui-controller.js"></script>
+    <script defer src="js/data-connector.js"></script>
+    <script defer src="js/app-connector.js"></script>
+    <script defer src="js/functionality-recovery.js"></script>
+    
+    <!-- 移动端轻量标记系统 - 为移动设备优化的标记处理 -->
+    <script defer src="js/mobile-lightweight-markers.js"></script>
+    
+    <!-- 原始标记处理脚本 -->
+    <script defer src="js/marker-handler.js"></script>
+    
+    <!-- 移动端标记修复脚本 -->
+    <script defer src="js/mobile-markers-fix.js"></script>
+    
+    <!-- 添加Firebase初始化脚本 -->
+    <script defer src="js/firebase-initializer.js"></script>
+=======
     <script src="js/ui-controller.js"></script>
     <script src="js/data-connector.js"></script>
     <script src="js/app-connector.js"></script>
@@ -359,6 +429,7 @@
             padding: 20px;
         }
     </style>
+>>>>>>> clean-version
 </head>
 <body>
     <!-- 右上角语言切换按钮 -->
@@ -389,6 +460,61 @@
             <span id="pushBtnText">启用推送通知</span>
         </button>
     </div>
+    
+    <!-- 移动端紧急重置按钮 -->
+    <div id="mobileResetBtnContainer" style="position:fixed;bottom:160px;right:20px;z-index:2000;display:none;">
+        <button id="mobileResetBtn" style="background-color:#ff3b30;color:white;border:none;padding:8px 12px;border-radius:8px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;gap:6px;">
+            <span style="font-size:18px;">🔄</span>
+            <span>紧急重置</span>
+        </button>
+    </div>
+    
+    <!-- 显示移动端紧急重置按钮 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检测是否为移动设备
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                // 显示重置按钮
+                const resetBtnContainer = document.getElementById('mobileResetBtnContainer');
+                if (resetBtnContainer) {
+                    resetBtnContainer.style.display = 'block';
+                    
+                    // 添加点击事件
+                    const resetBtn = document.getElementById('mobileResetBtn');
+                    if (resetBtn) {
+                        resetBtn.addEventListener('click', function() {
+                            if (confirm('确定要重置应用吗？这将清除所有标记数据。')) {
+                                try {
+                                    // 使用存储清理工具进行重置
+                                    if (window.MobileStorageCleaner && window.MobileStorageCleaner.resetAllStorage) {
+                                        window.MobileStorageCleaner.resetAllStorage();
+                                    } else {
+                                        // 备份语言设置
+                                        const lang = localStorage.getItem('preferredLanguage');
+                                        
+                                        // 清空localStorage
+                                        localStorage.clear();
+                                        
+                                        // 恢复语言设置
+                                        if (lang) {
+                                            localStorage.setItem('preferredLanguage', lang);
+                                        }
+                                        
+                                        // 刷新页面
+                                        window.location.reload();
+                                    }
+                                } catch (e) {
+                                    alert('重置失败: ' + e.message);
+                                    console.error('重置失败:', e);
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        });
+    </script>
     
     <!-- 报告计数器弹窗 - 默认隐藏，使用中央弹窗而非右侧蓝色弹窗 -->
     <div class="popup-base" id="reportCounterPopup" style="display:none;">
@@ -604,6 +730,18 @@
         }
     }
     </script>
+<<<<<<< HEAD
+
+    <!-- 添加标记自动清理脚本 -->
+    <script src="js/marker-cleanup-service.js"></script>
+    
+    <!-- 添加标记清理修复脚本 -->
+    <script src="js/marker-cleanup-fix.js"></script>
+    
+    <!-- 添加Google Maps setMap修复脚本 -->
+    <script src="js/google-maps-setmap-fix.js"></script>
+=======
+>>>>>>> clean-version
 </body>
 </html>
 
