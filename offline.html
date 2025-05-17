@@ -109,7 +109,7 @@
             <span id="statusText">离线</span>
         </div>
     </div>
-
+    
     <script>
         // 简单的语言切换逻辑
         const texts = {
@@ -142,15 +142,15 @@
         
         // 检查网络状态
         function updateNetworkStatus() {
-            const online = navigator.onLine;
-            const statusIndicator = document.getElementById('statusIndicator');
-            const statusText = document.getElementById('statusText');
-            
-            if (online) {
-                statusIndicator.classList.add('online');
+                const online = navigator.onLine;
+                const statusIndicator = document.getElementById('statusIndicator');
+                const statusText = document.getElementById('statusText');
+                
+                if (online) {
+                    statusIndicator.classList.add('online');
                 statusText.textContent = texts[lang].online;
-            } else {
-                statusIndicator.classList.remove('online');
+                } else {
+                    statusIndicator.classList.remove('online');
                 statusText.textContent = texts[lang].offline;
             }
         }
