@@ -379,27 +379,92 @@
                 // 检查是否有标记数据
                 const storedMarkers = localStorage.getItem('savedMarkers');
                 if (storedMarkers) {
-                    const markerData = JSON.parse(storedMarkers);
-                    console.log(`[App Connector] 从本地存储加载了 ${markerData.length} 个标记`);
-                    
-                    // 循环添加标记
-                    markerData.forEach(function(marker) {
-                        // 调用 marker-handler.js 中的方法添加标记
-                        if (typeof window.addReportMarker === 'function') {
-                            window.addReportMarker(
-                                marker.location,
-                                marker.description,
-                                marker.id,
-                                marker.image
-                            );
+                    try {
+                        const markerData = JSON.parse(storedMarkers);
+                        console.log(`[App Connector] 从本地存储加载了 ${markerData.length} 个标记`);
+                        
+                        if (!Array.isArray(markerData)) {
+                            console.error('[App Connector] 标记数据格式无效，不是数组');
+                            return;
                         }
-                    });
-                    
-                    // 更新状态显示
-                    const markerStatus = document.getElementById('markerStatus');
-                    if (markerStatus) {
-                        markerStatus.textContent = `已加载 ${markerData.length} 个标记`;
-                        markerStatus.style.color = 'green';
+                        
+                        // 先验证所有标记数据
+                        const validMarkers = markerData.filter(marker => {
+                            if (!marker) return false;
+                            
+                            // 添加额外验证逻辑
+                            if (typeof marker !== 'object') {
+                                console.warn('[App Connector] 跳过无效标记数据，不是对象:', marker);
+                                return false;
+                            }
+                            
+                            // 确保至少有描述字段
+                            if (!marker.description) {
+                                marker.description = '无描述';
+                            }
+                            
+                            // 确保位置对象
+                            if (!marker.location) {
+                                console.warn('[App Connector] 标记缺少位置数据，将使用默认位置');
+                                // 使用默认位置，标记处理器将进一步处理
+                                return true;
+                            }
+                            
+                            return true;
+                        });
+                        
+                        console.log(`[App Connector] 验证有效的标记: ${validMarkers.length}/${markerData.length}`);
+                        
+                        // 分批加载标记，避免一次加载过多导致性能问题
+                        const batchSize = 10;
+                        const totalMarkers = validMarkers.length;
+                        
+                        function loadMarkerBatch(startIndex) {
+                            const endIndex = Math.min(startIndex + batchSize, totalMarkers);
+                            console.log(`[App Connector] 加载标记批次 ${startIndex}-${endIndex-1}/${totalMarkers}`);
+                            
+                            for (let i = startIndex; i < endIndex; i++) {
+                                const marker = validMarkers[i];
+                                try {
+                                    // 调用 marker-handler.js 中的方法添加标记
+                                    if (typeof window.addReportMarker === 'function') {
+                                        window.addReportMarker(
+                                            marker.location,
+                                            marker.description,
+                                            marker.id,
+                                            marker.image
+                                        );
+                                    }
+                                } catch (error) {
+                                    console.error('[App Connector] 添加标记失败:', error, marker);
+                                }
+                            }
+                            
+                            // 更新状态显示
+                            const markerStatus = document.getElementById('markerStatus');
+                            if (markerStatus) {
+                                markerStatus.textContent = `已加载 ${endIndex}/${totalMarkers} 个标记`;
+                                markerStatus.style.color = 'green';
+                            }
+                            
+                            // 如果还有更多标记，继续加载下一批
+                            if (endIndex < totalMarkers) {
+                                setTimeout(() => loadMarkerBatch(endIndex), 300);
+                            }
+                        }
+                        
+                        // 开始加载第一批
+                        loadMarkerBatch(0);
+                    } catch (parseError) {
+                        console.error('[App Connector] 解析标记数据失败:', parseError);
+                        localStorage.removeItem('savedMarkers');
+                        // 尝试预加载一些默认标记
+                        if (window.MapFix && typeof window.MapFix.preloadMarkerData === 'function') {
+                            console.log('[App Connector] 尝试使用MapFix预加载默认标记');
+                            window.MapFix.preloadMarkerData();
+                            // 重新尝试加载
+                            setTimeout(loadFromStorage, 1000);
+                        }
                     }
                 } else {
                     console.log('[App Connector] 本地存储中没有标记数据');
@@ -492,41 +557,125 @@
                 try {
                     const storedMarkers = localStorage.getItem('savedMarkers');
                     if (storedMarkers) {
-                        const markerData = JSON.parse(storedMarkers);
-                        console.log(`[App Connector] 手动从本地存储加载了 ${markerData.length} 个标记`);
-                        
-                        // 清除已有标记
-                        if (window.markers && window.markers.length > 0) {
-                            window.markers.forEach(marker => {
-                                if (marker && marker.setMap) {
-                                    marker.setMap(null);
-                                }
-                            });
-                            window.markers = [];
-                        }
-                        
-                        // 添加标记
-                        markerData.forEach(marker => {
-                            if (typeof window.addReportMarker === 'function') {
-                                window.addReportMarker(
-                                    marker.location,
-                                    marker.description,
-                                    marker.id,
-                                    marker.image
-                                );
+                        try {
+                            const markerData = JSON.parse(storedMarkers);
+                            console.log(`[App Connector] 手动从本地存储加载了 ${markerData.length} 个标记`);
+                            
+                            // 验证是否为数组
+                            if (!Array.isArray(markerData)) {
+                                console.error('[App Connector] 标记数据格式无效，不是数组');
+                                this.textContent = '数据格式错误';
+                                setTimeout(() => {
+                                    this.textContent = '加载标记';
+                                }, 2000);
+                                return;
                             }
-                        });
-                        
-                        const markerStatus = document.getElementById('markerStatus');
-                        if (markerStatus) {
-                            markerStatus.textContent = `已加载 ${markerData.length} 个标记`;
-                            markerStatus.style.color = 'green';
+                            
+                            // 清除已有标记
+                            if (window.markers && window.markers.length > 0) {
+                                window.markers.forEach(marker => {
+                                    if (marker && marker.setMap) {
+                                        marker.setMap(null);
+                                    }
+                                });
+                                window.markers = [];
+                            }
+                            
+                            // 先验证所有标记数据
+                            const validMarkers = markerData.filter(marker => {
+                                if (!marker) return false;
+                                
+                                // 添加额外验证逻辑
+                                if (typeof marker !== 'object') {
+                                    console.warn('[App Connector] 跳过无效标记数据，不是对象:', marker);
+                                    return false;
+                                }
+                                
+                                // 确保至少有描述字段
+                                if (!marker.description) {
+                                    marker.description = '无描述';
+                                }
+                                
+                                // 确保位置对象
+                                if (!marker.location) {
+                                    console.warn('[App Connector] 标记缺少位置数据，将使用默认位置');
+                                    // 标记处理器会处理这种情况
+                                    return true;
+                                }
+                                
+                                return true;
+                            });
+                            
+                            console.log(`[App Connector] 验证有效的标记: ${validMarkers.length}/${markerData.length}`);
+                            
+                            // 分批加载标记，避免一次加载过多导致性能问题
+                            const batchSize = 5;
+                            const totalMarkers = validMarkers.length;
+                            let loadedCount = 0;
+                            
+                            const loadBatch = (startIndex) => {
+                                const endIndex = Math.min(startIndex + batchSize, totalMarkers);
+                                
+                                for (let i = startIndex; i < endIndex; i++) {
+                                    const marker = validMarkers[i];
+                                    try {
+                                        // 调用 marker-handler.js 中的方法添加标记
+                                        if (typeof window.addReportMarker === 'function') {
+                                            window.addReportMarker(
+                                                marker.location,
+                                                marker.description,
+                                                marker.id,
+                                                marker.image
+                                            );
+                                            loadedCount++;
+                                        }
+                                    } catch (error) {
+                                        console.error('[App Connector] 添加标记失败:', error, marker);
+                                    }
+                                }
+                                
+                                // 更新按钮状态
+                                this.textContent = `加载中... ${endIndex}/${totalMarkers}`;
+                                
+                                // 更新状态显示
+                                const markerStatus = document.getElementById('markerStatus');
+                                if (markerStatus) {
+                                    markerStatus.textContent = `已加载 ${endIndex}/${totalMarkers} 个标记`;
+                                    markerStatus.style.color = 'green';
+                                }
+                                
+                                // 继续加载下一批
+                                if (endIndex < totalMarkers) {
+                                    setTimeout(() => loadBatch(endIndex), 300);
+                                } else {
+                                    // 完成所有加载
+                                    this.textContent = `加载成功 (${loadedCount})`;
+                                    setTimeout(() => {
+                                        this.textContent = '加载标记';
+                                    }, 2000);
+                                }
+                            };
+                            
+                            // 开始加载第一批
+                            loadBatch(0);
+                        } catch (parseError) {
+                            console.error('[App Connector] 解析标记数据失败:', parseError);
+                            localStorage.removeItem('savedMarkers');
+                            this.textContent = '数据解析失败';
+                            setTimeout(() => {
+                                this.textContent = '加载标记';
+                            }, 2000);
+                            
+                            // 尝试预加载一些默认标记
+                            if (window.MapFix && typeof window.MapFix.preloadMarkerData === 'function') {
+                                console.log('[App Connector] 尝试使用MapFix预加载默认标记');
+                                window.MapFix.preloadMarkerData();
+                                
+                                setTimeout(() => {
+                                    this.textContent = '重新加载';
+                                }, 2000);
+                            }
                         }
-                        
-                        this.textContent = '加载成功';
-                        setTimeout(() => {
-                            this.textContent = '加载标记';
-                        }, 2000);
                     } else {
                         console.log('[App Connector] 本地存储中没有标记数据，尝试创建示例标记');
                         

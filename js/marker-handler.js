@@ -79,18 +79,72 @@
         }
         
         // 确保位置是有效的
-        if (!location || typeof location !== 'object' || 
-           (typeof location.lat !== 'function' && typeof location.lat !== 'number') ||
-           (typeof location.lng !== 'function' && typeof location.lng !== 'number')) {
-            console.error('[Marker Handler] 无效的位置对象:', location);
-            return null;
+        if (!location || typeof location !== 'object') {
+            console.warn('[Marker Handler] 无效的位置对象，使用默认位置:', location);
+            // 使用默认位置（地图中心或墨尔本中心）
+            try {
+                if (window.map && typeof window.map.getCenter === 'function') {
+                    const center = window.map.getCenter();
+                    location = {
+                        lat: center.lat(),
+                        lng: center.lng()
+                    };
+                    console.log('[Marker Handler] 使用地图中心作为默认位置:', location);
+                } else if (window.MELBOURNE_CENTER) {
+                    location = window.MELBOURNE_CENTER;
+                    console.log('[Marker Handler] 使用墨尔本中心作为默认位置:', location);
+                } else {
+                    location = {lat: -37.8136, lng: 144.9631}; // 墨尔本中心位置
+                    console.log('[Marker Handler] 使用硬编码墨尔本中心作为默认位置:', location);
+                }
+            } catch (e) {
+                console.error('[Marker Handler] 无法获取默认位置:', e);
+                location = {lat: -37.8136, lng: 144.9631}; // 墨尔本中心位置
+            }
+        } else if ((typeof location.lat !== 'function' && (typeof location.lat !== 'number' && typeof location.lat !== 'string')) ||
+                 (typeof location.lng !== 'function' && (typeof location.lng !== 'number' && typeof location.lng !== 'string'))) {
+            console.warn('[Marker Handler] 位置对象格式不正确，尝试修复:', location);
+            
+            // 尝试从其他属性中提取lat和lng
+            if (location.latitude !== undefined && location.longitude !== undefined) {
+                location = {
+                    lat: parseFloat(location.latitude),
+                    lng: parseFloat(location.longitude)
+                };
+                console.log('[Marker Handler] 从latitude/longitude修复位置:', location);
+            } else if (location.position && location.position.lat !== undefined && location.position.lng !== undefined) {
+                location = {
+                    lat: parseFloat(location.position.lat),
+                    lng: parseFloat(location.position.lng)
+                };
+                console.log('[Marker Handler] 从position属性修复位置:', location);
+            } else {
+                console.warn('[Marker Handler] 无法修复位置对象，使用默认位置');
+                // 使用默认位置
+                try {
+                    if (window.map && typeof window.map.getCenter === 'function') {
+                        const center = window.map.getCenter();
+                        location = {
+                            lat: center.lat(),
+                            lng: center.lng()
+                        };
+                    } else if (window.MELBOURNE_CENTER) {
+                        location = window.MELBOURNE_CENTER;
+                    } else {
+                        location = {lat: -37.8136, lng: 144.9631}; // 墨尔本中心位置
+                    }
+                } catch (e) {
+                    console.error('[Marker Handler] 无法获取默认位置:', e);
+                    location = {lat: -37.8136, lng: 144.9631}; // 墨尔本中心位置
+                }
+            }
         }
         
         // Create report data object
         const reportData = {
             id: reportId || 'marker-' + Date.now(),
             location: location,
-            description: description,
+            description: description || '无描述',
             time: new Date().toISOString(),
             image: image || '',
             emoji: '🐶' // Default emoji
@@ -112,7 +166,18 @@
                 }
             } catch (posError) {
                 console.error('[Marker Handler] 创建位置对象失败:', posError);
-                return null;
+                // 尝试使用地图中心作为备用位置
+                try {
+                    if (window.map && typeof window.map.getCenter === 'function') {
+                        markerPosition = window.map.getCenter();
+                    } else {
+                        // 使用墨尔本中心坐标创建LatLng对象
+                        markerPosition = new google.maps.LatLng(-37.8136, 144.9631);
+                    }
+                } catch (fallbackError) {
+                    console.error('[Marker Handler] 创建备用位置对象失败:', fallbackError);
+                    return null;
+                }
             }
             
             // 针对移动设备优化的标记选项
