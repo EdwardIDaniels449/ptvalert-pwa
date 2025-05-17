@@ -254,8 +254,15 @@
     
     <!-- 调试辅助工具 - 排查地图加载问题 -->
     <script src="./js/debug-helper.js?v=1.0.0_nocache"></script>
+    
+    <!-- 测试链接 -->
+    <div style="position:fixed;top:80px;right:20px;z-index:3000;display:flex;flex-direction:column;gap:10px;">
+        <a href="test-map.html" style="background:#4285f4;color:white;text-decoration:none;padding:10px 15px;border-radius:8px;font-weight:bold;text-align:center;">测试地图页面1</a>
+        <a href="simple-map.html" style="background:#34a853;color:white;text-decoration:none;padding:10px 15px;border-radius:8px;font-weight:bold;text-align:center;">极简地图测试</a>
+        <a href="csp-test.html" style="background:#ea4335;color:white;text-decoration:none;padding:10px 15px;border-radius:8px;font-weight:bold;text-align:center;">网络连接测试</a>
+    </div>
 
-    <!-- Google Maps API 脚本 -->
+    <!-- Google Maps API 脚本 - 使用更简单的加载方式 -->
     <script>
         // 定义全局变量，确保始终存在
         window.markers = window.markers || [];
@@ -266,7 +273,7 @@
         
         // 初始化地图函数
         function initMap() {
-            console.log("初始化地图...");
+            console.log("极简地图初始化方法...");
             
             if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
                 console.error("Google Maps API尚未加载");
@@ -274,135 +281,41 @@
             }
             
             try {
-                // 创建地图
-                window.map = new google.maps.Map(document.getElementById('map'), {
+                // 创建地图 - 使用极简方法
+                const mapElement = document.getElementById('map');
+                
+                // 确保地图容器可见
+                if (mapElement) {
+                    mapElement.style.display = 'block';
+                    mapElement.style.visibility = 'visible';
+                    mapElement.style.opacity = '1';
+                    console.log("地图容器样式已设置为可见");
+                }
+                
+                window.map = new google.maps.Map(mapElement, {
                     center: window.MELBOURNE_CENTER,
-                    zoom: 13,
-                    mapTypeId: google.maps.MapTypeId.ROADMAP,
-                    fullscreenControl: false,
-                    streetViewControl: false,
-                    zoomControl: true,
-                    mapTypeControl: false
+                    zoom: 13
                 });
                 
-                console.log("地图已初始化");
+                console.log("极简方法：地图已初始化");
                 
-                // 添加点击处理器
-                if (window.map && google && google.maps && google.maps.event) {
-                    google.maps.event.addListener(window.map, 'click', function(event) {
-                        console.log("地图被点击:", event.latLng.lat(), event.latLng.lng());
-                        
-                        // 如果正在添加报告
-                        if (window.addingReport) {
-                            window.selectedLocation = {
-                                lat: event.latLng.lat(),
-                                lng: event.latLng.lng()
-                            };
-                            
-                            console.log("已记录选中位置:", window.selectedLocation);
-                            
-                            // 显示提示
-                            const addReportTip = document.getElementById('addReportTip');
-                            if (addReportTip) {
-                                addReportTip.style.display = 'none';
-                            }
-                            
-                            // 显示表单
-                            const reportForm = document.getElementById('reportForm');
-                            if (reportForm) {
-                                reportForm.style.display = 'block';
-                                reportForm.style.transform = 'translateY(0)';
-                            }
-                        }
-                    });
-                    
-                    console.log("已为地图添加点击事件");
-                }
+                // 添加一个标记表示中心点
+                const centerMarker = new google.maps.Marker({
+                    position: window.MELBOURNE_CENTER,
+                    map: window.map,
+                    title: '墨尔本中心'
+                });
                 
-                // 触发自定义事件，通知地图已准备就绪
+                // 触发地图已初始化事件
                 document.dispatchEvent(new CustomEvent('map_initialized'));
-                
-                // 确保window.mapReadyCallbacks存在
-                if (!window.mapReadyCallbacks) {
-                    window.mapReadyCallbacks = [];
-                }
-                
-                // 调用所有回调函数
-                if (window.mapReadyCallbacks.length > 0) {
-                    console.log(`执行 ${window.mapReadyCallbacks.length} 个地图回调函数`);
-                    const callbacks = [...window.mapReadyCallbacks]; // 创建副本以避免回调中修改数组的问题
-                    for (let i = 0; i < callbacks.length; i++) {
-                        try {
-                            if (typeof callbacks[i] === 'function') {
-                                callbacks[i]();
-                            }
-                        } catch (e) {
-                            console.error("执行地图回调函数失败:", e);
-                        }
-                    }
-                }
             } catch (e) {
                 console.error("初始化地图时出错:", e);
             }
         }
-        
-        // Google Maps API 加载回调
-        function googleMapsLoadedCallback() {
-            console.log("Google Maps API已加载");
-            
-            // 延迟执行，确保DOM已经完全加载
-            setTimeout(function() {
-                try {
-                    // 避免重复初始化
-                    if (!window.map) {
-                        initMap();
-                    }
-                } catch (e) {
-                    console.error("初始化地图时出错:", e);
-                }
-            }, 100);
-        }
-        
-        // 加载Google Maps API的函数
-        function loadGoogleMapsAPI() {
-            if (window.google && window.google.maps) {
-                console.log("Google Maps API已加载，不需要重新加载");
-                googleMapsLoadedCallback();
-                return;
-            }
-            
-            // 创建script元素来加载Google Maps API
-            const script = document.createElement('script');
-            script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsLoadedCallback&libraries=places&v=weekly";
-            script.async = true;
-            script.defer = true;
-            script.onerror = function() {
-                console.error("Google Maps API加载失败");
-            };
-            document.head.appendChild(script);
-            
-            console.log("Google Maps API脚本已添加到页面");
-        }
-        
-        // 在DOMContentLoaded事件中加载Google Maps API
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("页面DOM已加载，准备加载Google Maps API");
-            setTimeout(loadGoogleMapsAPI, 500);
-        });
-        
-        // 备用计时器，以防回调未触发
-        setTimeout(function() {
-            if (!window.map) {
-                console.warn("Google Maps回调未触发，尝试手动初始化");
-                if (typeof initMap === 'function' && typeof google !== 'undefined' && google.maps) {
-                    initMap();
-                } else {
-                    console.warn("无法手动初始化地图，重新加载Google Maps API");
-                    loadGoogleMapsAPI();
-                }
-            }
-        }, 5000);
     </script>
+    
+    <!-- 直接加载Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=initMap&libraries=places&v=weekly" async defer></script>
 
     <!-- 在Google Maps API加载后加载这些脚本 -->
     <script src="js/ui-controller.js"></script>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Maps测试页面</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        .info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="info">简单地图测试页面</div>
+    <div id="map"></div>
+
+    <script>
+        // 墨尔本中心坐标
+        const MELBOURNE_CENTER = {lat: -37.8136, lng: 144.9631};
+        
+        // 地图初始化函数
+        function initMap() {
+            console.log('initMap函数执行...');
+            try {
+                const map = new google.maps.Map(document.getElementById('map'), {
+                    center: MELBOURNE_CENTER,
+                    zoom: 13,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP
+                });
+                
+                console.log('地图创建成功');
+                
+                // 添加一个标记
+                const marker = new google.maps.Marker({
+                    position: MELBOURNE_CENTER,
+                    map: map,
+                    title: '墨尔本中心'
+                });
+                
+                // 保存到全局变量
+                window.testMap = map;
+                window.testMarker = marker;
+                
+            } catch (error) {
+                console.error('创建地图时出错:', error);
+                document.querySelector('.info').innerHTML += '<br>错误: ' + error.message;
+            }
+        }
+    </script>
+    
+    <!-- 直接加载Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=initMap&libraries=places&v=weekly" 
+        async defer></script>
+</body>
+</html> 

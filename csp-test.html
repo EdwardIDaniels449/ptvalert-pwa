@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>CSP测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        button {
+            padding: 8px 12px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>网络连接与安全策略测试</h1>
+    
+    <div>
+        <h2>1. 谷歌地图API连接测试</h2>
+        <button id="testMapsApi">测试Google Maps API连接</button>
+        <div id="mapsApiResult" class="result"></div>
+    </div>
+    
+    <div>
+        <h2>2. 内容安全策略检查</h2>
+        <button id="checkCSP">检查CSP策略</button>
+        <div id="cspResult" class="result"></div>
+    </div>
+    
+    <div>
+        <h2>3. 测试加载Google Maps</h2>
+        <button id="loadMapsTest">尝试加载地图</button>
+        <div id="mapContainer" style="height: 300px; margin-top: 10px; display: none;"></div>
+        <div id="loadMapsResult" class="result"></div>
+    </div>
+    
+    <script>
+        // 测试Google Maps API连接
+        document.getElementById('testMapsApi').addEventListener('click', function() {
+            const resultElement = document.getElementById('mapsApiResult');
+            resultElement.innerHTML = '正在测试连接...';
+            resultElement.className = 'result';
+            
+            const testUrl = 'https://maps.googleapis.com/maps/api/js?callback=console.log';
+            const scriptElement = document.createElement('script');
+            
+            let timeout = setTimeout(function() {
+                resultElement.innerHTML = '连接超时，无法访问Google Maps API服务。可能是网络问题或被屏蔽。';
+                resultElement.className = 'result error';
+                scriptElement.remove();
+            }, 5000);
+            
+            scriptElement.onload = function() {
+                clearTimeout(timeout);
+                resultElement.innerHTML = '成功连接到Google Maps API服务！';
+                resultElement.className = 'result success';
+                scriptElement.remove();
+            };
+            
+            scriptElement.onerror = function() {
+                clearTimeout(timeout);
+                resultElement.innerHTML = '连接失败，无法访问Google Maps API服务。可能是网络问题或被屏蔽。';
+                resultElement.className = 'result error';
+                scriptElement.remove();
+            };
+            
+            scriptElement.src = testUrl;
+            document.head.appendChild(scriptElement);
+        });
+        
+        // 检查内容安全策略
+        document.getElementById('checkCSP').addEventListener('click', function() {
+            const resultElement = document.getElementById('cspResult');
+            
+            // 获取CSP策略
+            const cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+            const cspHeader = document.contentSecurityPolicy || null;
+            
+            if (cspMeta) {
+                resultElement.innerHTML = `<p>发现CSP元标签策略：</p><pre>${cspMeta.getAttribute('content')}</pre>` +
+                    `<p>这可能会阻止Google Maps加载。建议检查策略是否允许maps.googleapis.com域。</p>`;
+                resultElement.className = 'result error';
+            } else if (cspHeader) {
+                resultElement.innerHTML = `<p>发现CSP头部策略：</p><pre>${cspHeader}</pre>` +
+                    `<p>这可能会阻止Google Maps加载。建议检查策略是否允许maps.googleapis.com域。</p>`;
+                resultElement.className = 'result error';
+            } else {
+                resultElement.innerHTML = '未检测到内容安全策略(CSP)限制。这不应该阻止Google Maps加载。';
+                resultElement.className = 'result success';
+            }
+        });
+        
+        // 测试加载Google Maps
+        document.getElementById('loadMapsTest').addEventListener('click', function() {
+            const resultElement = document.getElementById('loadMapsResult');
+            const mapContainer = document.getElementById('mapContainer');
+            
+            resultElement.innerHTML = '正在尝试加载Google Maps...';
+            resultElement.className = 'result';
+            mapContainer.style.display = 'block';
+            
+            // 检查是否已经加载
+            if (window.google && window.google.maps) {
+                try {
+                    // 创建地图
+                    const map = new google.maps.Map(mapContainer, {
+                        center: {lat: -37.8136, lng: 144.9631},
+                        zoom: 12
+                    });
+                    
+                    resultElement.innerHTML = 'Google Maps成功加载并初始化！';
+                    resultElement.className = 'result success';
+                } catch (error) {
+                    resultElement.innerHTML = `地图初始化失败：${error.message}`;
+                    resultElement.className = 'result error';
+                }
+                return;
+            }
+            
+            // 尝试加载Google Maps API
+            const script = document.createElement('script');
+            
+            script.onload = function() {
+                try {
+                    // 等待API加载
+                    const checkInterval = setInterval(function() {
+                        if (window.google && window.google.maps) {
+                            clearInterval(checkInterval);
+                            
+                            // 创建地图
+                            const map = new google.maps.Map(mapContainer, {
+                                center: {lat: -37.8136, lng: 144.9631},
+                                zoom: 12
+                            });
+                            
+                            resultElement.innerHTML = 'Google Maps成功加载并初始化！';
+                            resultElement.className = 'result success';
+                        }
+                    }, 200);
+                    
+                    // 5秒后超时
+                    setTimeout(function() {
+                        clearInterval(checkInterval);
+                        if (!window.google || !window.google.maps) {
+                            resultElement.innerHTML = 'Google Maps API加载超时。';
+                            resultElement.className = 'result error';
+                        }
+                    }, 5000);
+                } catch (error) {
+                    resultElement.innerHTML = `加载过程中发生错误：${error.message}`;
+                    resultElement.className = 'result error';
+                }
+            };
+            
+            script.onerror = function() {
+                resultElement.innerHTML = 'Google Maps API脚本加载失败。';
+                resultElement.className = 'result error';
+            };
+            
+            script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U';
+            document.head.appendChild(script);
+        });
+    </script>
+</body>
+</html> 
