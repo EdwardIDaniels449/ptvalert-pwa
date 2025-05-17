@@ -262,60 +262,21 @@
         <a href="csp-test.html" style="background:#ea4335;color:white;text-decoration:none;padding:10px 15px;border-radius:8px;font-weight:bold;text-align:center;">网络连接测试</a>
     </div>
 
-    <!-- Google Maps API 脚本 - 使用更简单的加载方式 -->
+    <!-- 使用新的地图集成脚本 -->
+    <script src="./js/map-integration.js?v=1.0.0_nocache"></script>
+    
+    <!-- 定义全局变量 -->
     <script>
-        // 定义全局变量，确保始终存在
+        // 墨尔本中心坐标
+        window.MELBOURNE_CENTER = window.MELBOURNE_CENTER || {lat: -37.8136, lng: 144.9631};
+        
+        // 初始化标记和回调数组
         window.markers = window.markers || [];
         window.mapReadyCallbacks = window.mapReadyCallbacks || [];
         window.openedInfoWindow = null;
         window.addingReport = false;
         window.API_MODE = 'static';
-        
-        // 初始化地图函数
-        function initMap() {
-            console.log("极简地图初始化方法...");
-            
-            if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
-                console.error("Google Maps API尚未加载");
-                return;
-            }
-            
-            try {
-                // 创建地图 - 使用极简方法
-                const mapElement = document.getElementById('map');
-                
-                // 确保地图容器可见
-                if (mapElement) {
-                    mapElement.style.display = 'block';
-                    mapElement.style.visibility = 'visible';
-                    mapElement.style.opacity = '1';
-                    console.log("地图容器样式已设置为可见");
-                }
-                
-                window.map = new google.maps.Map(mapElement, {
-                    center: window.MELBOURNE_CENTER,
-                    zoom: 13
-                });
-                
-                console.log("极简方法：地图已初始化");
-                
-                // 添加一个标记表示中心点
-                const centerMarker = new google.maps.Marker({
-                    position: window.MELBOURNE_CENTER,
-                    map: window.map,
-                    title: '墨尔本中心'
-                });
-                
-                // 触发地图已初始化事件
-                document.dispatchEvent(new CustomEvent('map_initialized'));
-            } catch (e) {
-                console.error("初始化地图时出错:", e);
-            }
-        }
     </script>
-    
-    <!-- 直接加载Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=initMap&libraries=places&v=weekly" async defer></script>
 
     <!-- 在Google Maps API加载后加载这些脚本 -->
     <script src="js/ui-controller.js"></script>
