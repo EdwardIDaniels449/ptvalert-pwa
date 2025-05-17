@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Google Maps API加载测试</title>
+    
+    <!-- 加载API守卫 -->
+    <script src="./js/api-loading-guard.js"></script>
+    
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        #map {
+            height: 50%;
+            width: 100%;
+        }
+        
+        .controls {
+            padding: 15px;
+            background: #f5f5f5;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        button {
+            padding: 8px 15px;
+            margin: 5px;
+            background: #0071e3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        #log {
+            height: 40%;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f0f0f0;
+            border-top: 1px solid #ddd;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .error { color: red; }
+        .warn { color: orange; }
+        .info { color: blue; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <h2>Google Maps API加载测试</h2>
+        <p>此页面测试API守卫是否能防止重复加载Google Maps API</p>
+        <button id="loadApiBtn1">加载API (方式1 - 脚本标签)</button>
+        <button id="loadApiBtn2">加载API (方式2 - 动态脚本)</button>
+        <button id="loadMapBtn">初始化地图</button>
+        <button id="addMarkerBtn">添加标记</button>
+        <button id="clearLogBtn">清空日志</button>
+    </div>
+    
+    <div id="map"></div>
+    
+    <div id="log"></div>
+    
+    <script>
+        // 重写console方法以捕获日志
+        const originalConsole = {
+            log: console.log,
+            warn: console.warn,
+            error: console.error,
+            info: console.info
+        };
+        
+        const logDiv = document.getElementById('log');
+        
+        function addLogEntry(type, ...args) {
+            const message = args.map(arg => {
+                if (typeof arg === 'object') {
+                    try {
+                        return JSON.stringify(arg);
+                    } catch (e) {
+                        return arg.toString();
+                    }
+                }
+                return arg;
+            }).join(' ');
+            
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${type}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            // 调用原始console方法
+            originalConsole[type](...args);
+        }
+        
+        console.log = (...args) => addLogEntry('info', ...args);
+        console.warn = (...args) => addLogEntry('warn', ...args);
+        console.error = (...args) => addLogEntry('error', ...args);
+        console.info = (...args) => addLogEntry('info', ...args);
+        
+        // 清空日志
+        document.getElementById('clearLogBtn').addEventListener('click', function() {
+            logDiv.innerHTML = '';
+        });
+        
+        // 测试加载API - 方式1：直接添加script标签
+        document.getElementById('loadApiBtn1').addEventListener('click', function() {
+            console.log('尝试加载Google Maps API (方式1)');
+            
+            const script = document.createElement('script');
+            script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=onMapsLoaded&v=' + new Date().getTime();
+            script.async = true;
+            script.defer = true;
+            
+            window.onMapsLoaded = function() {
+                console.log('onMapsLoaded回调被触发');
+            };
+            
+            document.head.appendChild(script);
+        });
+        
+        // 测试加载API - 方式2：动态创建脚本
+        document.getElementById('loadApiBtn2').addEventListener('click', function() {
+            console.log('尝试加载Google Maps API (方式2)');
+            
+            // 创建临时回调
+            window.tempMapCallback = function() {
+                console.log('tempMapCallback回调被触发');
+            };
+            
+            const script = document.createElement('script');
+            script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=tempMapCallback&v=' + new Date().getTime();
+            script.async = true;
+            document.head.appendChild(script);
+        });
+        
+        // 初始化地图
+        document.getElementById('loadMapBtn').addEventListener('click', function() {
+            console.log('尝试初始化地图');
+            
+            if (!window.google || !window.google.maps) {
+                console.error('Google Maps API未加载，无法初始化地图');
+                return;
+            }
+            
+            try {
+                window.map = new google.maps.Map(document.getElementById('map'), {
+                    center: {lat: -37.8136, lng: 144.9631},
+                    zoom: 13
+                });
+                
+                console.log('地图初始化成功');
+            } catch (e) {
+                console.error('初始化地图时出错:', e);
+            }
+        });
+        
+        // 添加标记
+        document.getElementById('addMarkerBtn').addEventListener('click', function() {
+            console.log('尝试添加标记');
+            
+            if (!window.google || !window.google.maps || !window.map) {
+                console.error('地图未初始化，无法添加标记');
+                return;
+            }
+            
+            try {
+                const marker = new google.maps.Marker({
+                    position: {lat: -37.8136, lng: 144.9631},
+                    map: window.map,
+                    title: '测试标记'
+                });
+                
+                console.log('标记添加成功');
+            } catch (e) {
+                console.error('添加标记时出错:', e);
+            }
+        });
+        
+        // 初始化页面
+        window.addEventListener('load', function() {
+            console.log('页面加载完成');
+            
+            // 打印当前Google Maps API状态
+            console.log('当前API状态:',
+                window.GOOGLE_MAPS_LOADED ? '已加载' :
+                window.GOOGLE_MAPS_LOADING ? '正在加载' : '未加载'
+            );
+        });
+    </script>
+</body>
+</html> 

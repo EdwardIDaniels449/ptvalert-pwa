@@ -1,12 +1,13 @@
 /**
- * 纯Google Maps修复脚本 v2
+ * 纯Google Maps修复脚本 v2.1
  * 专注于解决setMap错误，不干扰原始地图加载
+ * 使用统一的API加载机制
  */
 
 (function() {
     'use strict';
     
-    console.log('[纯Google Maps修复 v2] 初始化...');
+    console.log('[纯Google Maps修复 v2.1] 初始化...');
     
     // 使用对象存储引用，避免常量重新赋值问题
     var originalFunctions = {
@@ -23,13 +24,13 @@
     
     // 监听DOM加载完成
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('[纯Google Maps修复 v2] DOM加载完成');
+        console.log('[纯Google Maps修复 v2.1] DOM加载完成');
         initMapFix();
     });
     
     // 如果DOM已加载，立即执行
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        console.log('[纯Google Maps修复 v2] DOM已加载，立即初始化');
+        console.log('[纯Google Maps修复 v2.1] DOM已加载，立即初始化');
         initMapFix();
     }
     
@@ -37,6 +38,7 @@
     function initMapFix() {
         // 监听地图就绪事件
         document.addEventListener('map_ready', onMapReady);
+        document.addEventListener('map_initialized', onMapReady);
         
         // 修复标记添加函数
         safelyPatchAddMarkerFunction();
@@ -50,7 +52,7 @@
     
     // 地图就绪事件处理函数
     function onMapReady() {
-        console.log('[纯Google Maps修复 v2] 地图就绪事件触发');
+        console.log('[纯Google Maps修复 v2.1] 地图就绪事件触发');
         mapReady = true;
         
         // 处理任何待处理的标记
@@ -60,12 +62,12 @@
     // 安全地修补添加标记函数
     function safelyPatchAddMarkerFunction() {
         if (!window.UIController) {
-            console.warn('[纯Google Maps修复 v2] UIController不存在，等待创建');
+            console.warn('[纯Google Maps修复 v2.1] UIController不存在，等待创建');
             setTimeout(safelyPatchAddMarkerFunction, 1000);
             return;
         }
         
-        console.log('[纯Google Maps修复 v2] 修补添加标记函数');
+        console.log('[纯Google Maps修复 v2.1] 修补添加标记函数');
         
         // 保存原始函数，如果还没保存的话
         if (!originalFunctions.addReportMarker && window.UIController.addReportMarker) {
@@ -76,7 +78,7 @@
         window.UIController.addReportMarker = function(location, description, reportId, image) {
             // 确保地图就绪
             if (!isMapReady()) {
-                console.warn('[纯Google Maps修复 v2] 地图未就绪，将标记加入待处理队列');
+                console.warn('[纯Google Maps修复 v2.1] 地图未就绪，将标记加入待处理队列');
                 
                 // 添加到待处理队列
                 window.pendingMarkers = window.pendingMarkers || [];
@@ -95,11 +97,11 @@
                 if (originalFunctions.addReportMarker) {
                     return originalFunctions.addReportMarker(location, description, reportId, image);
                 } else {
-                    console.warn('[纯Google Maps修复 v2] 未找到原始的addReportMarker函数');
+                    console.warn('[纯Google Maps修复 v2.1] 未找到原始的addReportMarker函数');
                     return createBasicMarker(location, description);
                 }
             } catch (e) {
-                console.error('[纯Google Maps修复 v2] 添加标记时出错:', e);
+                console.error('[纯Google Maps修复 v2.1] 添加标记时出错:', e);
                 return createBasicMarker(location, description);
             }
         };
@@ -108,7 +110,7 @@
     // 创建基本标记
     function createBasicMarker(location, description) {
         if (!window.google || !window.google.maps || !window.map) {
-            console.warn('[纯Google Maps修复 v2] 无法创建基本标记：API或地图不可用');
+            console.warn('[纯Google Maps修复 v2.1] 无法创建基本标记：API或地图不可用');
             return null;
         }
         
@@ -128,82 +130,75 @@
             
             return marker;
         } catch (e) {
-            console.error('[纯Google Maps修复 v2] 创建基本标记失败:', e);
+            console.error('[纯Google Maps修复 v2.1] 创建基本标记失败:', e);
             return null;
         }
     }
     
-    // 确保地图已加载
+    // 确保地图已加载 - 使用统一加载机制
     function ensureGoogleMapsLoaded() {
-        // 检查Google Maps是否已加载
-        if (typeof google !== 'undefined' && google.maps && google.maps.Map) {
-            console.log('[纯Google Maps修复 v2] Google Maps API已加载');
+        // 检查全局标志
+        if (window.GOOGLE_MAPS_LOADED) {
+            console.log('[纯Google Maps修复 v2.1] Google Maps API已加载');
             checkMapObject();
             return;
         }
         
-        console.log('[纯Google Maps修复 v2] 等待Google Maps API加载');
+        console.log('[纯Google Maps修复 v2.1] 等待Google Maps API加载');
         
-        // 尝试监听全局回调
-        if (typeof window.googleMapsLoadedCallback === 'function') {
-            var originalCallback = window.googleMapsLoadedCallback;
+        // 如果API未加载且没有加载中，使用统一的加载方法
+        if (!window.GOOGLE_MAPS_LOADING) {
+            console.log('[纯Google Maps修复 v2.1] 请求加载Google Maps API');
             
-            window.googleMapsLoadedCallback = function() {
-                // 调用原始回调
-                originalCallback.apply(this, arguments);
-                
-                // 我们的附加处理
-                console.log('[纯Google Maps修复 v2] Google Maps API加载回调触发');
+            // 添加回调
+            window.GOOGLE_MAPS_CALLBACKS = window.GOOGLE_MAPS_CALLBACKS || [];
+            window.GOOGLE_MAPS_CALLBACKS.push(function() {
+                console.log('[纯Google Maps修复 v2.1] 通过统一机制加载的API回调触发');
                 setTimeout(checkMapObject, 1000);
-            };
+            });
+            
+            // 如果存在map-integration.js提供的加载函数，使用它
+            if (window.MapIntegration && typeof window.MapIntegration.loadAPI === 'function') {
+                console.log('[纯Google Maps修复 v2.1] 使用MapIntegration加载API');
+                window.MapIntegration.loadAPI();
+            } else {
+                // 请求其他脚本加载API
+                document.dispatchEvent(new CustomEvent('request_google_maps_api'));
+            }
+        } else {
+            console.log('[纯Google Maps修复 v2.1] Google Maps API正在加载中，添加回调');
+            
+            // 添加我们的回调到全局队列
+            window.GOOGLE_MAPS_CALLBACKS = window.GOOGLE_MAPS_CALLBACKS || [];
+            window.GOOGLE_MAPS_CALLBACKS.push(function() {
+                console.log('[纯Google Maps修复 v2.1] API加载完成回调触发');
+                setTimeout(checkMapObject, 1000);
+            });
         }
         
-        // 检查API脚本是否存在
-        var hasMapScript = !!document.querySelector('script[src*="maps.googleapis.com"]');
-        
-        if (!hasMapScript) {
-            console.warn('[纯Google Maps修复 v2] 没有发现Google Maps脚本，尝试加载');
-            loadGoogleMapsScript();
-        }
-    }
-    
-    // 手动加载Google Maps脚本
-    function loadGoogleMapsScript() {
-        var script = document.createElement('script');
-        script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=pureMapFixCallback&libraries=places&v=weekly';
-        script.async = true;
-        script.defer = true;
-        
-        // 创建回调
-        window.pureMapFixCallback = function() {
-            console.log('[纯Google Maps修复 v2] 手动加载的Google Maps API就绪');
+        // 监听API加载完成事件
+        document.addEventListener('google_maps_loaded', function() {
+            console.log('[纯Google Maps修复 v2.1] 收到Google Maps加载完成事件');
             setTimeout(checkMapObject, 1000);
-        };
-        
-        // 添加错误处理
-        script.onerror = function() {
-            console.error('[纯Google Maps修复 v2] Google Maps脚本加载失败');
-        };
-        
-        document.head.appendChild(script);
+        });
     }
     
     // 检查地图对象
     function checkMapObject() {
         // 检查全局地图对象
         if (!window.map) {
-            console.warn('[纯Google Maps修复 v2] 全局地图对象不存在');
+            console.warn('[纯Google Maps修复 v2.1] 全局地图对象不存在');
             
             // 检查地图容器
             var mapElement = document.getElementById('map');
             if (!mapElement) {
-                console.error('[纯Google Maps修复 v2] 地图容器不存在');
+                console.error('[纯Google Maps修复 v2.1] 地图容器不存在');
                 return;
             }
             
             // 如果API已加载但地图不存在，尝试创建地图
             if (typeof google !== 'undefined' && google.maps && google.maps.Map) {
-                console.log('[纯Google Maps修复 v2] 尝试创建新的地图对象');
+                console.log('[纯Google Maps修复 v2.1] 尝试创建新的地图对象');
                 
                 try {
                     window.map = new google.maps.Map(mapElement, {
@@ -218,11 +213,11 @@
                     var event = new CustomEvent('map_ready');
                     document.dispatchEvent(event);
                 } catch (e) {
-                    console.error('[纯Google Maps修复 v2] 创建地图对象失败:', e);
+                    console.error('[纯Google Maps修复 v2.1] 创建地图对象失败:', e);
                 }
             }
         } else {
-            console.log('[纯Google Maps修复 v2] 全局地图对象已存在');
+            console.log('[纯Google Maps修复 v2.1] 全局地图对象已存在');
             
             // 检查地图对象是否有效
             if (isValidMapObject(window.map)) {
@@ -232,7 +227,7 @@
                 var event = new CustomEvent('map_ready');
                 document.dispatchEvent(event);
             } else {
-                console.warn('[纯Google Maps修复 v2] 地图对象无效');
+                console.warn('[纯Google Maps修复 v2.1] 地图对象无效');
             }
         }
     }
@@ -250,63 +245,44 @@
         }, 5000);
     }
     
-    // 处理待处理的标记
+    // 处理待处理标记
     function processPendingMarkers() {
-        if (!window.pendingMarkers || !window.pendingMarkers.length) {
+        if (!window.pendingMarkers || window.pendingMarkers.length === 0) {
             return;
         }
         
         if (!isMapReady()) {
-            console.warn('[纯Google Maps修复 v2] 地图未就绪，无法处理待处理标记');
+            console.warn('[纯Google Maps修复 v2.1] 地图未就绪，无法处理待处理标记');
             return;
         }
         
-        console.log(`[纯Google Maps修复 v2] 处理 ${window.pendingMarkers.length} 个待处理标记`);
+        console.log(`[纯Google Maps修复 v2.1] 处理 ${window.pendingMarkers.length} 个待处理标记`);
         
-        // 创建副本并清空原数组
-        var markers = window.pendingMarkers.slice();
+        // 复制数组并清空原数组
+        var markers = [...window.pendingMarkers];
         window.pendingMarkers = [];
         
         // 处理标记
         markers.forEach(function(marker) {
             try {
-                if (originalFunctions.addReportMarker) {
-                    originalFunctions.addReportMarker(
-                        marker.location,
-                        marker.description,
-                        marker.reportId,
-                        marker.image
-                    );
+                if (window.UIController && originalFunctions.addReportMarker) {
+                    originalFunctions.addReportMarker(marker.location, marker.description, marker.reportId, marker.image);
                 } else {
                     createBasicMarker(marker.location, marker.description);
                 }
             } catch (e) {
-                console.error('[纯Google Maps修复 v2] 处理待处理标记时出错:', e);
-                createBasicMarker(marker.location, marker.description);
+                console.error('[纯Google Maps修复 v2.1] 处理待处理标记失败:', e);
             }
         });
     }
     
-    // 检查地图是否就绪
+    // 判断地图是否就绪
     function isMapReady() {
-        return mapReady && window.map && isValidMapObject(window.map);
+        return mapReady && window.map && typeof google !== 'undefined' && google.maps;
     }
     
-    // 检查地图对象是否有效
+    // 验证地图对象是否有效
     function isValidMapObject(mapObj) {
-        if (!mapObj) return false;
-        
-        // 检查是否是有效的Google Maps实例
-        if (typeof google !== 'undefined' && google.maps && google.maps.Map && 
-            (mapObj instanceof google.maps.Map)) {
-            return true;
-        }
-        
-        // 检查是否有必要的方法
-        var hasMethods = typeof mapObj.getCenter === 'function' && 
-                          typeof mapObj.setCenter === 'function' && 
-                          typeof mapObj.getBounds === 'function';
-        
-        return hasMethods;
+        return mapObj && typeof mapObj === 'object' && typeof mapObj.setCenter === 'function';
     }
 })(); 

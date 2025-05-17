@@ -1,27 +1,32 @@
 /**
- * 地图集成脚本 v1.0.1
+ * 地图集成脚本 v1.0.2
  * 专门用于处理Google Maps初始化和标记管理
  * 独立控制地图生命周期，避免与其他脚本冲突
  */
 
 (function() {
-    // 立即记录加载状态
-    console.log('[Map Integration] 脚本加载 - 版本1.0.1');
+    // 全局标志，用于所有脚本检查API是否正在加载
+    window.GOOGLE_MAPS_LOADING = window.GOOGLE_MAPS_LOADING || false;
+    window.GOOGLE_MAPS_LOADED = !!(window.google && window.google.maps);
     
-    // 检查是否已经加载过Google Maps API
-    if (window.google && window.google.maps) {
-        console.log('[Map Integration] Google Maps API已被其他脚本加载，将使用现有API');
-    }
+    // 立即记录加载状态
+    console.log('[Map Integration] 脚本加载 - 版本1.0.2');
+    console.log('[Map Integration] Maps API状态: ' + 
+                (window.GOOGLE_MAPS_LOADED ? '已加载' : 
+                 (window.GOOGLE_MAPS_LOADING ? '正在加载' : '未加载')));
     
     // 定义全局变量
     let map = null;
     let markers = [];
     let initialized = false;
-    let apiLoaded = false;
-    let apiLoading = false; // 防止重复加载API
+    let apiLoaded = window.GOOGLE_MAPS_LOADED;
+    let apiLoading = window.GOOGLE_MAPS_LOADING;
     
     // 墨尔本中心坐标
     const MELBOURNE_CENTER = {lat: -37.8136, lng: 144.9631};
+    
+    // 全局回调队列
+    window.GOOGLE_MAPS_CALLBACKS = window.GOOGLE_MAPS_CALLBACKS || [];
     
     // 在全局空间暴露初始化函数
     window.initializeGoogleMap = initializeMap;
@@ -95,43 +100,81 @@
         }
     }
     
-    // 加载API
+    // 加载API - 统一的API加载入口
     function loadGoogleMapsAPI() {
-        // 防止重复加载
-        if (apiLoaded || apiLoading) {
-            console.log('[Map Integration] API已加载或正在加载，无需重复加载');
-            return;
-        }
-        
-        apiLoading = true;
-        
-        // 先检查是否已经有另一个脚本加载了Maps API
-        if (window.google && window.google.maps) {
-            console.log('[Map Integration] 检测到Google Maps API已存在，直接初始化地图');
+        // 全局状态检查，确保不重复加载
+        if (window.GOOGLE_MAPS_LOADED) {
+            console.log('[Map Integration] Google Maps API已全局加载，直接初始化地图');
             apiLoaded = true;
-            apiLoading = false;
             initializeMap();
             return;
         }
+        
+        if (window.GOOGLE_MAPS_LOADING) {
+            console.log('[Map Integration] Google Maps API正在由其他脚本加载，等待加载完成');
+            // 添加到回调队列
+            window.GOOGLE_MAPS_CALLBACKS.push(initializeMap);
+            return;
+        }
+        
+        // 设置全局加载状态
+        window.GOOGLE_MAPS_LOADING = true;
+        apiLoading = true;
         
         console.log('[Map Integration] 正在加载Google Maps API...');
         
         // 创建脚本元素
         const script = document.createElement('script');
-        script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=initializeGoogleMap&v=' + new Date().getTime();
+        script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=googleMapsAPILoaded&libraries=places&v=' + new Date().getTime();
         script.async = true;
         script.defer = true;
         
-        // 添加加载事件处理器
-        script.onload = function() {
+        // 创建全局回调
+        window.googleMapsAPILoaded = function() {
             console.log('[Map Integration] Google Maps API加载成功');
+            
+            // 更新状态
+            window.GOOGLE_MAPS_LOADING = false;
+            window.GOOGLE_MAPS_LOADED = true;
             apiLoaded = true;
             apiLoading = false;
+            
+            // 初始化地图
+            initializeMap();
+            
+            // 触发回调队列
+            if (window.GOOGLE_MAPS_CALLBACKS && window.GOOGLE_MAPS_CALLBACKS.length) {
+                console.log(`[Map Integration] 执行 ${window.GOOGLE_MAPS_CALLBACKS.length} 个待处理回调`);
+                window.GOOGLE_MAPS_CALLBACKS.forEach(callback => {
+                    if (typeof callback === 'function') {
+                        try {
+                            callback();
+                        } catch (e) {
+                            console.error('[Map Integration] 执行回调时出错:', e);
+                        }
+                    }
+                });
+                // 清空回调队列
+                window.GOOGLE_MAPS_CALLBACKS = [];
+            }
+            
+            // 兼容旧的回调机制
+            if (typeof window.googleMapsLoadedCallback === 'function') {
+                try {
+                    window.googleMapsLoadedCallback();
+                } catch (e) {
+                    console.error('[Map Integration] 执行传统回调时出错:', e);
+                }
+            }
+            
+            // 分发加载完成事件
+            document.dispatchEvent(new CustomEvent('google_maps_loaded'));
         };
         
         // 添加错误处理器
         script.onerror = function() {
             console.error('[Map Integration] 加载Google Maps API失败');
+            window.GOOGLE_MAPS_LOADING = false;
             apiLoading = false;
             showErrorUI();
         };
@@ -397,7 +440,22 @@
     // DOM加载完成后初始化
     document.addEventListener('DOMContentLoaded', function() {
         console.log('[Map Integration] DOM加载完成，准备加载API');
-        setTimeout(loadGoogleMapsAPI, 100);
+        
+        // 检查页面是否已有Google Maps加载回调
+        if (typeof window.googleMapsLoadedCallback === 'function' && !window.GOOGLE_MAPS_LOADED) {
+            console.log('[Map Integration] 检测到googleMapsLoadedCallback，添加到回调队列');
+            window.GOOGLE_MAPS_CALLBACKS.push(window.googleMapsLoadedCallback);
+        }
+        
+        setTimeout(function() {
+            // 如果API尚未加载，且没有其他脚本正在加载，则进行加载
+            if (!window.GOOGLE_MAPS_LOADED && !window.GOOGLE_MAPS_LOADING) {
+                loadGoogleMapsAPI();
+            } else if (window.GOOGLE_MAPS_LOADED) {
+                // 如果已加载，直接初始化地图
+                initializeMap();
+            }
+        }, 100);
         
         // 防御措施: 如果5秒内地图未能初始化，尝试再次加载
         setTimeout(function() {
@@ -407,21 +465,6 @@
             }
         }, 5000);
     });
-    
-    // 监听window.google可能被外部脚本设置的情况
-    let checkGoogleInterval = setInterval(function() {
-        if (!initialized && !apiLoaded && window.google && window.google.maps) {
-            console.log('[Map Integration] 检测到Google Maps API已由其他脚本加载');
-            clearInterval(checkGoogleInterval);
-            apiLoaded = true;
-            initializeMap();
-        }
-    }, 200);
-    
-    // 10秒后清除检查间隔
-    setTimeout(function() {
-        clearInterval(checkGoogleInterval);
-    }, 10000);
     
     // 暴露API到全局
     window.MapIntegration = {
