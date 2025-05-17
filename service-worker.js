@@ -181,7 +181,6 @@ self.addEventListener('fetch', event => {
   // 跳过非GET请求
   if (event.request.method !== 'GET') return;
   
-  // 跳过非同源请求和特定类型请求
   try {
     const url = new URL(event.request.url);
     
@@ -197,103 +196,89 @@ self.addEventListener('fetch', event => {
     // 检查是否是导航请求（页面加载）
     const isNavigationRequest = event.request.mode === 'navigate';
     
-    // 检查是否是静态资源
-    const isStaticAsset = /\.(css|js|woff2?|ttf|eot|svg|png|jpe?g|gif|ico)$/i.test(url.pathname);
-    
-    // 对导航请求使用网络优先策略
-    if (isNavigationRequest) {
-      event.respondWith(
-        fetch(event.request)
-          .then(response => {
-            return response;
-          })
-          .catch(() => {
-            // 网络请求失败，尝试从缓存中获取
-            return caches.match(event.request)
-              .then(cachedResponse => {
-                // 如果在缓存中找到了响应，返回它
-                if (cachedResponse) {
-                  return cachedResponse;
-                }
-                
-                // 如果在缓存中找不到，返回离线页面
-                return caches.match(BASE_PATH + 'offline.html');
-              });
-          })
-      );
-      return;
-    }
-    
-    // 对静态资源使用缓存优先策略
-    if (isStaticAsset) {
-      event.respondWith(
-        caches.match(event.request)
-          .then(cachedResponse => {
-            if (cachedResponse) {
-              return cachedResponse;
-            }
-            
-            // 如果缓存中没有找到，从网络获取
-            return fetch(event.request)
-              .then(response => {
-                // 确保响应有效
-                if (!response || response.status !== 200) {
-                  return response;
-                }
-                
-                // 缓存响应的副本
-                const responseToCache = response.clone();
-                caches.open(CACHE_NAME)
-                  .then(cache => {
-                    cache.put(event.request, responseToCache);
-                  })
-                  .catch(err => {
-                    console.warn('[Service Worker] 缓存静态资源失败:', err);
-                  });
-                
-                return response;
-              })
-              .catch(error => {
-                console.warn('[Service Worker] 获取静态资源失败:', error);
-                
-                // 对于图片，可以返回占位图
-                if (/\.(png|jpe?g|gif|svg|webp)$/i.test(url.pathname)) {
-                  return caches.match(BASE_PATH + 'images/icon-192x192.png');
-                }
-                
-                // 对于JS/CSS，返回空响应避免控制台错误
-                if (url.pathname.endsWith('.js')) {
-                  return new Response('// 空JavaScript响应', {
-                    headers: { 'Content-Type': 'application/javascript' }
-                  });
-                }
-                
-                if (url.pathname.endsWith('.css')) {
-                  return new Response('/* 空CSS响应 */', {
-                    headers: { 'Content-Type': 'text/css' }
-                  });
-                }
-                
-                // 其他类型资源
-                return new Response('资源不可用', {
-                  status: 404,
-                  statusText: '资源不可用'
-                });
-              });
-          })
-      );
-      return;
-    }
-    
-    // 对于其他类型的请求，使用网络优先策略
+    // 对导航请求和所有其他请求都使用网络优先策略，保证内容始终最新
+    // 这种策略对移动端 Safari 更友好
     event.respondWith(
       fetch(event.request)
-        .catch(() => {
-          return caches.match(event.request);
+        .then(response => {
+          // 只缓存成功的响应
+          if (response && response.status === 200) {
+            // 创建响应副本以便缓存
+            const responseToCache = response.clone();
+            
+            // 异步缓存，不阻塞响应返回
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              })
+              .catch(err => {
+                console.warn('[Service Worker] 缓存响应失败:', err);
+              });
+          }
+          
+          return response;
+        })
+        .catch(error => {
+          console.log('[Service Worker] 网络请求失败，尝试使用缓存:', error);
+          
+          // 网络请求失败，尝试从缓存获取
+          return caches.match(event.request)
+            .then(cachedResponse => {
+              // 有缓存则使用缓存
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+              
+              // 如果是导航请求，提供离线页面
+              if (isNavigationRequest) {
+                return caches.match(BASE_PATH + 'offline.html')
+                  .catch(() => {
+                    // 如果连离线页面都没有，返回一个基本提示
+                    return new Response(
+                      '网络连接失败。请检查您的网络连接并重试。',
+                      {
+                        status: 503,
+                        statusText: 'Service Unavailable',
+                        headers: new Headers({
+                          'Content-Type': 'text/html;charset=UTF-8'
+                        })
+                      }
+                    );
+                  });
+              }
+              
+              // 对于CSS和JS等资源，返回空响应避免控制台报错
+              if (url.pathname.endsWith('.css')) {
+                return new Response('/* 网络连接失败，使用空CSS */', { 
+                  status: 200, 
+                  headers: {'Content-Type': 'text/css'} 
+                });
+              }
+              
+              if (url.pathname.endsWith('.js')) {
+                return new Response('// 网络连接失败，使用空JS', { 
+                  status: 200, 
+                  headers: {'Content-Type': 'application/javascript'} 
+                });
+              }
+              
+              // 对于图片，返回1x1透明图
+              if (url.pathname.match(/\.(png|jpe?g|gif|webp|svg)$/i)) {
+                return fetch(BASE_PATH + 'images/fallback-image.png')
+                  .catch(() => {
+                    // 如果 fallback 图片不存在，返回空响应
+                    return new Response('', { status: 200 });
+                  });
+              }
+              
+              // 其他类型的请求返回空响应
+              return new Response('', { status: 200 });
+            });
         })
     );
   } catch (error) {
-    console.error('[Service Worker] 处理fetch事件时出错:', error);
+    console.error('[Service Worker] fetch 处理过程出错:', error);
+    // 不中断，让浏览器继续处理请求
   }
 });
 
