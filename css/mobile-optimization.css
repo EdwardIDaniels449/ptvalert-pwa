@@ -224,4 +224,128 @@
         height: auto !important;
         overflow: visible !important;
     }
+}
+
+/* 移动端性能优化样式 */
+
+/* 开启硬件加速 */
+* {
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  backface-visibility: hidden;
+  perspective: 1000;
+}
+
+/* 图片缩放质量优化 */
+img {
+  image-rendering: -webkit-optimize-contrast;
+  -webkit-touch-callout: none;
+}
+
+/* 图片懒加载占位图样式 */
+.lazy-img {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.lazy-img[src] {
+  opacity: 1;
+}
+
+/* 减少动画开销 */
+.reduce-animations * {
+  transition-duration: 0.1s !important;
+  transition-delay: 0s !important;
+  animation-duration: 0.1s !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+}
+
+/* 优化长列表滚动 */
+.map-control, .popup-base, .report-form {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* 优化触摸反馈 */
+button, a, .clickable {
+  touch-action: manipulation;
+}
+
+/* 优化文本渲染 */
+body {
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 强制开启GPU加速 */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* 添加对老旧移动浏览器的兼容性 */
+@media screen and (max-width: 768px) {
+  /* 简化地图UI */
+  #map {
+    background-image: linear-gradient(to bottom, #f5f5f5, #e0e0e0) !important;
+  }
+  
+  /* 减少阴影复杂度 */
+  .map-control, .popup-base, .report-form {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  }
+  
+  /* 简化按钮样式 */
+  button {
+    box-shadow: none !important;
+  }
+  
+  /* 减少圆角半径 */
+  .popup-base, .report-form, button {
+    border-radius: 8px !important;
+  }
+}
+
+/* 低性能设备样式调整 */
+.low-end-device #map {
+  filter: none !important;
+}
+
+.low-end-device .animated,
+.low-end-device .danmaku-container {
+  display: none !important;
+}
+
+/* 提高点击区域大小 */
+button, 
+a, 
+input[type="button"], 
+input[type="submit"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* 阻止iOS上的缩放 */
+input, 
+select, 
+textarea {
+  font-size: 16px;
+}
+
+/* 优化表单元素 */
+input, textarea, select {
+  -webkit-appearance: none;
+  border-radius: 0;
+}
+
+/* 优化滚动性能 */
+.scrollable {
+  -webkit-overflow-scrolling: touch;
+  overflow-scrolling: touch;
+}
+
+/* 增强移动端可访问性 */
+:focus {
+  outline: none;
 } 
