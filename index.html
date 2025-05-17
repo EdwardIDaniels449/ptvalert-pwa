@@ -250,7 +250,10 @@
     </script>
     
     <!-- 地图修复脚本 - 确保Google Maps正确加载 -->
-    <script src="./map-fix.js?v=1.0.3"></script>
+    <script src="./map-fix.js?v=1.0.4_nocache"></script>
+    
+    <!-- 调试辅助工具 - 排查地图加载问题 -->
+    <script src="./js/debug-helper.js?v=1.0.0_nocache"></script>
 
     <!-- Google Maps API 脚本 -->
     <script>
@@ -425,6 +428,10 @@
             width: 100%;
             height: 100%;
             z-index: 1;
+            background-color: #f9f9f9; /* 添加背景色，以便在地图加载前也能看到容器 */
+            display: block !important; /* 强制显示 */
+            visibility: visible !important; /* 强制可见 */
+            opacity: 1 !important; /* 强制不透明 */
         }
         
         .map-control {

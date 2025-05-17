@@ -1,11 +1,16 @@
 /**
- * Map Fix Script (v1.0.3)
+ * Map Fix Script (v1.0.4)
  * 用于修复地图加载和标记显示问题
  * 解决谷歌地图API加载失败或未初始化的问题
  */
 
 (function() {
-    console.log('[Map Fix] 地图修复脚本已加载 v1.0.3');
+    console.log('[Map Fix] 地图修复脚本已加载 v1.0.4 (无缓存版本)');
+    
+    // 记录页面状态
+    console.log('[Map Fix] 页面加载状态:', document.readyState);
+    console.log('[Map Fix] 谷歌地图API状态:', typeof google !== 'undefined' ? '已加载' : '未加载');
+    console.log('[Map Fix] 地图对象状态:', typeof window.map !== 'undefined' ? '已存在' : '未创建');
     
     // 强制静态模式，不依赖后端API
     window.FORCE_STATIC_MODE = true;
@@ -21,6 +26,44 @@
     
     // 添加轮询检查，确保地图真正初始化
     window.mapInitCheckInterval = null;
+    
+    // 提前强制加载Google Maps API, 不依赖页面原始加载流程
+    function forceLoadGoogleMapsAPI() {
+        // 如果已加载，则不重复加载
+        if (window.google && window.google.maps) {
+            console.log('[Map Fix] Google Maps API已存在，跳过强制加载');
+            return;
+        }
+        
+        console.log('[Map Fix] 强制加载Google Maps API...');
+        
+        // 创建script元素
+        const script = document.createElement('script');
+        script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCE-oMIlcnOeqplgMmL9y1qcU6A9-HBu9U&callback=mapFixGoogleMapsCallback&libraries=places&v=weekly";
+        script.async = true;
+        script.defer = true;
+        
+        // 添加回调函数
+        window.mapFixGoogleMapsCallback = function() {
+            console.log('[Map Fix] Google Maps API强制加载成功');
+            // 检查地图状态
+            if (!window.map) {
+                console.log('[Map Fix] 地图未初始化，尝试创建备用地图');
+                createBackupMap();
+            }
+        };
+        
+        // 添加错误处理
+        script.onerror = function() {
+            console.error('[Map Fix] 强制加载Google Maps API失败');
+            // 显示错误信息
+            createOfflineMapUI();
+        };
+        
+        // 添加到页面
+        document.head.appendChild(script);
+        console.log('[Map Fix] 已添加Google Maps API脚本到页面');
+    }
     
     // 清除可能无效的标记数据
     try {
@@ -74,6 +117,9 @@
         
         // 2秒后检查地图状态，减少等待时间
         setTimeout(checkMapStatus, 2000);
+        
+        // 3秒后尝试强制加载Google Maps API
+        setTimeout(forceLoadGoogleMapsAPI, 3000);
     });
     
     // 启动地图初始化检查轮询
@@ -101,14 +147,33 @@
                     
                     console.log('[Map Fix] 轮询检测到地图已初始化');
                     handleMapInitialized();
-                } else if (typeof window.initMap === 'function') {
+                } else if (typeof window.initMap === 'function' || typeof window.googleMapsLoadedCallback === 'function') {
                     // API已加载但地图未初始化，尝试初始化
                     try {
-                        window.initMap();
+                        console.log('[Map Fix] 尝试调用已存在的地图初始化函数');
+                        
+                        if (typeof window.initMap === 'function') {
+                            window.initMap();
+                        } else if (typeof window.googleMapsLoadedCallback === 'function') {
+                            window.googleMapsLoadedCallback();
+                        }
+                        
+                        // 如果仍未初始化，创建备用地图
+                        if (!window.map || typeof window.map.setCenter !== 'function') {
+                            console.log('[Map Fix] 地图初始化函数调用后仍未创建地图，使用备用地图');
+                            createBackupMap();
+                        }
                     } catch (e) {
                         console.error('[Map Fix] 轮询中尝试初始化地图失败:', e);
+                        // 创建备用地图
+                        createBackupMap();
                     }
+                } else {
+                    console.log('[Map Fix] 找不到地图初始化函数，使用备用地图');
+                    createBackupMap();
                 }
+            } else {
+                console.log('[Map Fix] Google Maps API尚未加载，继续等待...');
             }
         }, 1000);
     }
@@ -246,6 +311,14 @@
         }
         
         try {
+            // 检查Google Maps API是否已加载
+            if (!window.google || !window.google.maps) {
+                console.error('[Map Fix] Google Maps API未加载，无法创建备用地图');
+                // 创建离线UI
+                createOfflineMapUI();
+                return;
+            }
+            
             // 获取墨尔本中心坐标
             const center = window.MELBOURNE_CENTER || {lat: -37.8136, lng: 144.9631};
             
@@ -259,6 +332,11 @@
                 zoomControl: true,
                 mapTypeControl: false
             });
+            
+            // 确保可见
+            mapElement.style.display = 'block';
+            mapElement.style.visibility = 'visible';
+            mapElement.style.opacity = '1';
             
             console.log('[Map Fix] 备用地图创建成功');
             window.mapInitialized = true;
@@ -597,6 +675,7 @@
         checkMapStatus: checkMapStatus,
         loadMarkersFromStorage: loadMarkersFromStorage,
         createBackupMap: createBackupMap,
-        preloadMarkerData: preloadMarkerData
+        preloadMarkerData: preloadMarkerData,
+        forceLoadGoogleMapsAPI: forceLoadGoogleMapsAPI
     };
 })(); 
